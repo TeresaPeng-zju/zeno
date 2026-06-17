@@ -46,4 +46,4 @@ def get_result(session_id: str, db: Session = Depends(get_db)) -> ResultResponse
     sess = session_service.get_session(db, session_id)
     if sess is None:
         raise HTTPException(status_code=404, detail="session not found")
-    return session_service.build_result(sess)
+    return session_service.build_result(db, sess)
