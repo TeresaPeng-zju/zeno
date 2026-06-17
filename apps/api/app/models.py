@@ -1,3 +1,4 @@
+import hashlib
 import uuid
 from datetime import datetime
 
@@ -6,6 +7,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -21,6 +23,12 @@ from app.core.db import Base
 
 def _uuid() -> str:
     return str(uuid.uuid4())
+
+
+def url_hash(url: str) -> str:
+    """Idempotency key for a resource. The curation agent dedups on this so the
+    same source is never embedded/stored twice across runs."""
+    return hashlib.sha256(url.strip().rstrip("/").encode("utf-8")).hexdigest()
 
 
 class SurveySession(Base):
@@ -73,6 +81,8 @@ class Resource(Base):
     id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
     title: Mapped[str] = mapped_column(String, nullable=False)
     url: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    # Idempotency key (sha256 of normalized url) — dedup target for the agent.
+    url_hash: Mapped[str] = mapped_column(String, nullable=False, unique=True, index=True)
     platform: Mapped[str] = mapped_column(String, default="")  # e.g. YouTube, 官方文档
     resource_type: Mapped[str] = mapped_column(
         String, default="article"
@@ -106,4 +116,16 @@ class Resource(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    # HNSW index for fast approximate nearest-neighbour cosine search (pgvector).
+    # Built only on Postgres; ignored by other dialects.
+    __table_args__ = (
+        Index(
+            "ix_resources_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_with={"m": 16, "ef_construction": 64},
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
     )
