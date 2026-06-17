@@ -121,7 +121,22 @@ def record_answer(db: Session, sess: SurveySession, skill_id: str, answer_value:
     db.refresh(sess)
 
 
-def build_result(sess: SurveySession) -> ResultResponse:
+def _resources_for_step(db: Session, skill_id: str, target_level: int) -> list:
+    """Best-effort RAG resource prescription. Never break the result page if the
+    resource library is empty or the DB lacks the table yet."""
+    try:
+        from app.services import resource_service
+
+        skill = competency.SKILLS_BY_ID.get(skill_id)
+        query = f"{skill.name if skill else skill_id} 学习 实践 L{target_level}"
+        return resource_service.recommend_out(
+            db, skill_id=skill_id, gap_target_level=target_level, query_text=query
+        )
+    except Exception:
+        return []
+
+
+def build_result(db: Session, sess: SurveySession) -> ResultResponse:
     profile = [
         SkillProfileOut(
             skill_id=us.skill_id,
@@ -185,7 +200,7 @@ def build_result(sess: SurveySession) -> ResultResponse:
             next_score=ns.next_score,
             unblocks=ns.unblocks,
             blocked_by=ns.blocked_by,
-            recommended_resources=[],  # Resource Engine fills this in Week 3
+            recommended_resources=_resources_for_step(db, ns.skill_id, ns.target_level),
         )
         for ns in decision.select_next_steps(sess.role_id, obs)
     ]
@@ -199,5 +214,5 @@ def build_result(sess: SurveySession) -> ResultResponse:
         strengths=strengths,
         gaps=gaps,
         next_steps=next_steps,
-        note="资源处方将在 Week 3（资源引擎 + pgvector + 保鲜校验）接入。",
+        note="资源处方由 RAG 资源引擎（pgvector 召回 + 多信号重排 + 保鲜校验）生成。",
     )
