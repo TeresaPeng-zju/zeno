@@ -1,0 +1,49 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.core.db import get_db
+from app.schemas import (
+    AnswerIn,
+    NextQuestionResponse,
+    ResultResponse,
+    SessionCreateResponse,
+)
+from app.services import session_service
+
+router = APIRouter(prefix="/api/sessions", tags=["sessions"])
+
+
+@router.post("", response_model=SessionCreateResponse)
+def create_session(db: Session = Depends(get_db)) -> SessionCreateResponse:
+    sess = session_service.create_session(db)
+    return SessionCreateResponse(session_id=sess.id, role_id=sess.role_id)
+
+
+@router.get("/{session_id}/next-question", response_model=NextQuestionResponse)
+def get_next_question(session_id: str, db: Session = Depends(get_db)) -> NextQuestionResponse:
+    sess = session_service.get_session(db, session_id)
+    if sess is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    return session_service.next_question(db, sess)
+
+
+@router.post("/{session_id}/answers", response_model=NextQuestionResponse)
+def submit_answer(
+    session_id: str, payload: AnswerIn, db: Session = Depends(get_db)
+) -> NextQuestionResponse:
+    sess = session_service.get_session(db, session_id)
+    if sess is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    try:
+        session_service.record_answer(db, sess, payload.skill_id, payload.answer_value)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+    return session_service.next_question(db, sess)
+
+
+@router.get("/{session_id}/result", response_model=ResultResponse)
+def get_result(session_id: str, db: Session = Depends(get_db)) -> ResultResponse:
+    sess = session_service.get_session(db, session_id)
+    if sess is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    return session_service.build_result(sess)
