@@ -48,7 +48,7 @@ export function CircularProgress({
         />
         <defs>
           <linearGradient id="readiness" x1="0" y1="0" x2="1" y2="1">
-            <stop stopColor="hsl(187 100% 50%)" />
+            <stop stopColor="hsl(183 86% 52%)" />
             <stop offset="1" stopColor="hsl(165 100% 39%)" />
           </linearGradient>
         </defs>
