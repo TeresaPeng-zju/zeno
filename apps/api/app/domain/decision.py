@@ -147,7 +147,17 @@ def compute_strengths(obs: dict[str, SkillObservation]) -> list[Strength]:
 # --------------------------------------------------------------------------- #
 # Next-step ranking (plan 6.2)
 # --------------------------------------------------------------------------- #
-def select_next_steps(role_id: str, obs: dict[str, SkillObservation]) -> list[NextStep]:
+def select_next_steps(
+    role_id: str,
+    obs: dict[str, SkillObservation],
+    max_steps: int = MAX_NEXT_STEPS,
+) -> list[NextStep]:
+    """Rank next-steps deterministically.
+
+    `max_steps` only controls how many of the *already-ranked* steps are
+    surfaced — the gap/score/ordering above it is untouched, so the offline
+    eval baseline (computed at the default depth) never forks.
+    """
     gaps = compute_gaps(role_id, obs)
     gap_by_skill = {g.req.skill_id: g for g in gaps}
 
@@ -208,7 +218,7 @@ def select_next_steps(role_id: str, obs: dict[str, SkillObservation]) -> list[Ne
         )
 
     scored.sort(key=lambda s: s.next_score, reverse=True)
-    top = scored[:MAX_NEXT_STEPS]
+    top = scored[: max(1, max_steps)]
     for i, ns in enumerate(top, start=1):
         ns.rank = i
     return top

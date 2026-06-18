@@ -112,9 +112,20 @@ class NextStepOut(BaseModel):
     action_steps: list[str]
     acceptance_criteria: list[str]
     next_score: float
+    est_weeks: int = 0
     unblocks: list[str] = Field(default_factory=list)
     blocked_by: list[str] = Field(default_factory=list)
     recommended_resources: list[ResourceOut] = Field(default_factory=list)
+
+
+class PacingOut(BaseModel):
+    """Result-page time-budget calibration (expression layer, deterministic)."""
+
+    time_budget: str  # light | standard | intense
+    weekly_hours: int
+    parallelism: int
+    total_weeks: int
+    summary: str
 
 
 class ResultResponse(BaseModel):
@@ -122,6 +133,8 @@ class ResultResponse(BaseModel):
     role_id: str
     status: str
     readiness: float  # 0-100 weighted coverage of required skills
+    time_budget: str = "standard"
+    pacing: PacingOut | None = None
     # Section 0: raw profile (kept for the 画像 view)
     profile: list[SkillProfileOut]
     # Three-section decision output (plan 6.3)

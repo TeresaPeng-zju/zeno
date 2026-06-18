@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
+import { Centered } from "@/components/site/centered";
 import {
   api,
   type ProficiencyOptionOut,
