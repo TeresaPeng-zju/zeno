@@ -106,6 +106,11 @@ function ResultInner() {
             <p className="text-sm text-muted-foreground">
               基于 {data.profile.length} 项技能画像，由确定性决策引擎生成
             </p>
+            {data.orientation && data.orientation !== "base" && data.orientation_label && (
+              <span className="hairline mt-1 inline-flex items-center gap-1.5 rounded-full bg-cyan/10 px-3 py-1 text-xs text-cyan">
+                目标方向 · {data.orientation_label}
+              </span>
+            )}
           </div>
           <RoleJourney current="前端工程师" target="AI Engineer" progress={data.readiness / 100} />
         </div>

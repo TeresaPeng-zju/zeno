@@ -6,6 +6,7 @@ from app.schemas import (
     AnswerIn,
     NextQuestionResponse,
     ResultResponse,
+    SessionCreateRequest,
     SessionCreateResponse,
 )
 from app.services import session_service
@@ -14,9 +15,14 @@ router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 
 
 @router.post("", response_model=SessionCreateResponse)
-def create_session(db: Session = Depends(get_db)) -> SessionCreateResponse:
-    sess = session_service.create_session(db)
-    return SessionCreateResponse(session_id=sess.id, role_id=sess.role_id)
+def create_session(
+    payload: SessionCreateRequest | None = None, db: Session = Depends(get_db)
+) -> SessionCreateResponse:
+    orientation = payload.orientation if payload else None
+    sess = session_service.create_session(db, orientation=orientation)
+    return SessionCreateResponse(
+        session_id=sess.id, role_id=sess.role_id, orientation=sess.orientation
+    )
 
 
 @router.get("/{session_id}/next-question", response_model=NextQuestionResponse)

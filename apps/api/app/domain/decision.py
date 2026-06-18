@@ -78,9 +78,13 @@ class Strength:
 # --------------------------------------------------------------------------- #
 # Gap computation (plan 6.1)
 # --------------------------------------------------------------------------- #
-def compute_gaps(role_id: str, obs: dict[str, SkillObservation]) -> list[GapInfo]:
+def compute_gaps(
+    role_id: str,
+    obs: dict[str, SkillObservation],
+    orientation_id: str = competency.ORIENTATION_BASE,
+) -> list[GapInfo]:
     out: list[GapInfo] = []
-    for req in competency.requirements_for_role(role_id):
+    for req in competency.requirements_for_role(role_id, orientation_id):
         o = obs.get(req.skill_id)
         level = o.level if o else 0
         conf = o.confidence if o else 0.0
@@ -90,9 +94,15 @@ def compute_gaps(role_id: str, obs: dict[str, SkillObservation]) -> list[GapInfo
     return out
 
 
-def compute_readiness(role_id: str, obs: dict[str, SkillObservation]) -> float:
+def compute_readiness(
+    role_id: str,
+    obs: dict[str, SkillObservation],
+    orientation_id: str = competency.ORIENTATION_BASE,
+) -> float:
     """Weighted coverage of *required* skills, 0-100 ("Career Readiness")."""
-    reqs = [r for r in competency.requirements_for_role(role_id) if r.type == "required"]
+    reqs = [
+        r for r in competency.requirements_for_role(role_id, orientation_id) if r.type == "required"
+    ]
     total = sum(r.weight for r in reqs)
     if total == 0:
         return 0.0
@@ -151,6 +161,7 @@ def select_next_steps(
     role_id: str,
     obs: dict[str, SkillObservation],
     max_steps: int = MAX_NEXT_STEPS,
+    orientation_id: str = competency.ORIENTATION_BASE,
 ) -> list[NextStep]:
     """Rank next-steps deterministically.
 
@@ -158,7 +169,7 @@ def select_next_steps(
     surfaced — the gap/score/ordering above it is untouched, so the offline
     eval baseline (computed at the default depth) never forks.
     """
-    gaps = compute_gaps(role_id, obs)
+    gaps = compute_gaps(role_id, obs, orientation_id)
     gap_by_skill = {g.req.skill_id: g for g in gaps}
 
     positive = sorted([g for g in gaps if g.gap > 0], key=lambda g: g.gap_score, reverse=True)

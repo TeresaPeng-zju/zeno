@@ -38,6 +38,10 @@ class SurveySession(Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
     role_id: Mapped[str] = mapped_column(String, default="ai_engineer_applied")
+    # target_orientation: sub-specialization modifier over the base role
+    # requirements ("base" | "rag" | ...). server_default keeps create_all-only
+    # schemas (no migration) backward-compatible; the service treats NULL as base.
+    orientation: Mapped[str] = mapped_column(String, default="base", server_default="base")
     status: Mapped[str] = mapped_column(String, default="in_progress")  # in_progress | completed
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.domain import competency
 from app.domain.question_bank import ANSWER_OPTIONS
 from app.schemas import (
+    OrientationOut,
     ProficiencyOptionOut,
     SkillCatalogResponse,
     SkillGroupOut,
@@ -35,4 +36,10 @@ def list_skills() -> SkillCatalogResponse:
         ProficiencyOptionOut(value=o.value, label=o.label, level=o.level)
         for o in ANSWER_OPTIONS
     ]
-    return SkillCatalogResponse(groups=groups, proficiency=proficiency)
+    orientations = [
+        OrientationOut(id=o.id, label=o.label, description=o.description)
+        for o in competency.ORIENTATIONS.values()
+    ]
+    return SkillCatalogResponse(
+        groups=groups, proficiency=proficiency, orientations=orientations
+    )
