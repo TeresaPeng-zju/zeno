@@ -26,3 +26,16 @@ def test_eval_quality_above_baseline():
     report = evaluate()
     assert report["hit@3"] >= 0.75
     assert report["ndcg@10"] >= 0.6
+
+
+def test_eval_rag_orientation_baseline():
+    """Baseline for the RAG orientation surface (评测面). Mirrors the rag
+    modifier's raised target levels; locks retrieval quality on the data/检索
+    pipeline so a reweight or rerank regression on that orientation fails CI.
+    Refresh when the corpus/weights change. Offline real = 1.0 across the board."""
+    report = evaluate("rag")
+    assert report["orientation"] == "rag"
+    assert report["N"] == 5
+    assert report["hit@3"] >= 0.8
+    assert report["ndcg@10"] >= 0.8
+    assert report["recall@5"] >= 0.6

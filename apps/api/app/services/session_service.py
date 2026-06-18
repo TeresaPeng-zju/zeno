@@ -28,8 +28,13 @@ from app.schemas import (
 )
 
 
-def create_session(db: Session, role_id: str = competency.ROLE_AI_ENGINEER_APPLIED) -> SurveySession:
-    sess = SurveySession(role_id=role_id, status="in_progress")
+def create_session(
+    db: Session,
+    role_id: str = competency.ROLE_AI_ENGINEER_APPLIED,
+    orientation: str | None = None,
+) -> SurveySession:
+    orient = competency.get_orientation(orientation).id
+    sess = SurveySession(role_id=role_id, orientation=orient, status="in_progress")
     db.add(sess)
     db.commit()
     db.refresh(sess)
@@ -38,6 +43,11 @@ def create_session(db: Session, role_id: str = competency.ROLE_AI_ENGINEER_APPLI
 
 def get_session(db: Session, session_id: str) -> SurveySession | None:
     return db.get(SurveySession, session_id)
+
+
+def _orientation(sess: SurveySession) -> str:
+    """NULL-safe orientation (old rows / create_all-only schemas → base)."""
+    return getattr(sess, "orientation", None) or competency.ORIENTATION_BASE
 
 
 def _states(sess: SurveySession) -> dict[str, SkillState]:
@@ -74,13 +84,14 @@ def _max_questions() -> int:
 
 def next_question(db: Session, sess: SurveySession) -> NextQuestionResponse:
     states = _states(sess)
-    if is_complete(sess.role_id, states):
+    orient = _orientation(sess)
+    if is_complete(sess.role_id, states, orient):
         if sess.status != "completed":
             sess.status = "completed"
             db.commit()
         return NextQuestionResponse(result_ready=True)
 
-    skill_id = select_next_skill(sess.role_id, states)
+    skill_id = select_next_skill(sess.role_id, states, orient)
     if skill_id is None:
         sess.status = "completed"
         db.commit()
@@ -153,6 +164,8 @@ def build_result(
     ]
     profile.sort(key=lambda p: (p.category, p.skill_id))
 
+    orient = _orientation(sess)
+
     # Decision engine (deterministic) — plan section 6.
     obs = {
         us.skill_id: SkillObservation(level=us.level, confidence=us.confidence)
@@ -183,7 +196,7 @@ def build_result(
             weight=g.req.weight,
             gap_score=round(g.gap_score, 4),
         )
-        for g in decision.compute_gaps(sess.role_id, obs)
+        for g in decision.compute_gaps(sess.role_id, obs, orient)
         if g.gap > 0
     ]
     gaps.sort(key=lambda x: x.gap_score, reverse=True)
@@ -191,7 +204,7 @@ def build_result(
     # Time budget is an *expression-layer* lever: it only sets how many of the
     # already-ranked steps to show + the pacing. The ranking itself is unchanged.
     budget_key, _weekly_hours, max_steps = pacing.resolve(time_budget)
-    steps = decision.select_next_steps(sess.role_id, obs, max_steps=max_steps)
+    steps = decision.select_next_steps(sess.role_id, obs, max_steps=max_steps, orientation_id=orient)
     plan = pacing.build_plan(steps, budget_key)
     weeks_by_skill = {p.skill_id: p.est_weeks for p in plan.steps}
 
@@ -219,8 +232,10 @@ def build_result(
     return ResultResponse(
         session_id=sess.id,
         role_id=sess.role_id,
+        orientation=orient,
+        orientation_label=competency.get_orientation(orient).label,
         status=sess.status,
-        readiness=decision.compute_readiness(sess.role_id, obs),
+        readiness=decision.compute_readiness(sess.role_id, obs, orient),
         time_budget=plan.time_budget,
         pacing=PacingOut(
             time_budget=plan.time_budget,

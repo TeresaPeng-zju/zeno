@@ -18,7 +18,7 @@ export function RoleJourney({ current, target, progress = 0.5 }: RoleJourneyProp
           <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
             Current Role
           </p>
-          <p className="mt-1 text-base font-semibold text-foreground sm:text-lg">{current}</p>
+          <p className="mt-1 text-base font-semibold text-cyan sm:text-lg">{current}</p>
         </div>
 
         <div className="relative mx-2 flex-1">
@@ -32,7 +32,7 @@ export function RoleJourney({ current, target, progress = 0.5 }: RoleJourneyProp
             transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
           />
           {/* origin dot */}
-          <span className="absolute -left-1 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-cyan shadow-[0_0_12px_hsl(187_100%_50%/0.7)]" />
+          <span className="absolute -left-1 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-cyan shadow-[0_0_12px_hsl(183_86%_52%/0.7)]" />
           {/* traveling marker */}
           <motion.span
             className="absolute top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-foreground"
