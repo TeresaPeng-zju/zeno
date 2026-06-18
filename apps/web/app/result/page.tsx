@@ -72,6 +72,35 @@ function ResultInner() {
   const [error, setError] = useState<string | null>(null);
   const [budget, setBudget] = useState<TimeBudget>("standard");
   const [refreshing, setRefreshing] = useState(false);
+  const [done, setDone] = useState<Set<number>>(new Set());
+
+  // 纯前端「标记完成」：按 session 持久化到 localStorage，不进后端、不影响 readiness
+  const doneKey = sessionId ? `zeno:done:${sessionId}` : null;
+  useEffect(() => {
+    if (!doneKey) return;
+    try {
+      const raw = localStorage.getItem(doneKey);
+      if (raw) setDone(new Set(JSON.parse(raw) as number[]));
+    } catch {
+      /* ignore */
+    }
+  }, [doneKey]);
+
+  const toggleDone = (skillId: number) => {
+    setDone((prev) => {
+      const next = new Set(prev);
+      if (next.has(skillId)) next.delete(skillId);
+      else next.add(skillId);
+      if (doneKey) {
+        try {
+          localStorage.setItem(doneKey, JSON.stringify([...next]));
+        } catch {
+          /* ignore */
+        }
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!sessionId) {
@@ -185,6 +214,19 @@ function ResultInner() {
 
         {/* Section 3: roadmap journey */}
         <Section index={3} title="学习路线" subtitle="按时间预算展示的最高杠杆动作（按依赖排序）">
+          {data.next_steps.length > 0 && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>
+                已完成 <span className="font-semibold text-cyan">{data.next_steps.filter((s) => done.has(s.skill_id)).length}</span> / {data.next_steps.length} 步
+              </span>
+              <span className="inline-block h-1.5 w-28 overflow-hidden rounded-full bg-muted">
+                <span
+                  className="block h-full rounded-full bg-cyan transition-all duration-500"
+                  style={{ width: `${(data.next_steps.filter((s) => done.has(s.skill_id)).length / data.next_steps.length) * 100}%` }}
+                />
+              </span>
+            </div>
+          )}
           <TimeBudgetBar
             budget={budget}
             onChange={setBudget}
@@ -196,13 +238,40 @@ function ResultInner() {
           ) : (
             <div id="roadmap" className="relative space-y-5 pl-8">
               <span className="absolute left-[11px] top-2 h-[calc(100%-1rem)] w-px bg-gradient-to-b from-cyan via-gold to-transparent" />
-              {data.next_steps.map((ns, i) => (
+              {data.next_steps.map((ns, i) => {
+                const isDone = done.has(ns.skill_id);
+                return (
                 <Reveal key={ns.skill_id} i={i}>
                   <div className="relative">
-                    <span className="absolute -left-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-full border border-gold/60 bg-card text-xs font-bold text-gold">
-                      {ns.rank}
+                    <span
+                      className={
+                        "absolute -left-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-full border text-xs font-bold transition-colors " +
+                        (isDone
+                          ? "border-cyan bg-cyan text-background shadow-[0_0_12px_hsl(183_86%_52%/0.6)]"
+                          : "border-gold/60 bg-card text-gold")
+                      }
+                    >
+                      {isDone ? (
+                        <motion.svg
+                          key="check"
+                          initial={{ scale: 0, rotate: -20 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                          viewBox="0 0 24 24"
+                          className="h-3.5 w-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M5 13l4 4L19 7" />
+                        </motion.svg>
+                      ) : (
+                        ns.rank
+                      )}
                     </span>
-                    <Card className="border-gold/25">
+                    <Card className={"transition-colors " + (isDone ? "border-cyan/50 bg-cyan/[0.03]" : "border-gold/25")}>
                       <CardContent className="space-y-4 pt-6">
                         <div>
                           <div className="flex items-center justify-between gap-2">
@@ -233,11 +302,29 @@ function ResultInner() {
                           </div>
                         </div>
                         <Resources items={ns.recommended_resources} />
+                        <div className="flex items-center justify-between gap-3 border-t border-border/40 pt-3">
+                          <p className="text-xs text-muted-foreground">
+                            {isDone ? "已达成上面的完成标准 ✓" : "达成上面的完成标准后，标记一下"}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => toggleDone(ns.skill_id)}
+                            className={
+                              "shrink-0 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors " +
+                              (isDone
+                                ? "border-cyan/60 bg-cyan/10 text-cyan hover:bg-cyan/15"
+                                : "border-border/60 text-muted-foreground hover:border-cyan/50 hover:text-cyan")
+                            }
+                          >
+                            {isDone ? "已完成 · 点击撤销" : "标记完成"}
+                          </button>
+                        </div>
                       </CardContent>
                     </Card>
                   </div>
                 </Reveal>
-              ))}
+                );
+              })}
             </div>
           )}
         </Section>
