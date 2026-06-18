@@ -13,8 +13,9 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from app.data.seed_resources import CANDIDATE_POOL
+from app.domain import competency
 from app.domain.resource_engine import ScoredResource, rerank
-from app.eval.eval_set import EVAL_SET
+from app.eval.eval_set import eval_set_for
 from app.eval.metrics import hit_at_k, ndcg_at_k, recall_at_k
 from app.llm.embedding import cosine_similarity, get_embedder
 from app.services.resource_service import build_embed_text
@@ -61,12 +62,13 @@ def _recall(corpus: list[dict], skill_id: str, query_vec: list[float]) -> list[S
     return out
 
 
-def evaluate() -> dict:
+def evaluate(orientation: str = competency.ORIENTATION_BASE) -> dict:
     embedder = get_embedder()
     corpus = _build_corpus()
+    eval_set = eval_set_for(orientation)
 
     ndcg_list, hit_list, recall_list = [], [], []
-    for q in EVAL_SET:
+    for q in eval_set:
         qvec = embedder.embed_one(q.query)
         candidates = _recall(corpus, q.skill_id, qvec)
         ranked = rerank(candidates, gap_target_level=q.target_level, now=_NOW, limit=10)
@@ -76,8 +78,9 @@ def evaluate() -> dict:
         hit_list.append(hit_at_k(urls, rel, 3))
         recall_list.append(recall_at_k(urls, rel, 5))
 
-    n = len(EVAL_SET)
+    n = len(eval_set)
     return {
+        "orientation": orientation,
         "N": n,
         "ndcg@10": round(sum(ndcg_list) / n, 4),
         "hit@3": round(sum(hit_list) / n, 4),
@@ -86,12 +89,14 @@ def evaluate() -> dict:
 
 
 def main() -> None:
-    report = evaluate()
     print("Zeno retrieval eval (offline, mock embedder)")
-    print(f"  N         = {report['N']}")
-    print(f"  NDCG@10   = {report['ndcg@10']}")
-    print(f"  Hit@3     = {report['hit@3']}")
-    print(f"  Recall@5  = {report['recall@5']}")
+    for orientation in (competency.ORIENTATION_BASE, competency.ORIENTATION_RAG):
+        report = evaluate(orientation)
+        print(f"[orientation = {report['orientation']}]")
+        print(f"  N         = {report['N']}")
+        print(f"  NDCG@10   = {report['ndcg@10']}")
+        print(f"  Hit@3     = {report['hit@3']}")
+        print(f"  Recall@5  = {report['recall@5']}")
 
 
 if __name__ == "__main__":

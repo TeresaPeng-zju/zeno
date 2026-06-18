@@ -19,7 +19,11 @@ Termination (plan 5.2):
 from dataclasses import dataclass
 
 from app.core.config import settings
-from app.domain.competency import RoleRequirement, requirements_for_role
+from app.domain.competency import (
+    ORIENTATION_BASE,
+    RoleRequirement,
+    requirements_for_role,
+)
 
 BRANCH_FLOOR = 0.5
 
@@ -41,12 +45,12 @@ def ask_priority(req: RoleRequirement, confidence: float) -> float:
 
 
 def select_next_skill(
-    role_id: str, states: dict[str, SkillState]
+    role_id: str, states: dict[str, SkillState], orientation_id: str = ORIENTATION_BASE
 ) -> str | None:
     """Pick the unanswered requirement skill with the highest ask_priority."""
     best_skill: str | None = None
     best_score = -1.0
-    for req in requirements_for_role(role_id):
+    for req in requirements_for_role(role_id, orientation_id):
         if req.skill_id in states:  # already answered
             continue
         score = ask_priority(req, confidence=0.0)
@@ -56,9 +60,11 @@ def select_next_skill(
     return best_skill
 
 
-def weighted_uncertainty(role_id: str, states: dict[str, SkillState]) -> float:
+def weighted_uncertainty(
+    role_id: str, states: dict[str, SkillState], orientation_id: str = ORIENTATION_BASE
+) -> float:
     """Weighted remaining uncertainty across *required* skills (0-1)."""
-    reqs = [r for r in requirements_for_role(role_id) if r.type == "required"]
+    reqs = [r for r in requirements_for_role(role_id, orientation_id) if r.type == "required"]
     total_weight = sum(r.weight for r in reqs)
     if total_weight == 0:
         return 0.0
@@ -69,14 +75,19 @@ def weighted_uncertainty(role_id: str, states: dict[str, SkillState]) -> float:
     return acc / total_weight
 
 
-def is_complete(role_id: str, states: dict[str, SkillState]) -> bool:
+def is_complete(
+    role_id: str, states: dict[str, SkillState], orientation_id: str = ORIENTATION_BASE
+) -> bool:
     answered = len(states)
     if answered >= settings.max_questions:
         return True
-    if select_next_skill(role_id, states) is None:
+    if select_next_skill(role_id, states, orientation_id) is None:
         return True
     # Only allow early-stop on uncertainty once we have a minimum signal,
     # so we don't terminate immediately on an empty session.
-    if answered >= 1 and weighted_uncertainty(role_id, states) < settings.uncertainty_threshold:
+    if (
+        answered >= 1
+        and weighted_uncertainty(role_id, states, orientation_id) < settings.uncertainty_threshold
+    ):
         return True
     return False

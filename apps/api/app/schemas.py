@@ -1,9 +1,22 @@
 from pydantic import BaseModel, Field
 
 
+class SessionCreateRequest(BaseModel):
+    orientation: str | None = Field(
+        default=None, description="Target orientation modifier, e.g. 'base' | 'rag'."
+    )
+
+
 class SessionCreateResponse(BaseModel):
     session_id: str
     role_id: str
+    orientation: str = "base"
+
+
+class OrientationOut(BaseModel):
+    id: str
+    label: str
+    description: str
 
 
 class OptionOut(BaseModel):
@@ -33,6 +46,7 @@ class ProficiencyOptionOut(BaseModel):
 class SkillCatalogResponse(BaseModel):
     groups: list[SkillGroupOut]
     proficiency: list[ProficiencyOptionOut]
+    orientations: list[OrientationOut] = Field(default_factory=list)
 
 
 class Progress(BaseModel):
@@ -131,6 +145,8 @@ class PacingOut(BaseModel):
 class ResultResponse(BaseModel):
     session_id: str
     role_id: str
+    orientation: str = "base"
+    orientation_label: str | None = None
     status: str
     readiness: float  # 0-100 weighted coverage of required skills
     time_budget: str = "standard"

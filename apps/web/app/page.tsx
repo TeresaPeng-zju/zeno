@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 import { RoleJourney } from "@/components/zeno/role-journey";
 import { CareerGraph } from "@/components/zeno/career-graph";
-import { api } from "@/lib/api";
+import { api, type OrientationOut } from "@/lib/api";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 14 },
@@ -23,12 +23,31 @@ export default function HomePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [orientations, setOrientations] = useState<OrientationOut[]>([]);
+  const [orientation, setOrientation] = useState<string>("base");
+
+  // Load the available target orientations (base + modifiers) for the selector.
+  // Failure is non-fatal: the flow falls back to the default "base" orientation.
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .skills()
+      .then((cat) => {
+        if (!cancelled && cat.orientations?.length) setOrientations(cat.orientations);
+      })
+      .catch(() => {
+        /* keep default base; backend may be down — handled on map click */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function mapCareer() {
     setLoading(true);
     setError(null);
     try {
-      const { session_id } = await api.createSession();
+      const { session_id } = await api.createSession(orientation);
       router.push(`/skills?session=${session_id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "无法创建会话，请确认后端已启动");
@@ -57,11 +76,11 @@ export default function HomePage() {
           variants={fadeUp}
           initial="hidden"
           animate="show"
-          className="mt-7 max-w-4xl text-5xl font-extrabold leading-[1.05] tracking-tight text-gradient sm:text-7xl"
+          className="mt-7 max-w-4xl pb-3 text-5xl font-extrabold leading-tight tracking-tight text-gradient sm:text-7xl"
         >
           See where you are.
           <br />
-          Navigate where you could go.
+          <span className="text-cyan [-webkit-text-fill-color:hsl(183_86%_52%)]">Navigate</span> where you could go.
         </motion.h1>
 
         <motion.p
@@ -92,6 +111,45 @@ export default function HomePage() {
           </Link>
         </motion.div>
         {error && <p className="mt-3 text-sm text-magenta">{error}</p>}
+
+        {orientations.length > 1 && (
+          <motion.div
+            custom={3.5}
+            variants={fadeUp}
+            initial="hidden"
+            animate="show"
+            className="mt-8 w-full max-w-xl"
+          >
+            <p className="mb-2.5 text-xs uppercase tracking-wide text-muted-foreground">
+              目标方向
+            </p>
+            <div className="flex flex-wrap justify-center gap-2.5">
+              {orientations.map((o) => {
+                const selected = o.id === orientation;
+                return (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onClick={() => setOrientation(o.id)}
+                    title={o.description}
+                    aria-pressed={selected}
+                    className={
+                      "rounded-full border px-4 py-2 text-sm transition-all " +
+                      (selected
+                        ? "border-cyan/70 bg-cyan/10 text-cyan"
+                        : "border-border bg-surface/60 text-foreground hover:border-primary/50 hover:bg-surface")
+                    }
+                  >
+                    {o.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-2.5 text-xs text-muted-foreground">
+              {orientations.find((o) => o.id === orientation)?.description}
+            </p>
+          </motion.div>
+        )}
 
         <motion.div
           custom={4}
@@ -139,7 +197,7 @@ function SparkIcon() {
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
       <path
         d="M7 0l1.3 4.7L13 6 8.3 7.3 7 12 5.7 7.3 1 6l4.7-1.3L7 0z"
-        fill="hsl(187 100% 50%)"
+        fill="hsl(183 86% 52%)"
       />
     </svg>
   );
