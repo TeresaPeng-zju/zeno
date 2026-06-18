@@ -39,7 +39,7 @@ export function TopNav() {
           </Link>
           <Link
             href="/skills"
-            className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            className="rounded-lg bg-cyan px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-cyan/90"
           >
             Get started
           </Link>
@@ -52,21 +52,12 @@ export function TopNav() {
 function ZenoMark() {
   return (
     <span className="relative flex h-7 w-7 items-center justify-center">
-      <svg viewBox="0 0 28 28" className="h-7 w-7" fill="none">
-        <circle cx="6" cy="22" r="2.4" fill="hsl(187 100% 50%)" />
-        <circle cx="22" cy="6" r="2.4" fill="hsl(43 100% 50%)" />
-        <path
-          d="M6 22 L22 6"
-          stroke="url(#zg)"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-        <defs>
-          <linearGradient id="zg" x1="6" y1="22" x2="22" y2="6">
-            <stop stopColor="hsl(187 100% 50%)" />
-            <stop offset="1" stopColor="hsl(43 100% 50%)" />
-          </linearGradient>
-        </defs>
+      <span className="absolute inset-0 rounded-md bg-cyan/15" />
+      <svg viewBox="0 0 24 24" className="relative h-5 w-5 text-cyan" fill="none" aria-hidden="true">
+        <circle cx="5" cy="6" r="2" fill="currentColor" />
+        <circle cx="19" cy="18" r="2.4" className="fill-gold" />
+        <circle cx="13" cy="8" r="1.4" fill="currentColor" opacity="0.7" />
+        <path d="M5 6 L13 8 L19 18" stroke="currentColor" strokeWidth="1" opacity="0.5" />
       </svg>
     </span>
   );

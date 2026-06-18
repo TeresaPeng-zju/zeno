@@ -80,7 +80,7 @@ export default function HomePage() {
         >
           See where you are.
           <br />
-          Navigate where you could go.
+          <span className="text-cyan [-webkit-text-fill-color:hsl(183_86%_52%)]">Navigate</span> where you could go.
         </motion.h1>
 
         <motion.p
@@ -197,7 +197,7 @@ function SparkIcon() {
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
       <path
         d="M7 0l1.3 4.7L13 6 8.3 7.3 7 12 5.7 7.3 1 6l4.7-1.3L7 0z"
-        fill="hsl(187 100% 50%)"
+        fill="hsl(183 86% 52%)"
       />
     </svg>
   );

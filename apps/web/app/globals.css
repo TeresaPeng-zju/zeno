@@ -10,7 +10,7 @@
     --card: 222 34% 11%; /* #121826 */
     --card-foreground: 220 30% 92%;
     --surface: 222 32% 13%; /* #161D2D */
-    --primary: 187 100% 50%; /* Aurora Cyan #00E5FF */
+    --primary: 183 86% 52%; /* Aurora Teal — matches --cyan */
     --primary-foreground: 222 47% 6%;
     --muted: 222 28% 16%;
     --muted-foreground: 222 13% 62%;
@@ -18,11 +18,11 @@
     --accent-foreground: 220 30% 92%;
     --border: 222 20% 18%;
     --input: 222 20% 18%;
-    --ring: 187 100% 50%;
+    --ring: 183 86% 52%;
     --radius: 0.875rem;
 
     /* Brand semantic accents */
-    --cyan: 187 100% 50%; /* existing skills / connections */
+    --cyan: 183 86% 52%; /* soft aurora teal — lab(82.79 -43.81 -17.99) / oklch(0.84 0.14 200) / #1BE5EE */
     --gold: 43 100% 50%; /* target / goals  #FFB800 */
     --magenta: 335 100% 65%; /* gaps  #FF4D8D */
     --emerald: 165 100% 39%; /* success  #00C896 */
@@ -49,7 +49,7 @@
   /* Aurora ambient glow used sparingly (one per screen) */
   .bg-aurora {
     background-image:
-      radial-gradient(60% 50% at 50% 0%, hsl(187 100% 50% / 0.08), transparent 70%),
+      radial-gradient(60% 50% at 50% 0%, hsl(183 86% 52% / 0.08), transparent 70%),
       radial-gradient(40% 40% at 85% 15%, hsl(43 100% 50% / 0.06), transparent 70%);
   }
 
@@ -61,7 +61,7 @@
   }
 
   .glow-cyan {
-    box-shadow: 0 0 0 1px hsl(187 100% 50% / 0.25), 0 0 24px hsl(187 100% 50% / 0.15);
+    box-shadow: 0 0 0 1px hsl(183 86% 52% / 0.25), 0 0 24px hsl(183 86% 52% / 0.15);
   }
   .glow-gold {
     box-shadow: 0 0 0 1px hsl(43 100% 50% / 0.3), 0 0 24px hsl(43 100% 50% / 0.18);

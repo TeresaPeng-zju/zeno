@@ -105,7 +105,7 @@ export function CareerGraph({ nodes, edges, height = 420 }: CareerGraphProps) {
           ...e,
           animated: active,
           style: {
-            stroke: active ? "hsl(187 100% 50%)" : "hsl(187 100% 50% / 0.22)",
+            stroke: active ? "hsl(183 86% 52%)" : "hsl(183 86% 52% / 0.22)",
             strokeWidth: active ? 1.6 : 1,
             ...e.style,
           },
