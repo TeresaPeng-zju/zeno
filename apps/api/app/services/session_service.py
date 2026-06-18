@@ -3,7 +3,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.domain import competency, decision
+from app.domain import competency, decision, pacing
 from app.domain.decision import SkillObservation
 from app.domain.orchestrator import SkillState, is_complete, select_next_skill
 from app.domain.question_bank import (
@@ -19,6 +19,7 @@ from app.schemas import (
     NextQuestionResponse,
     NextStepOut,
     OptionOut,
+    PacingOut,
     Progress,
     QuestionOut,
     ResultResponse,
@@ -136,7 +137,9 @@ def _resources_for_step(db: Session, skill_id: str, target_level: int) -> list:
         return []
 
 
-def build_result(db: Session, sess: SurveySession) -> ResultResponse:
+def build_result(
+    db: Session, sess: SurveySession, time_budget: str | None = None
+) -> ResultResponse:
     profile = [
         SkillProfileOut(
             skill_id=us.skill_id,
@@ -185,6 +188,13 @@ def build_result(db: Session, sess: SurveySession) -> ResultResponse:
     ]
     gaps.sort(key=lambda x: x.gap_score, reverse=True)
 
+    # Time budget is an *expression-layer* lever: it only sets how many of the
+    # already-ranked steps to show + the pacing. The ranking itself is unchanged.
+    budget_key, _weekly_hours, max_steps = pacing.resolve(time_budget)
+    steps = decision.select_next_steps(sess.role_id, obs, max_steps=max_steps)
+    plan = pacing.build_plan(steps, budget_key)
+    weeks_by_skill = {p.skill_id: p.est_weeks for p in plan.steps}
+
     next_steps = [
         NextStepOut(
             rank=ns.rank,
@@ -198,11 +208,12 @@ def build_result(db: Session, sess: SurveySession) -> ResultResponse:
             action_steps=ns.action_steps,
             acceptance_criteria=ns.acceptance_criteria,
             next_score=ns.next_score,
+            est_weeks=weeks_by_skill.get(ns.skill_id, 0),
             unblocks=ns.unblocks,
             blocked_by=ns.blocked_by,
             recommended_resources=_resources_for_step(db, ns.skill_id, ns.target_level),
         )
-        for ns in decision.select_next_steps(sess.role_id, obs)
+        for ns in steps
     ]
 
     return ResultResponse(
@@ -210,6 +221,14 @@ def build_result(db: Session, sess: SurveySession) -> ResultResponse:
         role_id=sess.role_id,
         status=sess.status,
         readiness=decision.compute_readiness(sess.role_id, obs),
+        time_budget=plan.time_budget,
+        pacing=PacingOut(
+            time_budget=plan.time_budget,
+            weekly_hours=plan.weekly_hours,
+            parallelism=plan.parallelism,
+            total_weeks=plan.total_weeks,
+            summary=plan.summary,
+        ),
         profile=profile,
         strengths=strengths,
         gaps=gaps,
