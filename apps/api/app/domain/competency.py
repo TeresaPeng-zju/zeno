@@ -14,9 +14,17 @@ background is. RoleRequirement carries `weight`, `min_level`, `type`
 (required/bonus) and `branch_impact` (0/1) used by the orchestrator.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 ROLE_AI_ENGINEER_APPLIED = "ai_engineer_applied"
+
+# Target orientations: sub-specializations of the applied role (README:
+# "应用向：RAG / Agent / LLM App"). A modifier reweights the BASE requirements;
+# `base` == no modifier == today's behaviour, so the pipeline & eval baseline
+# only fork when an orientation is explicitly chosen.
+ORIENTATION_BASE = "base"
+ORIENTATION_RAG = "rag"
+DEFAULT_ORIENTATION = ORIENTATION_BASE
 
 # Level 0-4 reference descriptions (shared rubric, plan 4.2)
 LEVEL_RUBRIC: dict[int, str] = {
@@ -139,12 +147,82 @@ SKILL_DEPENDENCIES: list[SkillDependency] = [
 ]
 
 
-def requirements_for_role(role_id: str) -> list[RoleRequirement]:
-    return [r for r in ROLE_REQUIREMENTS if r.role_id == role_id]
+# --------------------------------------------------------------------------- #
+# Target orientations (modifiers over the base requirements)
+# --------------------------------------------------------------------------- #
+@dataclass(frozen=True)
+class OrientationModifier:
+    """Reweights the BASE role requirements for a target orientation.
+
+    Deltas are applied on top of the base list (weight clamped to [0, 1],
+    min_level to [0, 4]); skills not mentioned keep their base values, and
+    `promote_required` flips a bonus skill to required. The `base` orientation
+    is the empty modifier, so selecting nothing reproduces today's behaviour
+    exactly — the offline eval baseline only forks when an orientation is chosen.
+    """
+
+    id: str
+    label: str
+    description: str
+    weight_delta: dict[str, float] = field(default_factory=dict)
+    min_level_delta: dict[str, int] = field(default_factory=dict)
+    promote_required: frozenset[str] = field(default_factory=frozenset)
 
 
-def requirement_by_skill(role_id: str) -> dict[str, RoleRequirement]:
-    return {r.skill_id: r for r in requirements_for_role(role_id)}
+ORIENTATIONS: dict[str, OrientationModifier] = {
+    ORIENTATION_BASE: OrientationModifier(
+        ORIENTATION_BASE,
+        "通用应用向",
+        "AI Engineer 应用向的通用基线，数据/检索/LLM/评估均衡覆盖。",
+    ),
+    ORIENTATION_RAG: OrientationModifier(
+        ORIENTATION_RAG,
+        "检索向（RAG）",
+        "以检索增强系统为核心：加重数据与检索链路（切分/向量化/向量检索/重排），"
+        "抬高召回-重排相关技能的目标水位，并把数据质量提为必要项。",
+        weight_delta={
+            "data.chunking": 0.2,
+            "data.embedding": 0.2,
+            "data.vector_search": 0.1,
+            "data.retrieval_rerank": 0.2,
+            "data.quality": 0.25,
+            "eval.metrics": 0.1,
+        },
+        min_level_delta={
+            "data.vector_search": 1,     # L3 -> L4
+            "data.retrieval_rerank": 1,  # L2 -> L3
+            "data.chunking": 1,          # L2 -> L3
+        },
+        promote_required=frozenset({"data.quality"}),
+    ),
+}
+
+
+def get_orientation(orientation_id: str | None) -> OrientationModifier:
+    return ORIENTATIONS.get(orientation_id or ORIENTATION_BASE, ORIENTATIONS[ORIENTATION_BASE])
+
+
+def _apply_modifier(req: RoleRequirement, mod: OrientationModifier) -> RoleRequirement:
+    weight = min(1.0, max(0.0, req.weight + mod.weight_delta.get(req.skill_id, 0.0)))
+    min_level = min(4, max(0, req.min_level + mod.min_level_delta.get(req.skill_id, 0)))
+    req_type = "required" if req.skill_id in mod.promote_required else req.type
+    return replace(req, weight=round(weight, 4), min_level=min_level, type=req_type)
+
+
+def requirements_for_role(
+    role_id: str, orientation_id: str = ORIENTATION_BASE
+) -> list[RoleRequirement]:
+    base = [r for r in ROLE_REQUIREMENTS if r.role_id == role_id]
+    mod = get_orientation(orientation_id)
+    if mod.id == ORIENTATION_BASE:
+        return base
+    return [_apply_modifier(r, mod) for r in base]
+
+
+def requirement_by_skill(
+    role_id: str, orientation_id: str = ORIENTATION_BASE
+) -> dict[str, RoleRequirement]:
+    return {r.skill_id: r for r in requirements_for_role(role_id, orientation_id)}
 
 
 def dependencies_of(skill_id: str) -> list[str]:
