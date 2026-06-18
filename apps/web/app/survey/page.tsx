@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { QuestionCard } from "@/components/question-card";
+import { Centered } from "@/components/site/centered";
 import { api, type QuestionOut } from "@/lib/api";
 
 function SurveyInner() {
@@ -69,13 +70,13 @@ function SurveyInner() {
   }
 
   if (loading) {
-    return <CenteredNote text="正在准备你的第一道问题..." />;
+    return <Centered text="正在准备你的第一道问题..." minHeight="100vh" />;
   }
   if (error) {
-    return <CenteredNote text={error} tone="error" />;
+    return <Centered text={error} tone="error" minHeight="100vh" />;
   }
   if (!question) {
-    return <CenteredNote text="没有更多问题了。" />;
+    return <Centered text="没有更多问题了。" minHeight="100vh" />;
   }
 
   const { answered, max } = question.progress;
@@ -117,7 +118,7 @@ function CenteredNote({ text, tone }: { text: string; tone?: "error" }) {
 
 export default function SurveyPage() {
   return (
-    <Suspense fallback={<CenteredNote text="加载中..." />}>
+    <Suspense fallback={<Centered text="加载中..." minHeight="100vh" />}>
       <SurveyInner />
     </Suspense>
   );

@@ -11,7 +11,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CareerGraph, type ZenoNodeData } from "@/components/zeno/career-graph";
 import { CircularProgress } from "@/components/zeno/circular-progress";
 import { RoleJourney } from "@/components/zeno/role-journey";
-import { api, CATEGORY_LABELS, type ResultResponse } from "@/lib/api";
+import { Centered } from "@/components/site/centered";
+import { api, CATEGORY_LABELS, type ResourceOut, type ResultResponse, type TimeBudget } from "@/lib/api";
 
 const LEVEL_LABELS = ["未接触", "入门", "可独立做", "可交付", "可设计治理"];
 
@@ -69,14 +70,25 @@ function ResultInner() {
   const sessionId = params.get("session");
   const [data, setData] = useState<ResultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [budget, setBudget] = useState<TimeBudget>("standard");
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!sessionId) {
       setError("缺少 session 参数");
       return;
     }
-    api.result(sessionId).then(setData).catch((e) => setError(e instanceof Error ? e.message : "加载失败"));
-  }, [sessionId]);
+    let active = true;
+    setRefreshing(true);
+    api
+      .result(sessionId, budget)
+      .then((d) => active && setData(d))
+      .catch((e) => active && setError(e instanceof Error ? e.message : "加载失败"))
+      .finally(() => active && setRefreshing(false));
+    return () => {
+      active = false;
+    };
+  }, [sessionId, budget]);
 
   const graph = useMemo(() => (data ? buildGraph(data) : null), [data]);
 
@@ -167,7 +179,13 @@ function ResultInner() {
         </Section>
 
         {/* Section 3: roadmap journey */}
-        <Section index={3} title="学习路线" subtitle="1-3 个最高杠杆动作（按依赖排序）">
+        <Section index={3} title="学习路线" subtitle="按时间预算展示的最高杠杆动作（按依赖排序）">
+          <TimeBudgetBar
+            budget={budget}
+            onChange={setBudget}
+            pacing={data.pacing}
+            refreshing={refreshing}
+          />
           {data.next_steps.length === 0 ? (
             <EmptyHint text="暂无需要优先攻克的动作。" />
           ) : (
@@ -182,9 +200,16 @@ function ResultInner() {
                     <Card className="border-gold/25">
                       <CardContent className="space-y-4 pt-6">
                         <div>
-                          <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-                            Step {ns.rank}
-                          </p>
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                              Step {ns.rank}
+                            </p>
+                            {ns.est_weeks > 0 && (
+                              <span className="shrink-0 rounded-md border border-cyan/40 bg-cyan/10 px-2 py-0.5 text-[11px] font-medium text-cyan">
+                                预计 ~{ns.est_weeks} 周
+                              </span>
+                            )}
+                          </div>
                           <h3 className="mt-0.5 text-base font-semibold">{ns.action_title}</h3>
                           <p className="mt-1 text-sm text-muted-foreground">{ns.why}</p>
                         </div>
@@ -202,9 +227,7 @@ function ResultInner() {
                             </ul>
                           </div>
                         </div>
-                        <div className="hairline rounded-xl bg-surface/40 p-3 text-xs text-muted-foreground">
-                          推荐资源（带 last_verified_at、更新信号与保鲜理由）将在 Week 3 资源引擎接入。
-                        </div>
+                        <Resources items={ns.recommended_resources} />
                       </CardContent>
                     </Card>
                   </div>
@@ -227,6 +250,58 @@ function ResultInner() {
         </div>
       </div>
     </main>
+  );
+}
+
+function TimeBudgetBar({
+  budget,
+  onChange,
+  pacing,
+  refreshing,
+}: {
+  budget: TimeBudget;
+  onChange: (b: TimeBudget) => void;
+  pacing: ResultResponse["pacing"];
+  refreshing: boolean;
+}) {
+  const options: { value: TimeBudget; label: string; hint: string }[] = [
+    { value: "light", label: "每周 3h", hint: "聚焦少而专" },
+    { value: "standard", label: "每周 6h", hint: "稳步推进" },
+    { value: "intense", label: "每周 10h+", hint: "可并行多线" },
+  ];
+  return (
+    <Card className="border-cyan/20">
+      <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-muted-foreground">按你的时间预算校准路线</p>
+          <p className="text-sm text-muted-foreground" style={{ opacity: refreshing ? 0.5 : 1 }}>
+            {pacing?.summary ?? "选择每周可投入的时间，路线会即时重排。"}
+          </p>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          {options.map((o) => {
+            const active = o.value === budget;
+            return (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => onChange(o.value)}
+                disabled={refreshing}
+                className={
+                  "flex flex-col items-center rounded-lg border px-3 py-1.5 text-xs transition disabled:opacity-60 " +
+                  (active
+                    ? "border-cyan/60 bg-cyan/10 text-cyan"
+                    : "border-border/60 text-muted-foreground hover:border-cyan/40")
+                }
+              >
+                <span className="font-medium">{o.label}</span>
+                <span className="text-[10px] opacity-80">{o.hint}</span>
+              </button>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -294,6 +369,53 @@ function EmptyHint({ text }: { text: string }) {
     <Card className="border-dashed">
       <CardContent className="pt-6 text-sm text-muted-foreground">{text}</CardContent>
     </Card>
+  );
+}
+
+function formatVerified(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" });
+}
+
+function Resources({ items }: { items: ResourceOut[] }) {
+  if (!items || items.length === 0) {
+    return (
+      <div className="hairline rounded-xl bg-surface/40 p-3 text-xs text-muted-foreground">
+        暂无通过保鲜校验的推荐资源，资源库补充后会自动出现在这里。
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-semibold text-muted-foreground">推荐资源（已通过链接保鲜校验）</p>
+      <ul className="space-y-2">
+        {items.map((r) => {
+          const verified = formatVerified(r.last_verified_at);
+          return (
+            <li key={r.url}>
+              <a
+                href={r.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hairline group flex items-start justify-between gap-3 rounded-xl bg-surface/40 p-3 transition-colors hover:bg-surface/70"
+              >
+                <div className="min-w-0 space-y-0.5">
+                  <p className="truncate text-sm font-medium text-foreground group-hover:text-cyan">{r.title}</p>
+                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-muted-foreground">
+                    <span className="rounded bg-accent px-1.5 py-0.5 text-accent-foreground">{r.platform}</span>
+                    {verified && <span>核验于 {verified}</span>}
+                    {r.freshness_reason && <span className="text-cyan/80">{r.freshness_reason}</span>}
+                  </div>
+                </div>
+                <span className="shrink-0 pt-0.5 text-xs text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-cyan">↗</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 

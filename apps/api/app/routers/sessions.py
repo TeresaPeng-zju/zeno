@@ -42,8 +42,12 @@ def submit_answer(
 
 
 @router.get("/{session_id}/result", response_model=ResultResponse)
-def get_result(session_id: str, db: Session = Depends(get_db)) -> ResultResponse:
+def get_result(
+    session_id: str,
+    time_budget: str | None = None,
+    db: Session = Depends(get_db),
+) -> ResultResponse:
     sess = session_service.get_session(db, session_id)
     if sess is None:
         raise HTTPException(status_code=404, detail="session not found")
-    return session_service.build_result(db, sess)
+    return session_service.build_result(db, sess, time_budget=time_budget)
