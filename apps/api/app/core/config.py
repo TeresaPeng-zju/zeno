@@ -11,6 +11,11 @@ class Settings(BaseSettings):
     llm_provider: str = "mock"  # mock | openai
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
+    # DeepSeek (OpenAI-compatible REST). Used ONLY as an external baseline/opponent
+    # in the decision-surface comparison eval — never in the deterministic engine.
+    deepseek_api_key: str | None = None
+    deepseek_model: str = "deepseek-chat"
+    deepseek_base_url: str = "https://api.deepseek.com"
     # Embedding (Week 3 resource engine). 1536 = OpenAI text-embedding-3-small.
     embedding_provider: str = "mock"  # mock | openai
     embedding_model: str = "text-embedding-3-small"
