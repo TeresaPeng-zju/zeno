@@ -12,9 +12,22 @@ Skills are grouped into 4 competency areas:
 Each Skill carries `learnability` (0-1): how transferable a frontend
 background is. RoleRequirement carries `weight`, `min_level`, `type`
 (required/bonus) and `branch_impact` (0/1) used by the orchestrator.
+
+DATA EXTERNALIZATION
+--------------------
+The skill graph itself (skills / role requirements / dependencies /
+orientations) is **data, not code**, and lives in ``app/data/skill_graph.json``.
+This module only owns the *logic* (dataclasses + scoring/lookup helpers) and
+loads that data at import time. Calibration scripts (e.g. JD-driven reweighting)
+can regenerate the JSON and `git diff` it; adding a new target role becomes a
+new data file rather than new Python. The public names exported here
+(``SKILLS``, ``ROLE_REQUIREMENTS``, ``SKILL_DEPENDENCIES``, ``ORIENTATIONS`` …)
+are unchanged, so the rest of the codebase is unaffected.
 """
 
+import json
 from dataclasses import dataclass, field, replace
+from pathlib import Path
 
 ROLE_AI_ENGINEER_APPLIED = "ai_engineer_applied"
 
@@ -26,14 +39,8 @@ ORIENTATION_BASE = "base"
 ORIENTATION_RAG = "rag"
 DEFAULT_ORIENTATION = ORIENTATION_BASE
 
-# Level 0-4 reference descriptions (shared rubric, plan 4.2)
-LEVEL_RUBRIC: dict[int, str] = {
-    0: "不了解",
-    1: "跟教程可跑通",
-    2: "能独立做小功能",
-    3: "能在真实项目交付并排障",
-    4: "能设计系统、优化与治理",
-}
+# Single source of truth for the skill graph data.
+_SKILL_GRAPH_FILE = Path(__file__).resolve().parent.parent / "data" / "skill_graph.json"
 
 
 @dataclass(frozen=True)
@@ -60,96 +67,6 @@ class SkillDependency:
     depends_on: str
 
 
-# --------------------------------------------------------------------------- #
-# Skills
-# --------------------------------------------------------------------------- #
-SKILLS: list[Skill] = [
-    # A. 工程地基 (foundation) — highly transferable
-    Skill("eng.api_design", "API 设计与契约", "foundation", 0.8),
-    Skill("eng.auth", "鉴权与安全基线", "foundation", 0.6),
-    Skill("eng.error_handling", "错误处理与重试", "foundation", 0.75),
-    Skill("eng.observability", "可观测性（日志/指标/trace）", "foundation", 0.5),
-    Skill("eng.deploy", "部署与 CI/CD", "foundation", 0.6),
-    Skill("eng.typescript", "TypeScript 工程化", "foundation", 0.95),
-    # B. 数据与检索 (data) — RAG 地基
-    Skill("data.text_processing", "文本清洗与预处理", "data", 0.5),
-    Skill("data.chunking", "文档切分（chunking）", "data", 0.55),
-    Skill("data.embedding", "向量化与 embedding 选型", "data", 0.5),
-    Skill("data.vector_search", "向量检索（pgvector/HNSW）", "data", 0.45),
-    Skill("data.retrieval_rerank", "召回与重排（rerank）", "data", 0.4),
-    Skill("data.quality", "数据质量与去重", "data", 0.5),
-    # C. LLM 应用能力 (llm)
-    Skill("llm.prompt", "Prompt 结构设计", "llm", 0.7),
-    Skill("llm.structured_output", "结构化输出 / JSON schema 约束", "llm", 0.65),
-    Skill("llm.function_calling", "函数 / 工具调用", "llm", 0.55),
-    Skill("llm.tool_use", "多工具编排", "llm", 0.5),
-    Skill("llm.agent_state", "Agent 状态与记忆", "llm", 0.4),
-    Skill("llm.cost_latency", "成本与延迟优化", "llm", 0.5),
-    Skill("llm.streaming", "流式输出与前端集成", "llm", 0.9),
-    # D. 评估与迭代 (eval) — 最容易被忽略，差异点
-    Skill("eval.offline", "离线评估集构建", "eval", 0.4),
-    Skill("eval.online", "在线反馈采集", "eval", 0.45),
-    Skill("eval.ab", "A/B 实验", "eval", 0.45),
-    Skill("eval.metrics", "质量指标（准确/覆盖/幻觉率）", "eval", 0.4),
-]
-
-SKILLS_BY_ID: dict[str, Skill] = {s.id: s for s in SKILLS}
-
-
-# --------------------------------------------------------------------------- #
-# Role requirements (ai_engineer_applied)
-# --------------------------------------------------------------------------- #
-ROLE_REQUIREMENTS: list[RoleRequirement] = [
-    # foundation
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "eng.api_design", 3, 0.8, "required", 1),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "eng.auth", 2, 0.4, "bonus", 0),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "eng.error_handling", 2, 0.5, "required", 0),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "eng.observability", 2, 0.5, "bonus", 1),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "eng.deploy", 2, 0.6, "required", 1),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "eng.typescript", 3, 0.5, "required", 0),
-    # data
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "data.text_processing", 2, 0.5, "required", 0),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "data.chunking", 2, 0.7, "required", 1),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "data.embedding", 2, 0.7, "required", 1),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "data.vector_search", 3, 0.9, "required", 1),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "data.retrieval_rerank", 2, 0.8, "required", 1),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "data.quality", 2, 0.5, "bonus", 0),
-    # llm
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "llm.prompt", 3, 0.9, "required", 1),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "llm.structured_output", 3, 0.8, "required", 1),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "llm.function_calling", 2, 0.8, "required", 1),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "llm.tool_use", 2, 0.7, "required", 1),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "llm.agent_state", 2, 0.6, "bonus", 1),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "llm.cost_latency", 2, 0.6, "required", 0),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "llm.streaming", 2, 0.5, "bonus", 0),
-    # eval
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "eval.offline", 2, 0.7, "required", 1),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "eval.online", 1, 0.5, "bonus", 0),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "eval.ab", 1, 0.4, "bonus", 0),
-    RoleRequirement(ROLE_AI_ENGINEER_APPLIED, "eval.metrics", 2, 0.7, "required", 1),
-]
-
-
-# --------------------------------------------------------------------------- #
-# Dependencies (skill -> depends_on)
-# --------------------------------------------------------------------------- #
-SKILL_DEPENDENCIES: list[SkillDependency] = [
-    SkillDependency("data.chunking", "data.text_processing"),
-    SkillDependency("data.embedding", "data.text_processing"),
-    SkillDependency("data.vector_search", "data.embedding"),
-    SkillDependency("data.retrieval_rerank", "data.vector_search"),
-    SkillDependency("llm.function_calling", "llm.prompt"),
-    SkillDependency("llm.structured_output", "llm.prompt"),
-    SkillDependency("llm.tool_use", "llm.function_calling"),
-    SkillDependency("llm.agent_state", "llm.tool_use"),
-    SkillDependency("eval.metrics", "eval.offline"),
-    SkillDependency("eval.ab", "eval.online"),
-]
-
-
-# --------------------------------------------------------------------------- #
-# Target orientations (modifiers over the base requirements)
-# --------------------------------------------------------------------------- #
 @dataclass(frozen=True)
 class OrientationModifier:
     """Reweights the BASE role requirements for a target orientation.
@@ -169,35 +86,54 @@ class OrientationModifier:
     promote_required: frozenset[str] = field(default_factory=frozenset)
 
 
+# --------------------------------------------------------------------------- #
+# Data loading (skill_graph.json -> in-memory structures)
+# --------------------------------------------------------------------------- #
+def _load_raw(path: Path) -> dict:
+    with path.open(encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _build_orientation(o: dict) -> OrientationModifier:
+    return OrientationModifier(
+        id=o["id"],
+        label=o["label"],
+        description=o["description"],
+        weight_delta=dict(o.get("weight_delta", {})),
+        min_level_delta=dict(o.get("min_level_delta", {})),
+        promote_required=frozenset(o.get("promote_required", ())),
+    )
+
+
+_RAW = _load_raw(_SKILL_GRAPH_FILE)
+_ROLE_ID = _RAW["role"]["id"]
+
+# Level 0-4 reference descriptions (shared rubric, plan 4.2)
+LEVEL_RUBRIC: dict[int, str] = {int(k): v for k, v in _RAW["level_rubric"].items()}
+
+# Skills
+SKILLS: list[Skill] = [Skill(**s) for s in _RAW["skills"]]
+SKILLS_BY_ID: dict[str, Skill] = {s.id: s for s in SKILLS}
+
+# Role requirements (role_id injected from the role section)
+ROLE_REQUIREMENTS: list[RoleRequirement] = [
+    RoleRequirement(role_id=_ROLE_ID, **r) for r in _RAW["role_requirements"]
+]
+
+# Dependencies (skill -> depends_on)
+SKILL_DEPENDENCIES: list[SkillDependency] = [
+    SkillDependency(**d) for d in _RAW["dependencies"]
+]
+
+# Target orientations (modifiers over the base requirements)
 ORIENTATIONS: dict[str, OrientationModifier] = {
-    ORIENTATION_BASE: OrientationModifier(
-        ORIENTATION_BASE,
-        "通用应用向",
-        "AI Engineer 应用向的通用基线，数据/检索/LLM/评估均衡覆盖。",
-    ),
-    ORIENTATION_RAG: OrientationModifier(
-        ORIENTATION_RAG,
-        "检索向（RAG）",
-        "以检索增强系统为核心：加重数据与检索链路（切分/向量化/向量检索/重排），"
-        "抬高召回-重排相关技能的目标水位，并把数据质量提为必要项。",
-        weight_delta={
-            "data.chunking": 0.2,
-            "data.embedding": 0.2,
-            "data.vector_search": 0.1,
-            "data.retrieval_rerank": 0.2,
-            "data.quality": 0.25,
-            "eval.metrics": 0.1,
-        },
-        min_level_delta={
-            "data.vector_search": 1,     # L3 -> L4
-            "data.retrieval_rerank": 1,  # L2 -> L3
-            "data.chunking": 1,          # L2 -> L3
-        },
-        promote_required=frozenset({"data.quality"}),
-    ),
+    o["id"]: _build_orientation(o) for o in _RAW["orientations"]
 }
 
 
+# --------------------------------------------------------------------------- #
+# Lookup / scoring helpers (logic — unchanged)
+# --------------------------------------------------------------------------- #
 def get_orientation(orientation_id: str | None) -> OrientationModifier:
     return ORIENTATIONS.get(orientation_id or ORIENTATION_BASE, ORIENTATIONS[ORIENTATION_BASE])
 

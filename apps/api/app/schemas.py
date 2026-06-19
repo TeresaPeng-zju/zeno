@@ -142,6 +142,27 @@ class PacingOut(BaseModel):
     summary: str
 
 
+class SkillObservationIn(BaseModel):
+    skill_id: str
+    level: int = Field(..., ge=0, le=4)
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+
+
+class ExplainRequest(BaseModel):
+    """Self-contained (DB-free) explain request — feed a profile, get the chain."""
+
+    observations: list[SkillObservationIn]
+    orientation: str | None = None
+    max_steps: int = Field(default=3, ge=1, le=50)
+
+
+class PlanDiffRequest(BaseModel):
+    observations_before: list[SkillObservationIn]
+    observations_after: list[SkillObservationIn]
+    orientation: str | None = None
+    max_steps: int = Field(default=3, ge=1, le=50)
+
+
 class ResultResponse(BaseModel):
     session_id: str
     role_id: str
