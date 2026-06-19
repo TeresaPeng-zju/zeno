@@ -1,0 +1,114 @@
+{
+  "role": {
+    "id": "ai_engineer_applied",
+    "label": "前端工程师 → AI Engineer（应用向）"
+  },
+  "level_rubric": {
+    "0": "不了解",
+    "1": "跟教程可跑通",
+    "2": "能独立做小功能",
+    "3": "能在真实项目交付并排障",
+    "4": "能设计系统、优化与治理"
+  },
+  "skills": [
+    { "id": "eng.api_design", "name": "API 设计与契约", "category": "foundation", "learnability": 0.8 },
+    { "id": "eng.auth", "name": "鉴权与安全基线", "category": "foundation", "learnability": 0.6 },
+    { "id": "eng.error_handling", "name": "错误处理与重试", "category": "foundation", "learnability": 0.75 },
+    { "id": "eng.observability", "name": "可观测性（日志/指标/trace）", "category": "foundation", "learnability": 0.5 },
+    { "id": "eng.deploy", "name": "部署与 CI/CD", "category": "foundation", "learnability": 0.6 },
+    { "id": "eng.typescript", "name": "TypeScript 工程化", "category": "foundation", "learnability": 0.95 },
+
+    { "id": "data.text_processing", "name": "文本清洗与预处理", "category": "data", "learnability": 0.5 },
+    { "id": "data.chunking", "name": "文档切分（chunking）", "category": "data", "learnability": 0.55 },
+    { "id": "data.embedding", "name": "向量化与 embedding 选型", "category": "data", "learnability": 0.5 },
+    { "id": "data.vector_search", "name": "向量检索（pgvector/HNSW）", "category": "data", "learnability": 0.45 },
+    { "id": "data.retrieval_rerank", "name": "召回与重排（rerank）", "category": "data", "learnability": 0.4 },
+    { "id": "data.quality", "name": "数据质量与去重", "category": "data", "learnability": 0.5 },
+
+    { "id": "llm.prompt", "name": "Prompt 结构设计", "category": "llm", "learnability": 0.7 },
+    { "id": "llm.structured_output", "name": "结构化输出 / JSON schema 约束", "category": "llm", "learnability": 0.65 },
+    { "id": "llm.function_calling", "name": "函数 / 工具调用", "category": "llm", "learnability": 0.55 },
+    { "id": "llm.tool_use", "name": "多工具编排", "category": "llm", "learnability": 0.5 },
+    { "id": "llm.agent_state", "name": "Agent 状态与记忆", "category": "llm", "learnability": 0.4 },
+    { "id": "llm.cost_latency", "name": "成本与延迟优化", "category": "llm", "learnability": 0.5 },
+    { "id": "llm.streaming", "name": "流式输出与前端集成", "category": "llm", "learnability": 0.9 },
+
+    { "id": "eval.offline", "name": "离线评估集构建", "category": "eval", "learnability": 0.4 },
+    { "id": "eval.online", "name": "在线反馈采集", "category": "eval", "learnability": 0.45 },
+    { "id": "eval.ab", "name": "A/B 实验", "category": "eval", "learnability": 0.45 },
+    { "id": "eval.metrics", "name": "质量指标（准确/覆盖/幻觉率）", "category": "eval", "learnability": 0.4 }
+  ],
+  "role_requirements": [
+    { "skill_id": "eng.api_design", "min_level": 3, "weight": 0.8, "type": "required", "branch_impact": 1 },
+    { "skill_id": "eng.auth", "min_level": 2, "weight": 0.4, "type": "bonus", "branch_impact": 0 },
+    { "skill_id": "eng.error_handling", "min_level": 2, "weight": 0.5, "type": "required", "branch_impact": 0 },
+    { "skill_id": "eng.observability", "min_level": 2, "weight": 0.5, "type": "bonus", "branch_impact": 1 },
+    { "skill_id": "eng.deploy", "min_level": 2, "weight": 0.6, "type": "required", "branch_impact": 1 },
+    { "skill_id": "eng.typescript", "min_level": 3, "weight": 0.5, "type": "required", "branch_impact": 0 },
+
+    { "skill_id": "data.text_processing", "min_level": 2, "weight": 0.5, "type": "required", "branch_impact": 0 },
+    { "skill_id": "data.chunking", "min_level": 2, "weight": 0.7, "type": "required", "branch_impact": 1 },
+    { "skill_id": "data.embedding", "min_level": 2, "weight": 0.7, "type": "required", "branch_impact": 1 },
+    { "skill_id": "data.vector_search", "min_level": 3, "weight": 0.9, "type": "required", "branch_impact": 1 },
+    { "skill_id": "data.retrieval_rerank", "min_level": 2, "weight": 0.8, "type": "required", "branch_impact": 1 },
+    { "skill_id": "data.quality", "min_level": 2, "weight": 0.5, "type": "bonus", "branch_impact": 0 },
+
+    { "skill_id": "llm.prompt", "min_level": 3, "weight": 0.9, "type": "required", "branch_impact": 1 },
+    { "skill_id": "llm.structured_output", "min_level": 3, "weight": 0.8, "type": "required", "branch_impact": 1 },
+    { "skill_id": "llm.function_calling", "min_level": 2, "weight": 0.8, "type": "required", "branch_impact": 1 },
+    { "skill_id": "llm.tool_use", "min_level": 2, "weight": 0.7, "type": "required", "branch_impact": 1 },
+    { "skill_id": "llm.agent_state", "min_level": 2, "weight": 0.6, "type": "bonus", "branch_impact": 1 },
+    { "skill_id": "llm.cost_latency", "min_level": 2, "weight": 0.6, "type": "required", "branch_impact": 0 },
+    { "skill_id": "llm.streaming", "min_level": 2, "weight": 0.5, "type": "bonus", "branch_impact": 0 },
+
+    { "skill_id": "eval.offline", "min_level": 2, "weight": 0.7, "type": "required", "branch_impact": 1 },
+    { "skill_id": "eval.online", "min_level": 1, "weight": 0.5, "type": "bonus", "branch_impact": 0 },
+    { "skill_id": "eval.ab", "min_level": 1, "weight": 0.4, "type": "bonus", "branch_impact": 0 },
+    { "skill_id": "eval.metrics", "min_level": 2, "weight": 0.7, "type": "required", "branch_impact": 1 }
+  ],
+  "dependencies": [
+    { "skill_id": "data.chunking", "depends_on": "data.text_processing" },
+    { "skill_id": "data.embedding", "depends_on": "data.text_processing" },
+    { "skill_id": "data.quality", "depends_on": "data.text_processing" },
+    { "skill_id": "data.vector_search", "depends_on": "data.embedding" },
+    { "skill_id": "data.retrieval_rerank", "depends_on": "data.vector_search" },
+    { "skill_id": "llm.structured_output", "depends_on": "llm.prompt" },
+    { "skill_id": "llm.function_calling", "depends_on": "llm.prompt" },
+    { "skill_id": "llm.function_calling", "depends_on": "eng.error_handling" },
+    { "skill_id": "llm.tool_use", "depends_on": "llm.function_calling" },
+    { "skill_id": "llm.tool_use", "depends_on": "eng.api_design" },
+    { "skill_id": "llm.cost_latency", "depends_on": "llm.tool_use" },
+    { "skill_id": "llm.agent_state", "depends_on": "llm.tool_use" },
+    { "skill_id": "llm.agent_state", "depends_on": "data.vector_search" },
+    { "skill_id": "eval.offline", "depends_on": "data.embedding" },
+    { "skill_id": "eval.metrics", "depends_on": "eval.offline" },
+    { "skill_id": "eval.metrics", "depends_on": "data.retrieval_rerank" },
+    { "skill_id": "eval.ab", "depends_on": "eval.online" }
+  ],
+  "orientations": [
+    {
+      "id": "base",
+      "label": "通用应用向",
+      "description": "AI Engineer 应用向的通用基线，数据/检索/LLM/评估均衡覆盖。"
+    },
+    {
+      "id": "rag",
+      "label": "检索向（RAG）",
+      "description": "以检索增强系统为核心：加重数据与检索链路（切分/向量化/向量检索/重排），抬高召回-重排相关技能的目标水位，并把数据质量提为必要项。",
+      "weight_delta": {
+        "data.chunking": 0.2,
+        "data.embedding": 0.2,
+        "data.vector_search": 0.1,
+        "data.retrieval_rerank": 0.2,
+        "data.quality": 0.25,
+        "eval.metrics": 0.1
+      },
+      "min_level_delta": {
+        "data.vector_search": 1,
+        "data.retrieval_rerank": 1,
+        "data.chunking": 1
+      },
+      "promote_required": ["data.quality"]
+    }
+  ]
+}

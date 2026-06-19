@@ -24,7 +24,6 @@ from dataclasses import dataclass, field
 from app.domain import competency
 from app.domain.competency import RoleRequirement
 
-TOP_N_CANDIDATES = 8
 MAX_NEXT_STEPS = 3
 BLOCKED_PENALTY = 0.5
 # A skill counts as a "strength" (leverage point) if level is high, or a
@@ -64,6 +63,10 @@ class NextStep:
     next_score: float
     unblocks: list[str] = field(default_factory=list)
     blocked_by: list[str] = field(default_factory=list)
+    # Auditable score breakdown — the exact terms that produced `next_score`.
+    # Populated where the score is computed so there is a single source of truth
+    # (the explain layer reads this, it never re-derives the formula).
+    score_components: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass
@@ -157,6 +160,43 @@ def compute_strengths(obs: dict[str, SkillObservation]) -> list[Strength]:
 # --------------------------------------------------------------------------- #
 # Next-step ranking (plan 6.2)
 # --------------------------------------------------------------------------- #
+def _priority_topological_order(scored: list[NextStep]) -> list[NextStep]:
+    """Order next-steps so no skill precedes its (in-set) prerequisite.
+
+    The score-only sort this replaces could rank a high-gap dependent ahead of
+    its own prerequisite (``BLOCKED_PENALTY`` merely *discounts* a blocked skill,
+    it does not reorder). That let dependency inversions slip through — exactly
+    what the decision-surface eval caught (``vector_search`` before ``embedding``).
+
+    This is Kahn's algorithm with a deterministic priority rule: among all steps
+    whose prerequisites *within the candidate set* are already emitted, emit the
+    highest ``next_score`` (``skill_id`` as a stable tie-break). Result: zero
+    dependency violations by construction, the score ranking preserved as closely
+    as the dependency partial order permits, and fully reproducible output.
+    """
+    in_set = {s.skill_id for s in scored}
+    prereqs = {
+        s.skill_id: {d for d in competency.dependencies_of(s.skill_id) if d in in_set}
+        for s in scored
+    }
+    remaining = {s.skill_id: s for s in scored}
+    emitted: set[str] = set()
+    order: list[NextStep] = []
+    while remaining:
+        ready = [s for sid, s in remaining.items() if prereqs[sid] <= emitted]
+        if not ready:
+            # Defensive: a dependency cycle within candidates (the graph should
+            # be a DAG). Fall back to the highest-score remaining so we stay
+            # total and terminating instead of looping forever.
+            ready = list(remaining.values())
+        ready.sort(key=lambda s: (-s.next_score, s.skill_id))
+        nxt = ready[0]
+        order.append(nxt)
+        emitted.add(nxt.skill_id)
+        del remaining[nxt.skill_id]
+    return order
+
+
 def select_next_steps(
     role_id: str,
     obs: dict[str, SkillObservation],
@@ -172,17 +212,14 @@ def select_next_steps(
     gaps = compute_gaps(role_id, obs, orientation_id)
     gap_by_skill = {g.req.skill_id: g for g in gaps}
 
-    positive = sorted([g for g in gaps if g.gap > 0], key=lambda g: g.gap_score, reverse=True)
-    candidates: list[GapInfo] = positive[:TOP_N_CANDIDATES]
-    cand_ids = {g.req.skill_id for g in candidates}
-
-    # Dependency correction: pull unmet prerequisites into the candidate set.
-    for g in list(candidates):
-        for dep in competency.dependencies_of(g.req.skill_id):
-            dep_gap = gap_by_skill.get(dep)
-            if dep_gap and dep_gap.gap > 0 and dep not in cand_ids:
-                candidates.append(dep_gap)
-                cand_ids.add(dep)
+    # The decision layer scores the FULL positive-gap set. Recall must NOT be
+    # truncated here: capping candidates before ranking silently drops real gaps
+    # and shrinks coverage (the old TOP_N_CANDIDATES=8 produced 10/18-style gaps).
+    # Depth is purely a display concern, applied by max_steps at the very end, so
+    # any truncation stays a strict prefix of the full dependency-valid ordering.
+    candidates: list[GapInfo] = sorted(
+        [g for g in gaps if g.gap > 0], key=lambda g: g.gap_score, reverse=True
+    )
 
     dependents = _dependents_map()
     max_gs = max((g.gap_score for g in candidates), default=0.0) or 1.0
@@ -205,9 +242,20 @@ def select_next_steps(
         dep_urgency = min(1.0, dep_urgency_raw / max_gs)
         gs_norm = g.gap_score / max_gs
 
-        score = 0.5 * gs_norm + 0.3 * dep_urgency + 0.2 * skill.learnability
-        if blocked_by:
-            score *= BLOCKED_PENALTY
+        base_score = 0.5 * gs_norm + 0.3 * dep_urgency + 0.2 * skill.learnability
+        score = base_score * BLOCKED_PENALTY if blocked_by else base_score
+
+        # Exact additive contributions to next_score, for the audit trail.
+        components = {
+            "gap_score_norm": round(gs_norm, 4),
+            "gap_term": round(0.5 * gs_norm, 4),
+            "dependency_urgency": round(dep_urgency, 4),
+            "dependency_term": round(0.3 * dep_urgency, 4),
+            "learnability": round(skill.learnability, 4),
+            "learnability_term": round(0.2 * skill.learnability, 4),
+            "base_score": round(base_score, 4),
+            "blocked_penalty": BLOCKED_PENALTY if blocked_by else 1.0,
+        }
 
         title, why, steps, criteria = _action_blueprint(g, unblocks, blocked_by)
         scored.append(
@@ -225,11 +273,17 @@ def select_next_steps(
                 next_score=round(score, 4),
                 unblocks=unblocks,
                 blocked_by=blocked_by,
+                score_components=components,
             )
         )
 
-    scored.sort(key=lambda s: s.next_score, reverse=True)
-    top = scored[: max(1, max_steps)]
+    # Dependency-valid ordering (not a bare score sort): guarantees no skill is
+    # surfaced before its prerequisite, while keeping next_score as the priority
+    # within the topological order. Computed over the full candidate set so any
+    # truncation by max_steps is a strict prefix (the pacing/depth lever never
+    # changes the ranking, only how deep it shows).
+    ordered = _priority_topological_order(scored)
+    top = ordered[: max(1, max_steps)]
     for i, ns in enumerate(top, start=1):
         ns.rank = i
     return top

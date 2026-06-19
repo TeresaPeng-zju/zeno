@@ -1,0 +1,337 @@
+{
+  "schema_version": 2,
+  "n_jds": 50,
+  "method": "multi-source weak-label ledger; each skill accrues weighted, source-stamped evidence (see scripts/build_jd_evidence.py)",
+  "sources": [
+    {
+      "source_id": "bytedance/ai_jobs.xlsx",
+      "source_type": "jd",
+      "signal": "keyword",
+      "trust": 0.6
+    }
+  ],
+  "skills": {
+    "data.chunking": {
+      "jd_count": 0,
+      "frequency": 0.0,
+      "grounded": false,
+      "in_graph": true,
+      "evidence_score": 0,
+      "evidence": []
+    },
+    "data.embedding": {
+      "jd_count": 0,
+      "frequency": 0.0,
+      "grounded": false,
+      "in_graph": true,
+      "evidence_score": 0,
+      "evidence": []
+    },
+    "data.quality": {
+      "jd_count": 0,
+      "frequency": 0.0,
+      "grounded": false,
+      "in_graph": true,
+      "evidence_score": 0,
+      "evidence": []
+    },
+    "data.retrieval_rerank": {
+      "jd_count": 9,
+      "frequency": 0.18,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.108,
+      "evidence": [
+        {
+          "source_id": "bytedance/ai_jobs.xlsx",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.6,
+          "doc_count": 9,
+          "doc_total": 50,
+          "frequency": 0.18
+        }
+      ]
+    },
+    "data.text_processing": {
+      "jd_count": 0,
+      "frequency": 0.0,
+      "grounded": false,
+      "in_graph": true,
+      "evidence_score": 0,
+      "evidence": []
+    },
+    "data.vector_search": {
+      "jd_count": 0,
+      "frequency": 0.0,
+      "grounded": false,
+      "in_graph": true,
+      "evidence_score": 0,
+      "evidence": []
+    },
+    "eng.api_design": {
+      "jd_count": 41,
+      "frequency": 0.82,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.492,
+      "evidence": [
+        {
+          "source_id": "bytedance/ai_jobs.xlsx",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.6,
+          "doc_count": 41,
+          "doc_total": 50,
+          "frequency": 0.82
+        }
+      ]
+    },
+    "eng.auth": {
+      "jd_count": 0,
+      "frequency": 0.0,
+      "grounded": false,
+      "in_graph": true,
+      "evidence_score": 0,
+      "evidence": []
+    },
+    "eng.deploy": {
+      "jd_count": 5,
+      "frequency": 0.1,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.06,
+      "evidence": [
+        {
+          "source_id": "bytedance/ai_jobs.xlsx",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.6,
+          "doc_count": 5,
+          "doc_total": 50,
+          "frequency": 0.1
+        }
+      ]
+    },
+    "eng.error_handling": {
+      "jd_count": 13,
+      "frequency": 0.26,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.156,
+      "evidence": [
+        {
+          "source_id": "bytedance/ai_jobs.xlsx",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.6,
+          "doc_count": 13,
+          "doc_total": 50,
+          "frequency": 0.26
+        }
+      ]
+    },
+    "eng.observability": {
+      "jd_count": 1,
+      "frequency": 0.02,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.012,
+      "evidence": [
+        {
+          "source_id": "bytedance/ai_jobs.xlsx",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.6,
+          "doc_count": 1,
+          "doc_total": 50,
+          "frequency": 0.02
+        }
+      ]
+    },
+    "eng.typescript": {
+      "jd_count": 50,
+      "frequency": 1.0,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.6,
+      "evidence": [
+        {
+          "source_id": "bytedance/ai_jobs.xlsx",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.6,
+          "doc_count": 50,
+          "doc_total": 50,
+          "frequency": 1.0
+        }
+      ]
+    },
+    "eval.ab": {
+      "jd_count": 3,
+      "frequency": 0.06,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.036,
+      "evidence": [
+        {
+          "source_id": "bytedance/ai_jobs.xlsx",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.6,
+          "doc_count": 3,
+          "doc_total": 50,
+          "frequency": 0.06
+        }
+      ]
+    },
+    "eval.metrics": {
+      "jd_count": 0,
+      "frequency": 0.0,
+      "grounded": false,
+      "in_graph": true,
+      "evidence_score": 0,
+      "evidence": []
+    },
+    "eval.offline": {
+      "jd_count": 0,
+      "frequency": 0.0,
+      "grounded": false,
+      "in_graph": true,
+      "evidence_score": 0,
+      "evidence": []
+    },
+    "eval.online": {
+      "jd_count": 0,
+      "frequency": 0.0,
+      "grounded": false,
+      "in_graph": true,
+      "evidence_score": 0,
+      "evidence": []
+    },
+    "llm.agent_state": {
+      "jd_count": 6,
+      "frequency": 0.12,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.072,
+      "evidence": [
+        {
+          "source_id": "bytedance/ai_jobs.xlsx",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.6,
+          "doc_count": 6,
+          "doc_total": 50,
+          "frequency": 0.12
+        }
+      ]
+    },
+    "llm.core": {
+      "jd_count": 43,
+      "frequency": 0.86,
+      "grounded": true,
+      "in_graph": false,
+      "evidence_score": 0.516,
+      "evidence": [
+        {
+          "source_id": "bytedance/ai_jobs.xlsx",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.6,
+          "doc_count": 43,
+          "doc_total": 50,
+          "frequency": 0.86
+        }
+      ]
+    },
+    "llm.cost_latency": {
+      "jd_count": 24,
+      "frequency": 0.48,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.288,
+      "evidence": [
+        {
+          "source_id": "bytedance/ai_jobs.xlsx",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.6,
+          "doc_count": 24,
+          "doc_total": 50,
+          "frequency": 0.48
+        }
+      ]
+    },
+    "llm.function_calling": {
+      "jd_count": 0,
+      "frequency": 0.0,
+      "grounded": false,
+      "in_graph": true,
+      "evidence_score": 0,
+      "evidence": []
+    },
+    "llm.prompt": {
+      "jd_count": 6,
+      "frequency": 0.12,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.072,
+      "evidence": [
+        {
+          "source_id": "bytedance/ai_jobs.xlsx",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.6,
+          "doc_count": 6,
+          "doc_total": 50,
+          "frequency": 0.12
+        }
+      ]
+    },
+    "llm.streaming": {
+      "jd_count": 3,
+      "frequency": 0.06,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.036,
+      "evidence": [
+        {
+          "source_id": "bytedance/ai_jobs.xlsx",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.6,
+          "doc_count": 3,
+          "doc_total": 50,
+          "frequency": 0.06
+        }
+      ]
+    },
+    "llm.structured_output": {
+      "jd_count": 0,
+      "frequency": 0.0,
+      "grounded": false,
+      "in_graph": true,
+      "evidence_score": 0,
+      "evidence": []
+    },
+    "llm.tool_use": {
+      "jd_count": 24,
+      "frequency": 0.48,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.288,
+      "evidence": [
+        {
+          "source_id": "bytedance/ai_jobs.xlsx",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.6,
+          "doc_count": 24,
+          "doc_total": 50,
+          "frequency": 0.48
+        }
+      ]
+    }
+  }
+}
