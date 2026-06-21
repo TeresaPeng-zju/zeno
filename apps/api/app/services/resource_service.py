@@ -11,13 +11,14 @@ Recall has two interchangeable paths so the engine runs with or without Postgres
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.domain import competency
 from app.domain.resource_engine import ScoredResource, rerank
 from app.llm.embedding import cosine_similarity, get_embedder
-from app.models import Resource, url_hash as compute_url_hash
+from app.models import Resource, ResourceSkill, url_hash as compute_url_hash
 from app.schemas import ResourceOut
 
 _IS_PG = settings.database_url.startswith("postgresql")
@@ -33,6 +34,37 @@ def build_embed_text(title: str, summary: str | None, skill_ids: list[str]) -> s
     return "\n".join(parts)
 
 
+def _validate_skill_ids(skill_ids: list[str]) -> None:
+    """Application-layer substitute for a skills FK: reject any skill_id absent
+    from the skill graph (the catalog lives in skill_graph.json, not the DB)."""
+    unknown = [s for s in skill_ids if s not in competency.SKILLS_BY_ID]
+    if unknown:
+        raise ValueError(f"unknown skill_id(s) not in skill graph: {unknown}")
+
+
+def _sync_resource_skills(
+    db: Session,
+    resource: Resource,
+    skill_ids: list[str],
+    target_level: int,
+    target_levels: dict[str, int] | None,
+) -> None:
+    """Replace a resource's skill mappings. `target_levels` may override the
+    per-skill level (one resource can be L1 for one skill, L3 for another);
+    skills not listed there fall back to the shared `target_level`."""
+    db.flush()  # ensure resource.id is assigned for new rows
+    db.execute(delete(ResourceSkill).where(ResourceSkill.resource_id == resource.id))
+    overrides = target_levels or {}
+    for sid in skill_ids:
+        db.add(
+            ResourceSkill(
+                resource_id=resource.id,
+                skill_id=sid,
+                target_level=overrides.get(sid, target_level),
+            )
+        )
+
+
 def upsert_resource(
     db: Session,
     *,
@@ -45,8 +77,16 @@ def upsert_resource(
     summary: str | None = None,
     quality_score: float = 0.0,
     embed: bool = True,
+    target_levels: dict[str, int] | None = None,
 ) -> Resource:
-    """Insert or update a resource, deduped on the normalized url hash."""
+    """Insert or update a resource, deduped on the normalized url hash.
+
+    Skills are stored in the `resource_skills` association table. Pass
+    `target_levels` to set a different level per skill; otherwise every skill
+    gets the shared `target_level`. Signature is otherwise unchanged, so seed
+    loading and the curation agent need no edits.
+    """
+    _validate_skill_ids(skill_ids)
     uh = compute_url_hash(url)
     existing = db.scalar(select(Resource).where(Resource.url_hash == uh))
 
@@ -62,8 +102,6 @@ def upsert_resource(
             url_hash=uh,
             platform=platform,
             resource_type=resource_type,
-            skill_ids=skill_ids,
-            target_level=target_level,
             summary=summary,
             quality_score=quality_score,
             embedding=embedding,
@@ -73,26 +111,26 @@ def upsert_resource(
         existing.title = title
         existing.platform = platform
         existing.resource_type = resource_type
-        existing.skill_ids = skill_ids
-        existing.target_level = target_level
         existing.summary = summary
         existing.quality_score = quality_score
         if embedding is not None:
             existing.embedding = embedding
         res = existing
+
+    _sync_resource_skills(db, res, skill_ids, target_level, target_levels)
     db.commit()
     db.refresh(res)
     return res
 
 
-def _to_scored(r: Resource, relevance: float) -> ScoredResource:
+def _to_scored(r: Resource, target_level: int, relevance: float) -> ScoredResource:
     return ScoredResource(
         id=r.id,
         title=r.title,
         url=r.url,
         platform=r.platform,
         resource_type=r.resource_type,
-        target_level=r.target_level,
+        target_level=target_level,
         freshness_status=r.freshness_status,
         last_verified_at=r.last_verified_at,
         quality_score=r.quality_score,
@@ -104,23 +142,31 @@ def _recall(db: Session, skill_id: str, query_vec: list[float]) -> list[ScoredRe
     top_k = settings.retrieval_top_k
     if _IS_PG:
         # pgvector cosine distance (0..2); relevance = 1 - distance, clamped 0..1.
+        # JOIN the association table so we filter by skill via an index, not a
+        # full scan, and read this resource's per-skill target_level.
         dist = Resource.embedding.cosine_distance(query_vec)
         rows = db.execute(
-            select(Resource, dist.label("distance"))
-            .where(Resource.skill_ids.contains([skill_id]))
+            select(Resource, ResourceSkill.target_level, dist.label("distance"))
+            .join(ResourceSkill, ResourceSkill.resource_id == Resource.id)
+            .where(ResourceSkill.skill_id == skill_id)
+            .where(Resource.is_active.is_(True))
             .where(Resource.embedding.isnot(None))
             .order_by(dist)
             .limit(top_k)
         ).all()
-        return [_to_scored(r, max(0.0, 1.0 - float(d))) for r, d in rows]
+        return [_to_scored(r, tl, max(0.0, 1.0 - float(d))) for r, tl, d in rows]
 
     # In-memory cosine fallback (SQLite / tests).
-    resources = db.scalars(select(Resource)).all()
+    rows = db.execute(
+        select(Resource, ResourceSkill.target_level)
+        .join(ResourceSkill, ResourceSkill.resource_id == Resource.id)
+        .where(ResourceSkill.skill_id == skill_id)
+    ).all()
     scored: list[ScoredResource] = []
-    for r in resources:
-        if skill_id not in (r.skill_ids or []) or not r.embedding:
+    for r, tl in rows:
+        if not r.is_active or not r.embedding:
             continue
-        scored.append(_to_scored(r, cosine_similarity(query_vec, list(r.embedding))))
+        scored.append(_to_scored(r, tl, cosine_similarity(query_vec, list(r.embedding))))
     scored.sort(key=lambda s: s.relevance, reverse=True)
     return scored[:top_k]
 
