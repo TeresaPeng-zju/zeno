@@ -39,6 +39,10 @@ def test_url_pattern_checker():
 
 
 def _postgres_available() -> bool:
+    """True only if Postgres is reachable AND the `vector` extension can be
+    installed. The pipeline test calls `init_db()` -> `CREATE EXTENSION vector`,
+    so a server without pgvector would error rather than skip — check for it up
+    front via `pg_available_extensions`."""
     if not settings.database_url.startswith("postgresql"):
         return False
     try:
@@ -48,14 +52,19 @@ def _postgres_available() -> bool:
 
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
-        return True
+            has_vector = conn.execute(
+                text(
+                    "SELECT 1 FROM pg_available_extensions WHERE name = 'vector'"
+                )
+            ).first()
+        return has_vector is not None
     except Exception:
         return False
 
 
 pg_only = pytest.mark.skipif(
     not _postgres_available(),
-    reason="Postgres not reachable — pipeline test runs once the DB is up",
+    reason="Postgres+pgvector not available — pipeline test runs once the DB is up",
 )
 
 
