@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 interface RoleJourneyProps {
   current: string;
@@ -10,13 +11,14 @@ interface RoleJourneyProps {
 }
 
 export function RoleJourney({ current, target, progress = 0.5 }: RoleJourneyProps) {
+  const t = useTranslations("roles");
   const pct = Math.max(0.06, Math.min(0.94, progress));
   return (
     <div className="hairline rounded-2xl bg-card/60 px-6 py-5 backdrop-blur-md sm:px-8 sm:py-6">
       <div className="flex items-center gap-4 sm:gap-6">
         <div className="shrink-0">
           <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-            Current Role
+            {t("current")}
           </p>
           <p className="mt-1 text-base font-semibold text-cyan sm:text-lg">{current}</p>
         </div>
@@ -48,7 +50,7 @@ export function RoleJourney({ current, target, progress = 0.5 }: RoleJourneyProp
 
         <div className="shrink-0 text-right">
           <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-            Target Role
+            {t("target")}
           </p>
           <p className="mt-1 text-base font-semibold text-gold sm:text-lg">{target}</p>
         </div>

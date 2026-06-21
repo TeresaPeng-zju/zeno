@@ -3,6 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Centered } from "@/components/site/centered";
@@ -24,6 +25,8 @@ function levelTone(level: number): { ring: string; dot: string; text: string } {
 function SkillsInner() {
   const router = useRouter();
   const params = useSearchParams();
+  const t = useTranslations("skills");
+  const tc = useTranslations("common");
   const [sessionId, setSessionId] = useState<string | null>(params.get("session"));
   const [catalog, setCatalog] = useState<SkillCatalogResponse | null>(null);
   const [selections, setSelections] = useState<Selections>({});
@@ -45,7 +48,7 @@ function SkillsInner() {
         const cat = await api.skills();
         if (!cancelled) setCatalog(cat);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "加载失败，请确认后端已启动");
+        if (!cancelled) setError(e instanceof Error ? e.message : tc("backendDown"));
       }
     })();
     return () => {
@@ -77,21 +80,21 @@ function SkillsInner() {
       }
       router.push(`/result?session=${sessionId}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "提交失败");
+      setError(e instanceof Error ? e.message : tc("submitFailed"));
       setSubmitting(false);
     }
   }
 
   if (error && !catalog) return <Centered text={error} tone="error" />;
-  if (!catalog) return <Centered text="正在准备技能图谱..." />;
+  if (!catalog) return <Centered text={t("preparing")} />;
 
   return (
     <main className="container relative max-w-4xl py-14">
       <div className="bg-aurora pointer-events-none absolute inset-x-0 top-0 h-72" />
       <div className="relative space-y-2 text-center">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">选择你已有的技能</h1>
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("title")}</h1>
         <p className="text-muted-foreground">
-          点击技能选择熟练度即可，无需打字。整个过程通常不到 60 秒。
+          {t("subtitle")}
         </p>
       </div>
 
@@ -126,13 +129,16 @@ function SkillsInner() {
       <div className="sticky bottom-5 z-30 mt-12">
         <div className="hairline mx-auto flex max-w-2xl items-center justify-between gap-4 rounded-2xl bg-card/85 px-5 py-3 backdrop-blur-xl">
           <p className="text-sm text-muted-foreground">
-            已选 <span className="font-semibold text-foreground">{selectedCount}</span> 项
-            {selectedCount === 0 && " · 至少选 1 项以生成路径"}
+            {t.rich("selectedCount", {
+              count: selectedCount,
+              c: (chunks) => <span className="font-semibold text-foreground">{chunks}</span>,
+            })}
+            {selectedCount === 0 && t("pickAtLeastOne")}
           </p>
           <div className="flex items-center gap-2">
             {error && <span className="text-xs text-magenta">{error}</span>}
             <Button onClick={generate} disabled={submitting || selectedCount === 0}>
-              {submitting ? "生成中..." : "生成我的成长路径 →"}
+              {submitting ? t("generating") : t("generatePath")}
             </Button>
           </div>
         </div>
@@ -208,17 +214,10 @@ function Capsule({
   );
 }
 
-function Centered({ text, tone }: { text: string; tone?: "error" }) {
-  return (
-    <main className="container flex min-h-[60vh] items-center justify-center">
-      <p className={tone === "error" ? "text-magenta" : "text-muted-foreground"}>{text}</p>
-    </main>
-  );
-}
-
 export default function SkillsPage() {
+  const tc = useTranslations("common");
   return (
-    <Suspense fallback={<Centered text="加载中..." />}>
+    <Suspense fallback={<Centered text={tc("loading")} />}>
       <SkillsInner />
     </Suspense>
   );

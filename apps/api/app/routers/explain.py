@@ -6,10 +6,11 @@ causally-attributed plan diff ("why is this different from last time"). Both
 are DB-free — feed a profile, get the chain — so they double as a live demo.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from app.domain import competency, explain
 from app.domain.decision import SkillObservation
+from app.i18n import Lang, get_lang
 from app.schemas import ExplainRequest, PlanDiffRequest, SkillObservationIn
 
 router = APIRouter(prefix="/api/explain", tags=["explain"])
@@ -22,18 +23,19 @@ def _to_obs(items: list[SkillObservationIn]) -> dict[str, SkillObservation]:
 
 
 @router.post("")
-def explain_plan(payload: ExplainRequest) -> dict:
+def explain_plan(payload: ExplainRequest, lang: Lang = Depends(get_lang)) -> dict:
     """Full auditable evidence chain for a plan."""
     return explain.explain_plan(
         competency.ROLE_AI_ENGINEER_APPLIED,
         _to_obs(payload.observations),
         orientation_id=payload.orientation or competency.ORIENTATION_BASE,
         max_steps=payload.max_steps,
+        lang=lang,
     )
 
 
 @router.post("/diff")
-def diff_plans(payload: PlanDiffRequest) -> dict:
+def diff_plans(payload: PlanDiffRequest, lang: Lang = Depends(get_lang)) -> dict:
     """Causally-attributed diff between two plans (why this != last time)."""
     return explain.diff_plans(
         competency.ROLE_AI_ENGINEER_APPLIED,
@@ -41,4 +43,5 @@ def diff_plans(payload: PlanDiffRequest) -> dict:
         _to_obs(payload.observations_after),
         orientation_id=payload.orientation or competency.ORIENTATION_BASE,
         max_steps=payload.max_steps,
+        lang=lang,
     )

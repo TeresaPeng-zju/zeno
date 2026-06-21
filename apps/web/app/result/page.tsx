@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
+import { useLocale, useTranslations } from "next-intl";
 import type { Edge, Node } from "@xyflow/react";
 
 import { Button } from "@/components/ui/button";
@@ -12,16 +13,17 @@ import { CareerGraph, type ZenoNodeData } from "@/components/zeno/career-graph";
 import { CircularProgress } from "@/components/zeno/circular-progress";
 import { RoleJourney } from "@/components/zeno/role-journey";
 import { Centered } from "@/components/site/centered";
-import { api, CATEGORY_LABELS, type ResourceOut, type ResultResponse, type TimeBudget } from "@/lib/api";
+import { api, type ResourceOut, type ResultResponse, type TimeBudget } from "@/lib/api";
 
-const LEVEL_LABELS = ["未接触", "入门", "可独立做", "可交付", "可设计治理"];
-
-function buildGraph(data: ResultResponse): { nodes: Node<ZenoNodeData>[]; edges: Edge[] } {
+function buildGraph(
+  data: ResultResponse,
+  roles: { current: string; target: string },
+): { nodes: Node<ZenoNodeData>[]; edges: Edge[] } {
   const nodes: Node<ZenoNodeData>[] = [];
   const edges: Edge[] = [];
 
-  nodes.push({ id: "cur", type: "role", position: { x: 0, y: 190 }, data: { label: "前端工程师", kind: "role-current" } });
-  nodes.push({ id: "tgt", type: "role", position: { x: 780, y: 190 }, data: { label: "AI Engineer", kind: "role-target" } });
+  nodes.push({ id: "cur", type: "role", position: { x: 0, y: 190 }, data: { label: roles.current, kind: "role-current" } });
+  nodes.push({ id: "tgt", type: "role", position: { x: 780, y: 190 }, data: { label: roles.target, kind: "role-target" } });
 
   const haves = data.strengths.slice(0, 4);
   haves.forEach((s, i) => {
@@ -67,12 +69,15 @@ function buildGraph(data: ResultResponse): { nodes: Node<ZenoNodeData>[]; edges:
 
 function ResultInner() {
   const params = useSearchParams();
+  const t = useTranslations("result");
+  const tr = useTranslations("roles");
+  const tc = useTranslations("common");
   const sessionId = params.get("session");
   const [data, setData] = useState<ResultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [budget, setBudget] = useState<TimeBudget>("standard");
   const [refreshing, setRefreshing] = useState(false);
-  const [done, setDone] = useState<Set<number>>(new Set());
+  const [done, setDone] = useState<Set<string>>(new Set());
 
   // 纯前端「标记完成」：按 session 持久化到 localStorage，不进后端、不影响 readiness
   const doneKey = sessionId ? `zeno:done:${sessionId}` : null;
@@ -80,13 +85,13 @@ function ResultInner() {
     if (!doneKey) return;
     try {
       const raw = localStorage.getItem(doneKey);
-      if (raw) setDone(new Set(JSON.parse(raw) as number[]));
+      if (raw) setDone(new Set(JSON.parse(raw) as string[]));
     } catch {
       /* ignore */
     }
   }, [doneKey]);
 
-  const toggleDone = (skillId: number) => {
+  const toggleDone = (skillId: string) => {
     setDone((prev) => {
       const next = new Set(prev);
       if (next.has(skillId)) next.delete(skillId);
@@ -104,7 +109,7 @@ function ResultInner() {
 
   useEffect(() => {
     if (!sessionId) {
-      setError("缺少 session 参数");
+      setError(tc("missingSession"));
       return;
     }
     let active = true;
@@ -112,17 +117,20 @@ function ResultInner() {
     api
       .result(sessionId, budget)
       .then((d) => active && setData(d))
-      .catch((e) => active && setError(e instanceof Error ? e.message : "加载失败"))
+      .catch((e) => active && setError(e instanceof Error ? e.message : tc("loadFailed")))
       .finally(() => active && setRefreshing(false));
     return () => {
       active = false;
     };
-  }, [sessionId, budget]);
+  }, [sessionId, budget, tc]);
 
-  const graph = useMemo(() => (data ? buildGraph(data) : null), [data]);
+  const graph = useMemo(
+    () => (data ? buildGraph(data, { current: tr("frontend"), target: tr("aiEngineer") }) : null),
+    [data, tr],
+  );
 
   if (error) return <Centered text={error} tone="error" />;
-  if (!data || !graph) return <Centered text="正在生成你的成长路径..." />;
+  if (!data || !graph) return <Centered text={t("generatingPath")} />;
 
   return (
     <main className="relative overflow-hidden">
@@ -131,27 +139,27 @@ function ResultInner() {
         {/* header */}
         <div className="space-y-6">
           <div className="space-y-1.5 text-center">
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">你的 AI Engineer 成长路径</h1>
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("title")}</h1>
             <p className="text-sm text-muted-foreground">
-              基于 {data.profile.length} 项技能画像，由确定性决策引擎生成
+              {t("generatedFrom", { count: data.profile.length })}
             </p>
             {data.orientation && data.orientation !== "base" && data.orientation_label && (
               <span className="hairline mt-1 inline-flex items-center gap-1.5 rounded-full bg-cyan/10 px-3 py-1 text-xs text-cyan">
-                目标方向 · {data.orientation_label}
+                {t("orientationTag", { label: data.orientation_label })}
               </span>
             )}
           </div>
-          <RoleJourney current="前端工程师" target="AI Engineer" progress={data.readiness / 100} />
+          <RoleJourney current={tr("frontend")} target={tr("aiEngineer")} progress={data.readiness / 100} />
         </div>
 
         {/* readiness + graph */}
         <section id="gap" className="grid gap-6 lg:grid-cols-[300px_1fr]">
           <Card className="flex flex-col items-center justify-center gap-4 py-8">
-            <CircularProgress value={data.readiness} />
+            <CircularProgress value={data.readiness} label={t("careerReadiness")} />
             <div className="flex gap-5 text-center text-xs text-muted-foreground">
-              <Stat n={data.strengths.length} label="优势" tone="text-cyan" />
-              <Stat n={data.gaps.length} label="缺口" tone="text-magenta" />
-              <Stat n={data.next_steps.length} label="下一步" tone="text-gold" />
+              <Stat n={data.strengths.length} label={t("statStrengths")} tone="text-cyan" />
+              <Stat n={data.gaps.length} label={t("statGaps")} tone="text-magenta" />
+              <Stat n={data.next_steps.length} label={t("statNextSteps")} tone="text-gold" />
             </div>
           </Card>
           <div>
@@ -160,9 +168,9 @@ function ResultInner() {
         </section>
 
         {/* Section 1: strengths */}
-        <Section index={1} title="你的优势" subtitle="为什么是你学这个">
+        <Section index={1} title={t("section1Title")} subtitle={t("section1Subtitle")}>
           {data.strengths.length === 0 ? (
-            <EmptyHint text="本轮还没采集到明显优势项，多补充一些已有经验会更准。" />
+            <EmptyHint text={t("section1Empty")} />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               {data.strengths.map((s, i) => (
@@ -185,9 +193,9 @@ function ResultInner() {
         </Section>
 
         {/* Section 2: gaps */}
-        <Section index={2} title="能力差距" subtitle="必要 / 加分">
+        <Section index={2} title={t("section2Title")} subtitle={t("section2Subtitle")}>
           {data.gaps.length === 0 ? (
-            <EmptyHint text="目标岗位的必要能力你已基本覆盖，继续巩固即可。" />
+            <EmptyHint text={t("section2Empty")} />
           ) : (
             <Card>
               <CardContent className="space-y-2.5 pt-6">
@@ -195,7 +203,7 @@ function ResultInner() {
                   <div key={g.skill_id} className="flex items-center justify-between gap-3 border-b border-border/40 pb-2.5 last:border-0 last:pb-0">
                     <div className="flex items-center gap-2">
                       <span className={"rounded px-1.5 py-0.5 text-[10px] font-medium " + (g.type === "required" ? "bg-magenta/15 text-magenta" : "bg-gold/15 text-gold")}>
-                        {g.type === "required" ? "必要" : "加分"}
+                        {g.type === "required" ? t("required") : t("bonus")}
                       </span>
                       <span className="text-sm">{g.skill_name}</span>
                     </div>
@@ -213,11 +221,15 @@ function ResultInner() {
         </Section>
 
         {/* Section 3: roadmap journey */}
-        <Section index={3} title="学习路线" subtitle="按时间预算展示的最高杠杆动作（按依赖排序）">
+        <Section index={3} title={t("section3Title")} subtitle={t("section3Subtitle")}>
           {data.next_steps.length > 0 && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>
-                已完成 <span className="font-semibold text-cyan">{data.next_steps.filter((s) => done.has(s.skill_id)).length}</span> / {data.next_steps.length} 步
+                {t.rich("stepsDone", {
+                  done: data.next_steps.filter((s) => done.has(s.skill_id)).length,
+                  total: data.next_steps.length,
+                  c: (chunks) => <span className="font-semibold text-cyan">{chunks}</span>,
+                })}
               </span>
               <span className="inline-block h-1.5 w-28 overflow-hidden rounded-full bg-muted">
                 <span
@@ -234,7 +246,7 @@ function ResultInner() {
             refreshing={refreshing}
           />
           {data.next_steps.length === 0 ? (
-            <EmptyHint text="暂无需要优先攻克的动作。" />
+            <EmptyHint text={t("section3Empty")} />
           ) : (
             <div id="roadmap" className="relative space-y-5 pl-8">
               <span className="absolute left-[11px] top-2 h-[calc(100%-1rem)] w-px bg-gradient-to-b from-cyan via-gold to-transparent" />
@@ -276,11 +288,11 @@ function ResultInner() {
                         <div>
                           <div className="flex items-center justify-between gap-2">
                             <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-                              Step {ns.rank}
+                              {t("step", { rank: ns.rank })}
                             </p>
                             {ns.est_weeks > 0 && (
                               <span className="shrink-0 rounded-md border border-cyan/40 bg-cyan/10 px-2 py-0.5 text-[11px] font-medium text-cyan">
-                                预计 ~{ns.est_weeks} 周
+                                {t("estWeeks", { weeks: ns.est_weeks })}
                               </span>
                             )}
                           </div>
@@ -289,13 +301,13 @@ function ResultInner() {
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
                           <div>
-                            <p className="mb-1.5 text-xs font-semibold text-muted-foreground">行动步骤</p>
+                            <p className="mb-1.5 text-xs font-semibold text-muted-foreground">{t("actionSteps")}</p>
                             <ol className="list-decimal space-y-1 pl-5 text-sm">
                               {ns.action_steps.map((s, k) => <li key={k}>{s}</li>)}
                             </ol>
                           </div>
                           <div>
-                            <p className="mb-1.5 text-xs font-semibold text-muted-foreground">完成标准（可提交证据）</p>
+                            <p className="mb-1.5 text-xs font-semibold text-muted-foreground">{t("acceptanceCriteria")}</p>
                             <ul className="list-disc space-y-1 pl-5 text-sm">
                               {ns.acceptance_criteria.map((c, k) => <li key={k}>{c}</li>)}
                             </ul>
@@ -304,7 +316,7 @@ function ResultInner() {
                         <Resources items={ns.recommended_resources} />
                         <div className="flex items-center justify-between gap-3 border-t border-border/40 pt-3">
                           <p className="text-xs text-muted-foreground">
-                            {isDone ? "已达成上面的完成标准 ✓" : "达成上面的完成标准后，标记一下"}
+                            {isDone ? t("doneMet") : t("doneHint")}
                           </p>
                           <button
                             type="button"
@@ -316,7 +328,7 @@ function ResultInner() {
                                 : "border-border/60 text-muted-foreground hover:border-cyan/50 hover:text-cyan")
                             }
                           >
-                            {isDone ? "已完成 · 点击撤销" : "标记完成"}
+                            {isDone ? t("doneUndo") : t("markDone")}
                           </button>
                         </div>
                       </CardContent>
@@ -330,15 +342,15 @@ function ResultInner() {
         </Section>
 
         <details className="hairline rounded-2xl bg-card/50 p-4">
-          <summary className="cursor-pointer text-sm font-medium">查看完整能力画像</summary>
+          <summary className="cursor-pointer text-sm font-medium">{t("viewFullProfile")}</summary>
           <Profile data={data} />
         </details>
 
         <p className="text-xs text-muted-foreground">{data.note}</p>
 
         <div className="flex gap-3">
-          <Link href="/skills"><Button variant="outline">重新评估</Button></Link>
-          <Link href="/"><Button variant="ghost">返回首页</Button></Link>
+          <Link href="/skills"><Button variant="outline">{t("reassess")}</Button></Link>
+          <Link href="/"><Button variant="ghost">{t("backHome")}</Button></Link>
         </div>
       </div>
     </main>
@@ -356,18 +368,19 @@ function TimeBudgetBar({
   pacing: ResultResponse["pacing"];
   refreshing: boolean;
 }) {
+  const t = useTranslations("result");
   const options: { value: TimeBudget; label: string; hint: string }[] = [
-    { value: "light", label: "每周 3h", hint: "聚焦少而专" },
-    { value: "standard", label: "每周 6h", hint: "稳步推进" },
-    { value: "intense", label: "每周 10h+", hint: "可并行多线" },
+    { value: "light", label: t("budgetLight"), hint: t("budgetLightHint") },
+    { value: "standard", label: t("budgetStandard"), hint: t("budgetStandardHint") },
+    { value: "intense", label: t("budgetIntense"), hint: t("budgetIntenseHint") },
   ];
   return (
     <Card className="border-cyan/20">
       <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-semibold text-muted-foreground">按你的时间预算校准路线</p>
+          <p className="text-xs font-semibold text-muted-foreground">{t("calibrateTitle")}</p>
           <p className="text-sm text-muted-foreground" style={{ opacity: refreshing ? 0.5 : 1 }}>
-            {pacing?.summary ?? "选择每周可投入的时间，路线会即时重排。"}
+            {pacing?.summary ?? t("calibrateDefault")}
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
@@ -407,6 +420,9 @@ function Stat({ n, label, tone }: { n: number; label: string; tone: string }) {
 }
 
 function Profile({ data }: { data: ResultResponse }) {
+  const t = useTranslations("result");
+  const tcat = useTranslations("categories");
+  const tlv = useTranslations("levels");
   const byCategory = data.profile.reduce<Record<string, ResultResponse["profile"]>>((acc, p) => {
     (acc[p.category] ??= []).push(p);
     return acc;
@@ -415,13 +431,13 @@ function Profile({ data }: { data: ResultResponse }) {
     <div className="mt-4 space-y-4">
       {Object.entries(byCategory).map(([category, skills]) => (
         <div key={category} className="space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground">{CATEGORY_LABELS[category] ?? category}</p>
+          <p className="text-xs font-semibold text-muted-foreground">{tcat.has(category) ? tcat(category) : category}</p>
           {skills.map((s) => (
             <div key={s.skill_id} className="flex items-center justify-between gap-4">
               <span className="text-sm">{s.skill_name}</span>
               <div className="flex items-center gap-3">
-                <span className="rounded-md bg-accent px-2 py-0.5 text-xs text-accent-foreground">L{s.level} · {LEVEL_LABELS[s.level]}</span>
-                <span className="w-16 text-right text-xs text-muted-foreground">置信 {(s.confidence * 100).toFixed(0)}%</span>
+                <span className="rounded-md bg-accent px-2 py-0.5 text-xs text-accent-foreground">L{s.level} · {tlv(String(s.level))}</span>
+                <span className="w-16 text-right text-xs text-muted-foreground">{t("confidence", { percent: (s.confidence * 100).toFixed(0) })}</span>
               </div>
             </div>
           ))}
@@ -464,27 +480,29 @@ function EmptyHint({ text }: { text: string }) {
   );
 }
 
-function formatVerified(iso: string | null): string | null {
+function formatVerified(iso: string | null, locale: string): string | null {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" });
+  return d.toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", { year: "numeric", month: "2-digit", day: "2-digit" });
 }
 
 function Resources({ items }: { items: ResourceOut[] }) {
+  const t = useTranslations("result");
+  const locale = useLocale();
   if (!items || items.length === 0) {
     return (
       <div className="hairline rounded-xl bg-surface/40 p-3 text-xs text-muted-foreground">
-        暂无通过保鲜校验的推荐资源，资源库补充后会自动出现在这里。
+        {t("resourcesEmpty")}
       </div>
     );
   }
   return (
     <div className="space-y-2">
-      <p className="text-xs font-semibold text-muted-foreground">推荐资源（已通过链接保鲜校验）</p>
+      <p className="text-xs font-semibold text-muted-foreground">{t("resourcesTitle")}</p>
       <ul className="space-y-2">
         {items.map((r) => {
-          const verified = formatVerified(r.last_verified_at);
+          const verified = formatVerified(r.last_verified_at, locale);
           return (
             <li key={r.url}>
               <a
@@ -497,7 +515,7 @@ function Resources({ items }: { items: ResourceOut[] }) {
                   <p className="truncate text-sm font-medium text-foreground group-hover:text-cyan">{r.title}</p>
                   <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-muted-foreground">
                     <span className="rounded bg-accent px-1.5 py-0.5 text-accent-foreground">{r.platform}</span>
-                    {verified && <span>核验于 {verified}</span>}
+                    {verified && <span>{t("verifiedOn", { date: verified })}</span>}
                     {r.freshness_reason && <span className="text-cyan/80">{r.freshness_reason}</span>}
                   </div>
                 </div>
@@ -511,17 +529,10 @@ function Resources({ items }: { items: ResourceOut[] }) {
   );
 }
 
-function Centered({ text, tone }: { text: string; tone?: "error" }) {
-  return (
-    <main className="container flex min-h-[60vh] items-center justify-center">
-      <p className={tone === "error" ? "text-magenta" : "text-muted-foreground"}>{text}</p>
-    </main>
-  );
-}
-
 export default function ResultPage() {
+  const tc = useTranslations("common");
   return (
-    <Suspense fallback={<Centered text="加载中..." />}>
+    <Suspense fallback={<Centered text={tc("loading")} />}>
       <ResultInner />
     </Suspense>
   );
