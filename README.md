@@ -55,6 +55,31 @@ zeno/
 docker compose up -d
 ```
 
+<details>
+<summary>不用 Docker：本机 Homebrew Postgres 16 + pgvector</summary>
+
+Homebrew 的 `pgvector` formula 默认只为最新的 pg 版本编译，可能不含 pg16。可从源码针对 pg16 编译安装一次：
+
+```bash
+brew install postgresql@16
+brew services start postgresql@16
+
+# 针对 pg16 编译安装 pgvector（写入 pg16 扩展目录）
+cd /tmp && git clone --depth 1 --branch v0.8.3 https://github.com/pgvector/pgvector.git
+cd pgvector
+make        PG_CONFIG=/opt/homebrew/opt/postgresql@16/bin/pg_config
+make install PG_CONFIG=/opt/homebrew/opt/postgresql@16/bin/pg_config
+
+# 建库 + 用超级用户启用扩展（CREATE EXTENSION 需超级用户，一次即可）
+/opt/homebrew/opt/postgresql@16/bin/createdb zeno
+/opt/homebrew/opt/postgresql@16/bin/psql -U "$(whoami)" -d zeno \
+  -c "CREATE EXTENSION IF NOT EXISTS vector;"
+```
+
+之后把 `apps/api/.env` 的 `DATABASE_URL` 指向本机库（如 `postgresql+psycopg://<user>@localhost:5432/zeno`）即可。应用启动用的 `CREATE EXTENSION IF NOT EXISTS` 在非超级用户下仅在扩展已存在时不报错，所以这一步要用超级用户先建好。
+
+</details>
+
 ### 1. 后端 API（FastAPI）
 
 ```bash
@@ -62,8 +87,11 @@ cd apps/api
 python -m venv .venv && source .venv/bin/activate
 pip install -e .                 # 或: pip install -e ".[openai]"
 cp .env.example .env
+alembic upgrade head             # 建表（schema 由 Alembic 管理，应用启动不再 create_all）
 uvicorn app.main:app --reload --port 8000
 ```
+
+> 数据库 schema 的唯一事实源是 Alembic 迁移（`apps/api/migrations/`）。应用启动时**不再** `create_all`，只做技能引用完整性校验（fail-fast）。新增/修改模型后用 `alembic revision --autogenerate -m "..."` 生成迁移，再 `alembic upgrade head`。
 
 - 健康检查：http://localhost:8000/health
 - 接口文档：http://localhost:8000/docs
