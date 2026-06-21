@@ -15,6 +15,8 @@ Everything here is a pure function of (steps, weekly_hours), so the result-page
 from dataclasses import dataclass, field
 from math import ceil
 
+from app.i18n import t
+
 # Rough effort estimate: hours needed to raise one level on one skill.
 HOURS_PER_LEVEL = 12
 
@@ -61,7 +63,7 @@ def _est_weeks(gap: int, weekly_hours: int) -> int:
     return max(1, ceil(hours / weekly_hours))
 
 
-def build_plan(steps, time_budget: str | None) -> PacingPlan:
+def build_plan(steps, time_budget: str | None, lang: str = "en") -> PacingPlan:
     """Compute a pacing plan for a list of NextStep-like objects.
 
     Each step must expose `.skill_id`, `.current_level`, `.target_level`.
@@ -85,16 +87,23 @@ def build_plan(steps, time_budget: str | None) -> PacingPlan:
         total_weeks = _balanced_makespan(week_costs, parallelism)
 
     if not week_costs:
-        summary = "暂无需要排期的动作。"
+        summary = t(lang, "pacing.empty")
     elif parallelism > 1:
-        summary = (
-            f"每周投入约 {weekly_hours} 小时，可并行推进 {parallelism} 条线，"
-            f"预计约 {total_weeks} 周完成这 {len(week_costs)} 个动作。"
+        summary = t(
+            lang,
+            "pacing.parallel",
+            hours=weekly_hours,
+            parallelism=parallelism,
+            weeks=total_weeks,
+            count=len(week_costs),
         )
     else:
-        summary = (
-            f"每周投入约 {weekly_hours} 小时，建议串行推进，"
-            f"预计约 {total_weeks} 周依次完成这 {len(week_costs)} 个动作。"
+        summary = t(
+            lang,
+            "pacing.serial",
+            hours=weekly_hours,
+            weeks=total_weeks,
+            count=len(week_costs),
         )
 
     return PacingPlan(

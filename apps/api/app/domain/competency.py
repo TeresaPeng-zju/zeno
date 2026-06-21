@@ -49,6 +49,7 @@ class Skill:
     name: str
     category: str  # foundation | data | llm | eval
     learnability: float  # 0-1, frontend -> this skill transferability
+    name_en: str = ""  # English display name (i18n; falls back to `name`)
 
 
 @dataclass(frozen=True)
@@ -81,6 +82,8 @@ class OrientationModifier:
     id: str
     label: str
     description: str
+    label_en: str = ""  # English label (i18n; falls back to `label`)
+    description_en: str = ""  # English description (i18n; falls back to `description`)
     weight_delta: dict[str, float] = field(default_factory=dict)
     min_level_delta: dict[str, int] = field(default_factory=dict)
     promote_required: frozenset[str] = field(default_factory=frozenset)
@@ -99,6 +102,8 @@ def _build_orientation(o: dict) -> OrientationModifier:
         id=o["id"],
         label=o["label"],
         description=o["description"],
+        label_en=o.get("label_en", ""),
+        description_en=o.get("description_en", ""),
         weight_delta=dict(o.get("weight_delta", {})),
         min_level_delta=dict(o.get("min_level_delta", {})),
         promote_required=frozenset(o.get("promote_required", ())),
@@ -107,9 +112,14 @@ def _build_orientation(o: dict) -> OrientationModifier:
 
 _RAW = _load_raw(_SKILL_GRAPH_FILE)
 _ROLE_ID = _RAW["role"]["id"]
+ROLE_LABEL: str = _RAW["role"]["label"]
+ROLE_LABEL_EN: str = _RAW["role"].get("label_en", "") or ROLE_LABEL
 
 # Level 0-4 reference descriptions (shared rubric, plan 4.2)
 LEVEL_RUBRIC: dict[int, str] = {int(k): v for k, v in _RAW["level_rubric"].items()}
+LEVEL_RUBRIC_EN: dict[int, str] = {
+    int(k): v for k, v in _RAW.get("level_rubric_en", {}).items()
+}
 
 # Skills
 SKILLS: list[Skill] = [Skill(**s) for s in _RAW["skills"]]
@@ -163,3 +173,42 @@ def requirement_by_skill(
 
 def dependencies_of(skill_id: str) -> list[str]:
     return [d.depends_on for d in SKILL_DEPENDENCIES if d.skill_id == skill_id]
+
+
+# --------------------------------------------------------------------------- #
+# i18n display helpers (expression layer — decision layer stays language-neutral)
+# --------------------------------------------------------------------------- #
+def skill_name(skill_id: str, lang: str = "en") -> str:
+    """Localized display name for a skill (falls back to the Chinese `name`)."""
+    skill = SKILLS_BY_ID.get(skill_id)
+    if skill is None:
+        return skill_id
+    if lang == "en":
+        return skill.name_en or skill.name
+    return skill.name
+
+
+def level_rubric(level: int, lang: str = "en") -> str:
+    """Localized rubric text for a proficiency level."""
+    if lang == "en":
+        return LEVEL_RUBRIC_EN.get(level) or LEVEL_RUBRIC.get(level, "")
+    return LEVEL_RUBRIC.get(level, "")
+
+
+def role_label(lang: str = "en") -> str:
+    """Localized label for the target role."""
+    return ROLE_LABEL_EN if lang == "en" else ROLE_LABEL
+
+
+def orientation_label(o: OrientationModifier, lang: str = "en") -> str:
+    """Localized label for an orientation (falls back to the Chinese `label`)."""
+    if lang == "en":
+        return o.label_en or o.label
+    return o.label
+
+
+def orientation_description(o: OrientationModifier, lang: str = "en") -> str:
+    """Localized description for an orientation (falls back to Chinese)."""
+    if lang == "en":
+        return o.description_en or o.description
+    return o.description

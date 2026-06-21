@@ -1,0 +1,139 @@
+{
+  "meta": {
+    "title": "Zeno · 看清你在哪，导航你能去哪。",
+    "description": "Zeno 把你的技能映射成一张动态的职业星图，揭示你的优势、差距，以及通往目标岗位最有效的路径。"
+  },
+  "nav": {
+    "careerGraph": "职业图谱",
+    "skills": "技能",
+    "gapAnalysis": "差距分析",
+    "roadmap": "成长路线",
+    "signIn": "登录",
+    "getStarted": "开始使用"
+  },
+  "lang": {
+    "label": "语言",
+    "en": "EN",
+    "zh": "中文"
+  },
+  "common": {
+    "loading": "加载中…",
+    "loadFailed": "加载失败",
+    "submitFailed": "提交失败",
+    "missingSession": "缺少 session 参数",
+    "backendDown": "无法连接后端，请确认 API 已启动"
+  },
+  "roles": {
+    "current": "当前角色",
+    "target": "目标角色",
+    "frontend": "前端工程师",
+    "aiEngineer": "AI Engineer"
+  },
+  "categories": {
+    "foundation": "工程地基",
+    "data": "数据与检索",
+    "llm": "LLM 应用",
+    "eval": "评估与迭代"
+  },
+  "levels": {
+    "0": "未接触",
+    "1": "入门",
+    "2": "可独立做",
+    "3": "可交付",
+    "4": "可设计治理"
+  },
+  "home": {
+    "badge": "面向工程师的 AI 职业智能",
+    "titleLine1": "看清你在哪。",
+    "titleNavigate": "导航",
+    "titleLine2": "你能去哪。",
+    "subtitle": "Zeno 把你的技能映射成一张动态的职业星图，揭示你的优势、差距，以及通往目标岗位最有效的路径。",
+    "mapMyCareer": "绘制我的职业路径 →",
+    "mapping": "绘制中…",
+    "exploreGraph": "浏览图谱",
+    "targetOrientation": "目标方向",
+    "constellationTitle": "你的职业星图",
+    "generateMyGraph": "生成我的专属图谱 →"
+  },
+  "graph": {
+    "legendHave": "已掌握",
+    "legendInProgress": "进行中 / 目标",
+    "legendGap": "能力缺口",
+    "legendHint": "点击节点查看路径",
+    "nodeCurrent": "当前",
+    "nodeTarget": "目标",
+    "demo": {
+      "apiDesign": "API 设计",
+      "streaming": "流式集成",
+      "promptStructure": "Prompt 结构",
+      "vectorSearch": "向量检索",
+      "functionCalling": "函数调用",
+      "offlineEval": "离线评估"
+    }
+  },
+  "skills": {
+    "title": "选择你已有的技能",
+    "subtitle": "点击技能选择熟练度即可，无需打字。整个过程通常不到 60 秒。",
+    "preparing": "正在准备技能图谱…",
+    "selectedCount": "已选 <c>{count}</c> 项",
+    "pickAtLeastOne": " · 至少选 1 项以生成路径",
+    "generating": "生成中…",
+    "generatePath": "生成我的成长路径 →"
+  },
+  "survey": {
+    "assessment": "能力评估",
+    "progress": "第 {current} 题 · 最多 {max} 题",
+    "preparingFirst": "正在准备你的第一道问题…",
+    "noMoreQuestions": "没有更多问题了。"
+  },
+  "question": {
+    "pickOption": "请选择一个选项",
+    "submitting": "提交中…",
+    "next": "下一步"
+  },
+  "result": {
+    "generatingPath": "正在生成你的成长路径…",
+    "title": "你的 AI Engineer 成长路径",
+    "generatedFrom": "基于 {count} 项技能画像，由确定性决策引擎生成",
+    "orientationTag": "目标方向 · {label}",
+    "statStrengths": "优势",
+    "statGaps": "缺口",
+    "statNextSteps": "下一步",
+    "section1Title": "你的优势",
+    "section1Subtitle": "为什么是你学这个",
+    "section1Empty": "本轮还没采集到明显优势项，多补充一些已有经验会更准。",
+    "section2Title": "能力差距",
+    "section2Subtitle": "必要 / 加分",
+    "section2Empty": "目标岗位的必要能力你已基本覆盖，继续巩固即可。",
+    "required": "必要",
+    "bonus": "加分",
+    "section3Title": "学习路线",
+    "section3Subtitle": "按时间预算展示的最高杠杆动作（按依赖排序）",
+    "stepsDone": "已完成 <c>{done}</c> / {total} 步",
+    "section3Empty": "暂无需要优先攻克的动作。",
+    "step": "第 {rank} 步",
+    "estWeeks": "预计 ~{weeks} 周",
+    "actionSteps": "行动步骤",
+    "acceptanceCriteria": "完成标准（可提交证据）",
+    "doneMet": "已达成上面的完成标准 ✓",
+    "doneHint": "达成上面的完成标准后，标记一下",
+    "doneUndo": "已完成 · 点击撤销",
+    "markDone": "标记完成",
+    "viewFullProfile": "查看完整能力画像",
+    "reassess": "重新评估",
+    "backHome": "返回首页",
+    "careerReadiness": "职业就绪度",
+    "confidence": "置信 {percent}%",
+    "budgetLight": "每周 3h",
+    "budgetLightHint": "聚焦少而专",
+    "budgetStandard": "每周 6h",
+    "budgetStandardHint": "稳步推进",
+    "budgetIntense": "每周 10h+",
+    "budgetIntenseHint": "可并行多线",
+    "calibrateTitle": "按你的时间预算校准路线",
+    "calibrateDefault": "选择每周可投入的时间，路线会即时重排。",
+    "resourcesEmpty": "暂无通过保鲜校验的推荐资源，资源库补充后会自动出现在这里。",
+    "resourcesTitle": "推荐资源（已通过链接保鲜校验）",
+    "verifiedOn": "核验于 {date}"
+  }
+}

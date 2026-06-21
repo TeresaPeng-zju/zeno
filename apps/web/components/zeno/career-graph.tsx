@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Background,
   BackgroundVariant,
@@ -36,6 +37,7 @@ const STATUS_DOT: Record<SkillStatus, string> = {
 };
 
 function RoleNode({ data }: NodeProps) {
+  const t = useTranslations("graph");
   const d = data as ZenoNodeData;
   const isTarget = d.kind === "role-target";
   return (
@@ -49,7 +51,7 @@ function RoleNode({ data }: NodeProps) {
     >
       <Handle type="target" position={Position.Left} className="!bg-transparent !border-0" />
       <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-        {isTarget ? "Target" : "Current"}
+        {isTarget ? t("nodeTarget") : t("nodeCurrent")}
       </p>
       <p className={"mt-0.5 text-sm font-semibold " + (isTarget ? "text-gold" : "text-cyan")}>
         {d.label}
@@ -89,7 +91,8 @@ interface CareerGraphProps {
 }
 
 export function CareerGraph({ nodes, edges, height = 420 }: CareerGraphProps) {
-  const initialNodes = nodes ?? DEMO_NODES;
+  const demoNodes = useDemoNodes();
+  const initialNodes = nodes ?? demoNodes;
   const initialEdges = edges ?? DEMO_EDGES;
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -141,17 +144,24 @@ export function CareerGraph({ nodes, edges, height = 420 }: CareerGraphProps) {
 // --------------------------------------------------------------------------- //
 // Demo constellation for the homepage (frontend -> AI engineer)
 // --------------------------------------------------------------------------- //
-const DEMO_NODES: Node<ZenoNodeData>[] = [
-  { id: "cur", type: "role", position: { x: 0, y: 180 }, data: { label: "Frontend Engineer", kind: "role-current" } },
-  { id: "tgt", type: "role", position: { x: 760, y: 180 }, data: { label: "AI Engineer", kind: "role-target" } },
-  { id: "ts", type: "skill", position: { x: 230, y: 40 }, data: { label: "TypeScript", kind: "skill", status: "have" } },
-  { id: "api", type: "skill", position: { x: 230, y: 170 }, data: { label: "API 设计", kind: "skill", status: "have" } },
-  { id: "stream", type: "skill", position: { x: 230, y: 300 }, data: { label: "流式集成", kind: "skill", status: "have" } },
-  { id: "prompt", type: "skill", position: { x: 470, y: 30 }, data: { label: "Prompt 结构", kind: "skill", status: "partial" } },
-  { id: "rag", type: "skill", position: { x: 470, y: 150 }, data: { label: "向量检索", kind: "skill", status: "gap" } },
-  { id: "fc", type: "skill", position: { x: 470, y: 270 }, data: { label: "函数调用", kind: "skill", status: "gap" } },
-  { id: "eval", type: "skill", position: { x: 470, y: 380 }, data: { label: "离线评估", kind: "skill", status: "gap" } },
-];
+function useDemoNodes(): Node<ZenoNodeData>[] {
+  const tr = useTranslations("roles");
+  const td = useTranslations("graph.demo");
+  return useMemo<Node<ZenoNodeData>[]>(
+    () => [
+      { id: "cur", type: "role", position: { x: 0, y: 180 }, data: { label: tr("frontend"), kind: "role-current" } },
+      { id: "tgt", type: "role", position: { x: 760, y: 180 }, data: { label: tr("aiEngineer"), kind: "role-target" } },
+      { id: "ts", type: "skill", position: { x: 230, y: 40 }, data: { label: "TypeScript", kind: "skill", status: "have" } },
+      { id: "api", type: "skill", position: { x: 230, y: 170 }, data: { label: td("apiDesign"), kind: "skill", status: "have" } },
+      { id: "stream", type: "skill", position: { x: 230, y: 300 }, data: { label: td("streaming"), kind: "skill", status: "have" } },
+      { id: "prompt", type: "skill", position: { x: 470, y: 30 }, data: { label: td("promptStructure"), kind: "skill", status: "partial" } },
+      { id: "rag", type: "skill", position: { x: 470, y: 150 }, data: { label: td("vectorSearch"), kind: "skill", status: "gap" } },
+      { id: "fc", type: "skill", position: { x: 470, y: 270 }, data: { label: td("functionCalling"), kind: "skill", status: "gap" } },
+      { id: "eval", type: "skill", position: { x: 470, y: 380 }, data: { label: td("offlineEval"), kind: "skill", status: "gap" } },
+    ],
+    [tr, td],
+  );
+}
 
 const DEMO_EDGES: Edge[] = [
   { id: "e1", source: "cur", target: "ts" },
