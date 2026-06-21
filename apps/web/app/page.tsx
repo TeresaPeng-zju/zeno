@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { RoleJourney } from "@/components/zeno/role-journey";
@@ -21,6 +22,10 @@ const fadeUp = {
 
 export default function HomePage() {
   const router = useRouter();
+  const t = useTranslations("home");
+  const tg = useTranslations("graph");
+  const tr = useTranslations("roles");
+  const tc = useTranslations("common");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orientations, setOrientations] = useState<OrientationOut[]>([]);
@@ -50,7 +55,7 @@ export default function HomePage() {
       const { session_id } = await api.createSession(orientation);
       router.push(`/skills?session=${session_id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "无法创建会话，请确认后端已启动");
+      setError(e instanceof Error ? e.message : tc("backendDown"));
       setLoading(false);
     }
   }
@@ -68,7 +73,7 @@ export default function HomePage() {
           animate="show"
           className="hairline inline-flex items-center gap-2 rounded-full bg-card/60 px-4 py-1.5 text-sm text-muted-foreground backdrop-blur"
         >
-          <SparkIcon /> AI Career Intelligence for engineers
+          <SparkIcon /> {t("badge")}
         </motion.span>
 
         <motion.h1
@@ -78,9 +83,10 @@ export default function HomePage() {
           animate="show"
           className="mt-7 max-w-4xl pb-3 text-5xl font-extrabold leading-tight tracking-tight text-gradient sm:text-7xl"
         >
-          See where you are.
+          {t("titleLine1")}
           <br />
-          <span className="text-cyan [-webkit-text-fill-color:hsl(183_86%_52%)]">Navigate</span> where you could go.
+          <span className="text-cyan [-webkit-text-fill-color:hsl(183_86%_52%)]">{t("titleNavigate")}</span>
+          {t("titleLine2")}
         </motion.h1>
 
         <motion.p
@@ -90,8 +96,7 @@ export default function HomePage() {
           animate="show"
           className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground"
         >
-          Zeno maps your skills into a living career constellation — revealing your
-          strengths, your gaps, and the most effective path to your target role.
+          {t("subtitle")}
         </motion.p>
 
         <motion.div
@@ -102,11 +107,11 @@ export default function HomePage() {
           className="mt-9 flex items-center gap-3"
         >
           <Button size="lg" variant="solid" onClick={mapCareer} disabled={loading}>
-            {loading ? "Mapping..." : "Map my career →"}
+            {loading ? t("mapping") : t("mapMyCareer")}
           </Button>
           <Link href="/#graph">
             <Button size="lg" variant="outline">
-              Explore the graph
+              {t("exploreGraph")}
             </Button>
           </Link>
         </motion.div>
@@ -121,7 +126,7 @@ export default function HomePage() {
             className="mt-8 w-full max-w-xl"
           >
             <p className="mb-2.5 text-xs uppercase tracking-wide text-muted-foreground">
-              目标方向
+              {t("targetOrientation")}
             </p>
             <div className="flex flex-wrap justify-center gap-2.5">
               {orientations.map((o) => {
@@ -158,7 +163,7 @@ export default function HomePage() {
           animate="show"
           className="mt-16 w-full max-w-4xl"
         >
-          <RoleJourney current="Frontend Engineer" target="AI Engineer" progress={0.4} />
+          <RoleJourney current={tr("frontend")} target={tr("aiEngineer")} progress={0.4} />
         </motion.div>
       </section>
 
@@ -166,15 +171,15 @@ export default function HomePage() {
       <section id="graph" className="container relative mt-20 pb-28">
         <div className="mb-6 flex items-end justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Your career constellation</h2>
+            <h2 className="text-2xl font-bold tracking-tight">{t("constellationTitle")}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              <Legend dot="bg-cyan" label="已掌握" /> ·{" "}
-              <Legend dot="bg-gold" label="进行中 / 目标" /> ·{" "}
-              <Legend dot="bg-magenta" label="能力缺口" /> — 点击节点查看路径
+              <Legend dot="bg-cyan" label={tg("legendHave")} /> ·{" "}
+              <Legend dot="bg-gold" label={tg("legendInProgress")} /> ·{" "}
+              <Legend dot="bg-magenta" label={tg("legendGap")} /> — {tg("legendHint")}
             </p>
           </div>
           <Link href="/skills" className="hidden text-sm text-cyan hover:underline sm:block">
-            生成我的专属图谱 →
+            {t("generateMyGraph")}
           </Link>
         </div>
         <CareerGraph height={460} />

@@ -11,7 +11,9 @@ from app.domain.question_bank import (
     OPTIONS_BY_VALUE,
     default_help_text,
     default_question_text,
+    option_label,
 )
+from app.i18n import t
 from app.llm.factory import get_llm_provider
 from app.models import SurveySession, UserSkill
 from app.schemas import (
@@ -57,13 +59,13 @@ def _states(sess: SurveySession) -> dict[str, SkillState]:
     }
 
 
-def _build_question(skill_id: str, answered: int) -> QuestionOut:
+def _build_question(skill_id: str, answered: int, lang: str = "en") -> QuestionOut:
     skill = competency.SKILLS_BY_ID[skill_id]
     text, help_text = get_llm_provider().rephrase_question(
-        skill_name=skill.name,
+        skill_name=competency.skill_name(skill_id, lang),
         skill_category=skill.category,
-        default_text=default_question_text(skill_id),
-        default_help=default_help_text(skill_id),
+        default_text=default_question_text(skill_id, lang),
+        default_help=default_help_text(skill_id, lang),
     )
     return QuestionOut(
         question_id=skill_id,
@@ -71,7 +73,10 @@ def _build_question(skill_id: str, answered: int) -> QuestionOut:
         category=skill.category,
         text=text,
         help_text=help_text,
-        options=[OptionOut(value=o.value, label=o.label) for o in ANSWER_OPTIONS],
+        options=[
+            OptionOut(value=o.value, label=option_label(o.value, lang))
+            for o in ANSWER_OPTIONS
+        ],
         progress=Progress(answered=answered, max=_max_questions()),
     )
 
@@ -82,7 +87,9 @@ def _max_questions() -> int:
     return settings.max_questions
 
 
-def next_question(db: Session, sess: SurveySession) -> NextQuestionResponse:
+def next_question(
+    db: Session, sess: SurveySession, lang: str = "en"
+) -> NextQuestionResponse:
     states = _states(sess)
     orient = _orientation(sess)
     if is_complete(sess.role_id, states, orient):
@@ -99,7 +106,7 @@ def next_question(db: Session, sess: SurveySession) -> NextQuestionResponse:
 
     return NextQuestionResponse(
         result_ready=False,
-        question=_build_question(skill_id, answered=len(states)),
+        question=_build_question(skill_id, answered=len(states), lang=lang),
     )
 
 
@@ -133,28 +140,34 @@ def record_answer(db: Session, sess: SurveySession, skill_id: str, answer_value:
     db.refresh(sess)
 
 
-def _resources_for_step(db: Session, skill_id: str, target_level: int) -> list:
+def _resources_for_step(
+    db: Session, skill_id: str, target_level: int, lang: str = "en"
+) -> list:
     """Best-effort RAG resource prescription. Never break the result page if the
     resource library is empty or the DB lacks the table yet."""
     try:
         from app.services import resource_service
 
-        skill = competency.SKILLS_BY_ID.get(skill_id)
-        query = f"{skill.name if skill else skill_id} 学习 实践 L{target_level}"
+        query = t(
+            lang,
+            "query.template",
+            name=competency.skill_name(skill_id, lang),
+            level=target_level,
+        )
         return resource_service.recommend_out(
-            db, skill_id=skill_id, gap_target_level=target_level, query_text=query
+            db, skill_id=skill_id, gap_target_level=target_level, query_text=query, lang=lang
         )
     except Exception:
         return []
 
 
 def build_result(
-    db: Session, sess: SurveySession, time_budget: str | None = None
+    db: Session, sess: SurveySession, time_budget: str | None = None, lang: str = "en"
 ) -> ResultResponse:
     profile = [
         SkillProfileOut(
             skill_id=us.skill_id,
-            skill_name=competency.SKILLS_BY_ID[us.skill_id].name,
+            skill_name=competency.skill_name(us.skill_id, lang),
             category=competency.SKILLS_BY_ID[us.skill_id].category,
             level=us.level,
             confidence=us.confidence,
@@ -181,13 +194,13 @@ def build_result(
             level=s.level,
             reason=s.reason,
         )
-        for s in decision.compute_strengths(obs)
+        for s in decision.compute_strengths(obs, lang)
     ]
 
     gaps = [
         GapOut(
             skill_id=g.req.skill_id,
-            skill_name=competency.SKILLS_BY_ID[g.req.skill_id].name,
+            skill_name=competency.skill_name(g.req.skill_id, lang),
             category=competency.SKILLS_BY_ID[g.req.skill_id].category,
             current_level=g.level,
             target_level=g.req.min_level,
@@ -204,8 +217,10 @@ def build_result(
     # Time budget is an *expression-layer* lever: it only sets how many of the
     # already-ranked steps to show + the pacing. The ranking itself is unchanged.
     budget_key, _weekly_hours, max_steps = pacing.resolve(time_budget)
-    steps = decision.select_next_steps(sess.role_id, obs, max_steps=max_steps, orientation_id=orient)
-    plan = pacing.build_plan(steps, budget_key)
+    steps = decision.select_next_steps(
+        sess.role_id, obs, max_steps=max_steps, orientation_id=orient, lang=lang
+    )
+    plan = pacing.build_plan(steps, budget_key, lang)
     weeks_by_skill = {p.skill_id: p.est_weeks for p in plan.steps}
 
     next_steps = [
@@ -224,7 +239,7 @@ def build_result(
             est_weeks=weeks_by_skill.get(ns.skill_id, 0),
             unblocks=ns.unblocks,
             blocked_by=ns.blocked_by,
-            recommended_resources=_resources_for_step(db, ns.skill_id, ns.target_level),
+            recommended_resources=_resources_for_step(db, ns.skill_id, ns.target_level, lang),
         )
         for ns in steps
     ]
@@ -233,7 +248,7 @@ def build_result(
         session_id=sess.id,
         role_id=sess.role_id,
         orientation=orient,
-        orientation_label=competency.get_orientation(orient).label,
+        orientation_label=competency.orientation_label(competency.get_orientation(orient), lang),
         status=sess.status,
         readiness=decision.compute_readiness(sess.role_id, obs, orient),
         time_budget=plan.time_budget,
@@ -248,5 +263,5 @@ def build_result(
         strengths=strengths,
         gaps=gaps,
         next_steps=next_steps,
-        note="资源处方由 RAG 资源引擎（pgvector 召回 + 多信号重排 + 保鲜校验）生成。",
+        note=t(lang, "note.resource"),
     )

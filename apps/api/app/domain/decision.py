@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 
 from app.domain import competency
 from app.domain.competency import RoleRequirement
+from app.i18n import t
 
 MAX_NEXT_STEPS = 3
 BLOCKED_PENALTY = 0.5
@@ -129,25 +130,29 @@ def _dependents_map() -> dict[str, list[str]]:
 # --------------------------------------------------------------------------- #
 # Strengths (你的优势 / why you)
 # --------------------------------------------------------------------------- #
-def compute_strengths(obs: dict[str, SkillObservation]) -> list[Strength]:
+def compute_strengths(
+    obs: dict[str, SkillObservation], lang: str = "en"
+) -> list[Strength]:
     out: list[Strength] = []
     for skill_id, o in obs.items():
         skill = competency.SKILLS_BY_ID.get(skill_id)
         if skill is None:
             continue
         if o.level >= STRENGTH_LEVEL:
-            reason = f"你已能在真实场景交付（L{o.level}），可作为切入 AI 工程的跳板。"
+            reason = t(lang, "strength.high", level=o.level)
         elif o.level >= TRANSFER_LEVEL and skill.learnability >= TRANSFER_LEARNABILITY:
-            reason = (
-                f"前端背景对该能力迁移度高（{int(skill.learnability * 100)}%），"
-                f"当前 L{o.level}，稍加练习即可放大优势。"
+            reason = t(
+                lang,
+                "strength.transfer",
+                pct=int(skill.learnability * 100),
+                level=o.level,
             )
         else:
             continue
         out.append(
             Strength(
                 skill_id=skill_id,
-                skill_name=skill.name,
+                skill_name=competency.skill_name(skill_id, lang),
                 category=skill.category,
                 level=o.level,
                 reason=reason,
@@ -202,6 +207,7 @@ def select_next_steps(
     obs: dict[str, SkillObservation],
     max_steps: int = MAX_NEXT_STEPS,
     orientation_id: str = competency.ORIENTATION_BASE,
+    lang: str = "en",
 ) -> list[NextStep]:
     """Rank next-steps deterministically.
 
@@ -257,12 +263,12 @@ def select_next_steps(
             "blocked_penalty": BLOCKED_PENALTY if blocked_by else 1.0,
         }
 
-        title, why, steps, criteria = _action_blueprint(g, unblocks, blocked_by)
+        title, why, steps, criteria = _action_blueprint(g, unblocks, blocked_by, lang)
         scored.append(
             NextStep(
                 rank=0,
                 skill_id=sid,
-                skill_name=skill.name,
+                skill_name=competency.skill_name(sid, lang),
                 category=skill.category,
                 current_level=g.level,
                 target_level=g.req.min_level,
@@ -293,26 +299,35 @@ def select_next_steps(
 # Action prescription (plan 6.3) — deterministic templates
 # --------------------------------------------------------------------------- #
 def _action_blueprint(
-    g: GapInfo, unblocks: list[str], blocked_by: list[str]
+    g: GapInfo, unblocks: list[str], blocked_by: list[str], lang: str = "en"
 ) -> tuple[str, str, list[str], list[str]]:
     skill = competency.SKILLS_BY_ID[g.req.skill_id]
-    title = f"把「{skill.name}」从 L{g.level} 提升到 L{g.req.min_level}"
+    sep = t(lang, "join.sep")
+    title = t(
+        lang,
+        "blueprint.title",
+        skill=competency.skill_name(skill.id, lang),
+        cur=g.level,
+        target=g.req.min_level,
+    )
 
+    req_type = t(lang, "type.required" if g.req.type == "required" else "type.bonus")
     why_parts = [
-        f"岗位权重 {g.req.weight}（{'必要' if g.req.type == 'required' else '加分'}），"
-        f"当前差距 {g.gap} 级。"
+        t(lang, "why.weight", weight=g.req.weight, type=req_type, gap=g.gap)
     ]
     if unblocks:
-        names = "、".join(competency.SKILLS_BY_ID[s].name for s in unblocks[:3])
-        why_parts.append(f"它是「{names}」的前置依赖，先学能解锁后续路径。")
+        names = sep.join(competency.skill_name(s, lang) for s in unblocks[:3])
+        why_parts.append(t(lang, "why.unblocks", names=names))
     if blocked_by:
-        names = "、".join(competency.SKILLS_BY_ID[s].name for s in blocked_by[:3])
-        why_parts.append(f"注意：建议先补齐其依赖「{names}」。")
+        names = sep.join(competency.skill_name(s, lang) for s in blocked_by[:3])
+        why_parts.append(t(lang, "why.blocked", names=names))
     if skill.learnability >= 0.7:
-        why_parts.append(f"前端背景迁移度高（{int(skill.learnability * 100)}%），上手快。")
+        why_parts.append(t(lang, "why.transfer", pct=int(skill.learnability * 100)))
     why = "".join(why_parts)
 
-    blueprint = _SKILL_BLUEPRINTS.get(skill.id) or _CATEGORY_BLUEPRINTS[skill.category]
+    blueprints = _SKILL_BLUEPRINTS_EN if lang == "en" else _SKILL_BLUEPRINTS
+    categories = _CATEGORY_BLUEPRINTS_EN if lang == "en" else _CATEGORY_BLUEPRINTS
+    blueprint = blueprints.get(skill.id) or categories[skill.category]
     return title, why, list(blueprint["steps"]), list(blueprint["acceptance"])
 
 
@@ -456,5 +471,193 @@ _SKILL_BLUEPRINTS: dict[str, dict[str, list[str]]] = {
             "写一份接口文档并自测",
         ],
         "acceptance": ["提交接口仓库或可访问 URL", "附接口契约文档"],
+    },
+}
+
+# English category-level fallback templates (mirror of _CATEGORY_BLUEPRINTS).
+_CATEGORY_BLUEPRINTS_EN: dict[str, dict[str, list[str]]] = {
+    "foundation": {
+        "steps": [
+            "Take a frontend project you've built and list its backend contracts and boundaries",
+            "Rewrite one of its endpoints in FastAPI, adding auth and unified error handling",
+            "Add request logging and a health-check endpoint",
+            "Containerize the service and deploy it to a free platform",
+        ],
+        "acceptance": [
+            "Submit a reachable endpoint URL or repo link",
+            "Attach an API contract (inputs/outputs/error codes)",
+        ],
+    },
+    "data": {
+        "steps": [
+            "Pick a document set you know well (e.g. a team wiki) as the corpus",
+            "Build a minimal clean → chunking → embedding pipeline",
+            "Write the vectors into pgvector and run a similarity search end to end",
+            "Compare recall across 2 chunking strategies and record the difference",
+        ],
+        "acceptance": [
+            "Submit a runnable retrieval demo repo",
+            "Attach a one-page chunking-strategy comparison note",
+        ],
+    },
+    "llm": {
+        "steps": [
+            "Write a prompt with role/constraints/examples for a real task",
+            "Add a JSON schema constraint and validate the output",
+            "Wire in one function/tool call to close the loop",
+            "Record cost and latency, then do a round of prompt trimming",
+        ],
+        "acceptance": [
+            "Submit a runnable LLM-feature demo",
+            "Attach the prompt design notes and one failure-then-fix record",
+        ],
+    },
+    "eval": {
+        "steps": [
+            "Curate 20-50 eval examples (input + expected) for your AI feature",
+            "Define 2-3 quality metrics (accuracy/coverage/hallucination rate)",
+            "Run one round of offline eval and produce a baseline score",
+            "Change one variable, evaluate again, and compare results",
+        ],
+        "acceptance": [
+            "Submit the eval set and scripts",
+            "Attach a baseline-vs-improvement comparison report",
+        ],
+    },
+}
+
+# English skill-specific blueprints (mirror of _SKILL_BLUEPRINTS).
+_SKILL_BLUEPRINTS_EN: dict[str, dict[str, list[str]]] = {
+    "data.chunking": {
+        "steps": [
+            "Learn the three strategies: fixed-window / semantic / recursive splitting",
+            "Chunk the same document with all 3 strategies and inspect boundary quality",
+            "Implement a structure-preserving splitter for documents with heading levels",
+            "Test recall with a set of questions and record which strategy wins",
+        ],
+        "acceptance": [
+            "Submit the splitter code",
+            "Attach a recall comparison table for the 3 strategies",
+        ],
+    },
+    "data.embedding": {
+        "steps": [
+            "Compare at least 2 embedding models (dimensions/cost/quality)",
+            "Generate vectors for the same corpus with each and store them",
+            "Evaluate Top-k hit rate of both with the same batch of queries",
+            "Write down your selection conclusion and the fitting scenarios",
+        ],
+        "acceptance": [
+            "Submit a reproducible evaluation script",
+            "Attach a one-page embedding-selection conclusion",
+        ],
+    },
+    "data.vector_search": {
+        "steps": [
+            "Install pgvector on Postgres and create a vector table",
+            "Build an HNSW index and run a nearest-neighbor search end to end",
+            "Add structured filtering (pre-filter by skill/level) before searching",
+            "Stress-test how different ef/index params affect recall and latency",
+        ],
+        "acceptance": [
+            "Submit the table-creation + search SQL/code",
+            "Attach measured recall and latency data",
+        ],
+    },
+    "data.retrieval_rerank": {
+        "steps": [
+            "Build a two-stage 'vector recall → rerank' retrieval pipeline",
+            "Implement rule-based reranking: weighted relevance/freshness/fit scoring",
+            "Score the Top10 once with an LLM (fixed rubric) and compare effects",
+            "Record the quality change of the Top3 before vs after reranking",
+        ],
+        "acceptance": [
+            "Submit a runnable retrieval + rerank demo",
+            "Attach a before/after reranking comparison record",
+        ],
+    },
+    "llm.prompt": {
+        "steps": [
+            "Pick a real task and write a structured prompt with role/task/constraints/examples",
+            "Iterate 2-3 rounds, changing only one variable per round",
+            "Catalog common failure modes and the matching prompt fixes",
+            "Distill it into a reusable prompt template",
+        ],
+        "acceptance": [
+            "Submit the prompt template and iteration log",
+            "Attach a set of input/output samples",
+        ],
+    },
+    "llm.structured_output": {
+        "steps": [
+            "Define the target output schema with Pydantic/Zod",
+            "Have the model output JSON and validate it strictly",
+            "Implement a fallback/retry strategy when validation fails",
+            "Test stability against edge-case inputs",
+        ],
+        "acceptance": [
+            "Submit code with schema validation",
+            "Attach test cases for the failure fallback",
+        ],
+    },
+    "llm.function_calling": {
+        "steps": [
+            "Define the function signatures and descriptions for 1-2 tools",
+            "Let the model call them on demand and parse the arguments",
+            "Feed tool results back to the model to close the loop",
+            "Handle a case where the model picks the wrong tool",
+        ],
+        "acceptance": [
+            "Submit a runnable function-calling demo",
+            "Attach the tool definitions and one error-correction record",
+        ],
+    },
+    "llm.tool_use": {
+        "steps": [
+            "Design a task that requires 2+ tools working together",
+            "Implement tool orchestration and intermediate-state passing",
+            "Add failure retries and timeout handling",
+            "Record one end-to-end trace of the multi-tool chain",
+        ],
+        "acceptance": [
+            "Submit a multi-tool orchestration demo",
+            "Attach one end-to-end call-chain trace",
+        ],
+    },
+    "eval.offline": {
+        "steps": [
+            "Curate 30+ eval examples around your AI feature",
+            "Separate them into 'normal / edge / adversarial' categories",
+            "Write a re-runnable offline evaluation script",
+            "Produce the first baseline score",
+        ],
+        "acceptance": [
+            "Submit the eval set (with labels)",
+            "Attach a baseline evaluation report",
+        ],
+    },
+    "eval.metrics": {
+        "steps": [
+            "Define computable definitions for accuracy/coverage/hallucination rate",
+            "Implement automatic computation of these metrics on the offline eval set",
+            "Do a metric comparison for one change",
+            "Wire the metrics into the checklist for every iteration",
+        ],
+        "acceptance": [
+            "Submit the metric-computation code",
+            "Attach a metric comparison for one change",
+        ],
+    },
+    "eng.api_design": {
+        "steps": [
+            "Design a clear API contract for an AI feature (inputs/outputs/error codes)",
+            "Implement it with FastAPI, adding auth and unified error handling",
+            "Add request logging and observability instrumentation",
+            "Write an API doc and self-test it",
+        ],
+        "acceptance": [
+            "Submit the API repo or a reachable URL",
+            "Attach the API contract doc",
+        ],
     },
 }

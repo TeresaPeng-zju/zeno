@@ -92,7 +92,7 @@ def test_blocked_step_is_downweighted():
         comp = step["score_components"]
         if step["dependency"]["blocked_by"]:
             assert comp["blocked_penalty"] < 1.0
-            assert "拓扑约束" in step["dependency"]["reason"]
+            assert "topological" in step["dependency"]["reason"]
         else:
             assert comp["blocked_penalty"] == 1.0
 

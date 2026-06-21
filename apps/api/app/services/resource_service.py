@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.domain import competency
 from app.domain.resource_engine import ScoredResource, rerank
+from app.i18n import t
 from app.llm.embedding import cosine_similarity, get_embedder
 from app.models import Resource, ResourceSkill, url_hash as compute_url_hash
 from app.schemas import ResourceOut
@@ -180,19 +181,24 @@ def recommend_for_skill(
     return rerank(candidates, gap_target_level=gap_target_level)
 
 
-def _freshness_reason(s: ScoredResource) -> str:
-    when = s.last_verified_at.date().isoformat() if s.last_verified_at else "未校验"
-    label = {
-        "fresh": "链接有效",
-        "stale": "可能过时",
-        "unverified": "待校验",
-        "dead": "已失效",
-    }.get(s.freshness_status, s.freshness_status)
-    return f"{label}（{when}）"
+def _freshness_reason(s: ScoredResource, lang: str = "en") -> str:
+    when = (
+        s.last_verified_at.date().isoformat()
+        if s.last_verified_at
+        else t(lang, "freshness.not_verified")
+    )
+    key = {
+        "fresh": "freshness.fresh",
+        "stale": "freshness.stale",
+        "unverified": "freshness.unverified",
+        "dead": "freshness.dead",
+    }.get(s.freshness_status)
+    label = t(lang, key) if key else s.freshness_status
+    return t(lang, "freshness.format", label=label, when=when)
 
 
 def recommend_out(
-    db: Session, *, skill_id: str, gap_target_level: int, query_text: str
+    db: Session, *, skill_id: str, gap_target_level: int, query_text: str, lang: str = "en"
 ) -> list[ResourceOut]:
     """Adapt the reranked resources to the API schema for `next_steps`."""
     top = recommend_for_skill(
@@ -204,7 +210,7 @@ def recommend_out(
             url=s.url,
             platform=s.platform,
             last_verified_at=s.last_verified_at.isoformat() if s.last_verified_at else None,
-            freshness_reason=_freshness_reason(s),
+            freshness_reason=_freshness_reason(s, lang),
         )
         for s in top
     ]
