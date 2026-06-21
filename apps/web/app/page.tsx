@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { RoleJourney } from "@/components/zeno/role-journey";
 import { CareerGraph } from "@/components/zeno/career-graph";
-import { api, type OrientationOut } from "@/lib/api";
+import { api } from "@/lib/api";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 14 },
@@ -28,31 +28,15 @@ export default function HomePage() {
   const tc = useTranslations("common");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [orientations, setOrientations] = useState<OrientationOut[]>([]);
-  const [orientation, setOrientation] = useState<string>("base");
-
-  // Load the available target orientations (base + modifiers) for the selector.
-  // Failure is non-fatal: the flow falls back to the default "base" orientation.
-  useEffect(() => {
-    let cancelled = false;
-    api
-      .skills()
-      .then((cat) => {
-        if (!cancelled && cat.orientations?.length) setOrientations(cat.orientations);
-      })
-      .catch(() => {
-        /* keep default base; backend may be down — handled on map click */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   async function mapCareer() {
     setLoading(true);
     setError(null);
     try {
-      const { session_id } = await api.createSession(orientation);
+      // Zeno's direction is the role transition itself (engineer → AI engineer);
+      // we no longer ask users to pick an intra-role sub-orientation, so the
+      // session always starts from the general ("base") path.
+      const { session_id } = await api.createSession("base");
       router.push(`/skills?session=${session_id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : tc("backendDown"));
@@ -81,12 +65,18 @@ export default function HomePage() {
           variants={fadeUp}
           initial="hidden"
           animate="show"
-          className="mt-7 max-w-4xl pb-3 text-5xl font-extrabold leading-tight tracking-tight text-gradient sm:text-7xl"
+          className="mt-7 max-w-5xl pb-3 text-5xl font-extrabold leading-tight tracking-tight text-gradient sm:text-7xl"
         >
           {t("titleLine1")}
           <br />
-          <span className="text-cyan [-webkit-text-fill-color:hsl(183_86%_52%)]">{t("titleNavigate")}</span>
-          {t("titleLine2")}
+          {/* Keep the whole second line together so "go." never wraps off on
+              its own; on wide screens it stays a single clean line. */}
+          <span className="whitespace-nowrap">
+            <span className="text-cyan [-webkit-text-fill-color:hsl(183_86%_52%)]">
+              {t("titleNavigate")}
+            </span>
+            {t("titleLine2")}
+          </span>
         </motion.h1>
 
         <motion.p
@@ -94,7 +84,7 @@ export default function HomePage() {
           variants={fadeUp}
           initial="hidden"
           animate="show"
-          className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground"
+          className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground"
         >
           {t("subtitle")}
         </motion.p>
@@ -116,45 +106,6 @@ export default function HomePage() {
           </Link>
         </motion.div>
         {error && <p className="mt-3 text-sm text-magenta">{error}</p>}
-
-        {orientations.length > 1 && (
-          <motion.div
-            custom={3.5}
-            variants={fadeUp}
-            initial="hidden"
-            animate="show"
-            className="mt-8 w-full max-w-xl"
-          >
-            <p className="mb-2.5 text-xs uppercase tracking-wide text-muted-foreground">
-              {t("targetOrientation")}
-            </p>
-            <div className="flex flex-wrap justify-center gap-2.5">
-              {orientations.map((o) => {
-                const selected = o.id === orientation;
-                return (
-                  <button
-                    key={o.id}
-                    type="button"
-                    onClick={() => setOrientation(o.id)}
-                    title={o.description}
-                    aria-pressed={selected}
-                    className={
-                      "rounded-full border px-4 py-2 text-sm transition-all " +
-                      (selected
-                        ? "border-cyan/70 bg-cyan/10 text-cyan"
-                        : "border-border bg-surface/60 text-foreground hover:border-primary/50 hover:bg-surface")
-                    }
-                  >
-                    {o.label}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="mt-2.5 text-xs text-muted-foreground">
-              {orientations.find((o) => o.id === orientation)?.description}
-            </p>
-          </motion.div>
-        )}
 
         <motion.div
           custom={4}

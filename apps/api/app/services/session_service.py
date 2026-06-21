@@ -162,7 +162,11 @@ def _resources_for_step(
 
 
 def build_result(
-    db: Session, sess: SurveySession, time_budget: str | None = None, lang: str = "en"
+    db: Session,
+    sess: SurveySession,
+    time_budget: str | None = None,
+    lang: str = "en",
+    orientation: str | None = None,
 ) -> ResultResponse:
     profile = [
         SkillProfileOut(
@@ -177,9 +181,14 @@ def build_result(
     ]
     profile.sort(key=lambda p: (p.category, p.skill_id))
 
-    orient = _orientation(sess)
-
-    # Decision engine (deterministic) — plan section 6.
+    # Orientation: an optional override lets the result page re-score the *same*
+    # profile against a specific target role's focus (e.g. a knowledge-base / RAG
+    # job) without re-taking the survey. None → the session's stored orientation.
+    orient = (
+        competency.get_orientation(orientation).id
+        if orientation is not None
+        else _orientation(sess)
+    )
     obs = {
         us.skill_id: SkillObservation(level=us.level, confidence=us.confidence)
         for us in sess.user_skills

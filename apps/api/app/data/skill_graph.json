@@ -96,17 +96,17 @@
   "orientations": [
     {
       "id": "base",
-      "label": "通用应用向",
-      "label_en": "General applied",
-      "description": "AI Engineer 应用向的通用基线，数据/检索/LLM/评估均衡覆盖。",
-      "description_en": "General baseline for the applied AI Engineer role, with balanced coverage of data/retrieval/LLM/evaluation."
+      "label": "通用 AI 应用",
+      "label_en": "General AI apps",
+      "description": "不确定方向？选这个。覆盖 AI 应用开发的全部基础能力，数据、模型、评估都均衡涉及。",
+      "description_en": "Not sure where to focus? Start here. Covers the all-round fundamentals of AI app development — data, models, and evaluation in balance."
     },
     {
       "id": "rag",
-      "label": "检索向（RAG）",
-      "label_en": "Retrieval-focused (RAG)",
-      "description": "以检索增强系统为核心：加重数据与检索链路（切分/向量化/向量检索/重排），抬高召回-重排相关技能的目标水位，并把数据质量提为必要项。",
-      "description_en": "Centered on retrieval-augmented systems: emphasizes the data & retrieval pipeline (chunking/embedding/vector search/reranking), raises target levels for recall-and-rerank skills, and promotes data quality to required.",
+      "label": "智能问答 / 知识库",
+      "label_en": "Q&A & knowledge bases",
+      "description": "想做能查资料、答问题的 AI（如企业知识库问答、文档助手）。重点练「让 AI 准确找到并用对资料」的检索能力。",
+      "description_en": "Build AI that searches and answers from your own documents (knowledge-base Q&A, doc assistants). Focuses on retrieval — helping the AI find and use the right information accurately.",
       "weight_delta": {
         "data.chunking": 0.2,
         "data.embedding": 0.2,
@@ -120,7 +120,54 @@
         "data.retrieval_rerank": 1,
         "data.chunking": 1
       },
-      "promote_required": ["data.quality"]
+      "promote_required": ["data.quality"],
+      "jd_signals": [
+        "rag",
+        "retrieval-augmented",
+        "retrieval augmented",
+        "retrieval",
+        "retriever",
+        "vector search",
+        "vector database",
+        "vector db",
+        "vector store",
+        "embedding",
+        "embeddings",
+        "rerank",
+        "reranking",
+        "re-rank",
+        "semantic search",
+        "knowledge base",
+        "knowledge-base",
+        "chunking",
+        "chunk",
+        "faiss",
+        "pinecone",
+        "milvus",
+        "weaviate",
+        "qdrant",
+        "elasticsearch",
+        "bm25",
+        "hybrid search",
+        "question answering",
+        "document qa",
+        "检索增强",
+        "检索",
+        "召回",
+        "重排",
+        "向量检索",
+        "向量数据库",
+        "向量库",
+        "向量化",
+        "嵌入",
+        "语义检索",
+        "语义搜索",
+        "知识库",
+        "切分",
+        "分块",
+        "文档问答",
+        "问答系统"
+      ]
     }
   ]
 }

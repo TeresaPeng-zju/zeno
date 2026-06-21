@@ -19,6 +19,22 @@ class OrientationOut(BaseModel):
     description: str
 
 
+class JdMatchRequest(BaseModel):
+    jd: str = Field(..., description="Pasted job description text to classify.")
+
+
+class JdMatchResponse(BaseModel):
+    """Result of inferring a target orientation from a pasted JD."""
+
+    orientation: str  # detected orientation id ('base' when nothing stands out)
+    orientation_label: str
+    description: str
+    matched: bool  # True when a specialty orientation was confidently detected
+    signals: list[str] = Field(
+        default_factory=list, description="Keyword terms found in the JD."
+    )
+
+
 class OptionOut(BaseModel):
     value: str
     label: str

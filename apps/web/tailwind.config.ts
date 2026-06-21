@@ -15,14 +15,8 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        sans: [
-          "Inter",
-          "SF Pro Display",
-          "PingFang SC",
-          "system-ui",
-          "-apple-system",
-          "sans-serif",
-        ],
+        sans: ["var(--default-font-family)"],
+        mono: ["var(--default-font-family-monospace)"],
       },
       colors: {
         border: "hsl(var(--border))",

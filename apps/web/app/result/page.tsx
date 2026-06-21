@@ -13,7 +13,7 @@ import { CareerGraph, type ZenoNodeData } from "@/components/zeno/career-graph";
 import { CircularProgress } from "@/components/zeno/circular-progress";
 import { RoleJourney } from "@/components/zeno/role-journey";
 import { Centered } from "@/components/site/centered";
-import { api, type ResourceOut, type ResultResponse, type TimeBudget } from "@/lib/api";
+import { api, type JdMatchResponse, type OrientationOut, type ResourceOut, type ResultResponse, type TimeBudget } from "@/lib/api";
 
 function buildGraph(
   data: ResultResponse,
@@ -75,9 +75,29 @@ function ResultInner() {
   const sessionId = params.get("session");
   const [data, setData] = useState<ResultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [expired, setExpired] = useState(false);
   const [budget, setBudget] = useState<TimeBudget>("standard");
   const [refreshing, setRefreshing] = useState(false);
   const [done, setDone] = useState<Set<string>>(new Set());
+  // Optional "target a specific role" override: re-scores the same profile
+  // against a role's focus (e.g. a knowledge-base/RAG job) without re-taking
+  // the survey. null → use the session's default (general) orientation.
+  const [orientations, setOrientations] = useState<OrientationOut[]>([]);
+  const [targetRole, setTargetRole] = useState<string | null>(null);
+
+  // The roles a user can target are the same orientations the engine supports.
+  useEffect(() => {
+    let active = true;
+    api
+      .skills()
+      .then((c) => active && c.orientations?.length && setOrientations(c.orientations))
+      .catch(() => {
+        /* non-fatal: the picker just won't render */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // 纯前端「标记完成」：按 session 持久化到 localStorage，不进后端、不影响 readiness
   const doneKey = sessionId ? `zeno:done:${sessionId}` : null;
@@ -115,20 +135,38 @@ function ResultInner() {
     let active = true;
     setRefreshing(true);
     api
-      .result(sessionId, budget)
+      .result(sessionId, budget, targetRole ?? undefined)
       .then((d) => active && setData(d))
-      .catch((e) => active && setError(e instanceof Error ? e.message : tc("loadFailed")))
+      .catch((e) => {
+        if (!active) return;
+        const msg = e instanceof Error ? e.message : "";
+        // A stale/expired session id (e.g. an old /result URL after the DB was
+        // reset) → guide the user to start over instead of dumping a raw error.
+        if (/\b404\b/.test(msg) || msg.includes("session not found")) {
+          setExpired(true);
+        } else {
+          setError(msg || tc("loadFailed"));
+        }
+      })
       .finally(() => active && setRefreshing(false));
     return () => {
       active = false;
     };
-  }, [sessionId, budget, tc]);
+  }, [sessionId, budget, targetRole, tc]);
 
   const graph = useMemo(
     () => (data ? buildGraph(data, { current: tr("frontend"), target: tr("aiEngineer") }) : null),
     [data, tr],
   );
 
+  if (expired)
+    return (
+      <Centered tone="error" text={tc("sessionExpired")}>
+        <Link href="/skills" className="mt-4 inline-block">
+          <Button>{tc("restart")}</Button>
+        </Link>
+      </Centered>
+    );
   if (error) return <Centered text={error} tone="error" />;
   if (!data || !graph) return <Centered text={t("generatingPath")} />;
 
@@ -346,6 +384,12 @@ function ResultInner() {
           <Profile data={data} />
         </details>
 
+        <TargetRoleSection
+          available={orientations.length > 1}
+          refreshing={refreshing}
+          onPick={setTargetRole}
+        />
+
         <p className="text-xs text-muted-foreground">{data.note}</p>
 
         <div className="flex gap-3">
@@ -354,6 +398,120 @@ function ResultInner() {
         </div>
       </div>
     </main>
+  );
+}
+
+function TargetRoleSection({
+  available,
+  refreshing,
+  onPick,
+}: {
+  available: boolean;
+  refreshing: boolean;
+  onPick: (id: string | null) => void;
+}) {
+  const t = useTranslations("result");
+  const [jd, setJd] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [match, setMatch] = useState<JdMatchResponse | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
+
+  // Hidden unless the engine actually supports >1 orientation to map a JD onto.
+  if (!available) return null;
+
+  async function analyze() {
+    if (!jd.trim()) {
+      setMatch(null);
+      setHint(t("targetEmpty"));
+      return;
+    }
+    setHint(null);
+    setAnalyzing(true);
+    try {
+      const m = await api.matchOrientation(jd);
+      setMatch(m);
+      // A confident specialty → re-score against it; otherwise stay general.
+      onPick(m.matched ? m.orientation : null);
+    } catch {
+      setHint(t("targetEmpty"));
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+  function reset() {
+    setJd("");
+    setMatch(null);
+    setHint(null);
+    onPick(null);
+  }
+
+  const busy = analyzing || refreshing;
+
+  return (
+    <Card className="border-cyan/20">
+      <CardContent className="space-y-4 pt-6">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold">{t("targetTitle")}</p>
+          <p className="text-sm text-muted-foreground">{t("targetSubtitle")}</p>
+        </div>
+
+        <textarea
+          value={jd}
+          onChange={(e) => setJd(e.target.value)}
+          disabled={busy}
+          rows={4}
+          placeholder={t("targetPlaceholder")}
+          className="w-full resize-y rounded-xl border border-border bg-surface/60 p-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-cyan/60 disabled:opacity-60"
+        />
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={analyze}
+            disabled={busy}
+            className="rounded-full border border-cyan/70 bg-cyan/10 px-4 py-2 text-sm text-cyan transition-all hover:bg-cyan/15 disabled:opacity-60"
+          >
+            {analyzing ? t("targetAnalyzing") : refreshing ? t("targetRecomputing") : t("targetAnalyze")}
+          </button>
+          {(match || jd) && (
+            <button
+              type="button"
+              onClick={reset}
+              disabled={busy}
+              className="rounded-full border border-border bg-surface/60 px-4 py-2 text-sm text-muted-foreground transition-all hover:border-primary/50 hover:bg-surface disabled:opacity-60"
+            >
+              {t("targetReset")}
+            </button>
+          )}
+        </div>
+
+        {hint && <p className="text-xs text-magenta">{hint}</p>}
+
+        {match && !analyzing && (
+          match.matched ? (
+            <div className="space-y-1.5 rounded-xl border border-cyan/30 bg-cyan/[0.06] p-3">
+              <p className="text-sm text-foreground">
+                {t.rich("targetMatched", {
+                  label: match.orientation_label,
+                  b: (chunks) => <span className="font-semibold text-cyan">{chunks}</span>,
+                })}
+              </p>
+              {match.signals.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {t("targetSignals", { signals: match.signals.slice(0, 8).join("、") })}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {refreshing ? t("targetRecomputing") : t("targetMatchedHint")}
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">{t("targetNoMatch")}</p>
+          )
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
