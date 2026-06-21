@@ -1,4 +1,8 @@
 allowBuilds:
   '@parcel/watcher': set this to true or false
   '@swc/core': set this to true or false
-  sharp: true
+  sharp: set this to true or false
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - '@swc/core'
+  - sharp
