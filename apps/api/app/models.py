@@ -4,6 +4,9 @@ from datetime import datetime
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
     DateTime,
     Float,
     ForeignKey,
@@ -13,8 +16,8 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.config import settings
@@ -46,6 +49,14 @@ class SurveySession(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+    # Audit/analytics: updated on every write; completed_at set when status flips
+    # to "completed". Useful for funnel analysis once live.
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     user_skills: Mapped[list["UserSkill"]] = relationship(
         back_populates="session", cascade="all, delete-orphan"
@@ -56,7 +67,10 @@ class UserSkill(Base):
     """Observed/claimed skill level for a session, with a confidence signal."""
 
     __tablename__ = "user_skills"
-    __table_args__ = (UniqueConstraint("session_id", "skill_id", name="uq_session_skill"),)
+    __table_args__ = (
+        UniqueConstraint("session_id", "skill_id", name="uq_session_skill"),
+        CheckConstraint("level >= 0 AND level <= 4", name="ck_user_skill_level"),
+    )
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
     session_id: Mapped[str] = mapped_column(ForeignKey("sessions.id"), index=True)
@@ -74,10 +88,11 @@ class UserSkill(Base):
 class Resource(Base):
     """Learning resource for the prescription/roadmap (Week 3 resource engine).
 
-    A single resource can cover multiple skills (`skill_ids`). `embedding` powers
-    pgvector similarity search; the freshness block (`last_verified_at`,
-    `freshness_status`, `http_status`) is maintained by the periodic verifier so
-    we never recommend dead or stale links — Zeno's product moat.
+    A single resource can serve several skills, each at its own target level —
+    that mapping lives in `ResourceSkill` (replaces the former `skill_ids` JSONB
+    array). `embedding` powers pgvector similarity search; the freshness block
+    (`last_verified_at`, `freshness_status`, `http_status`) is maintained by the
+    periodic verifier so we never recommend dead or stale links — Zeno's moat.
     """
 
     __tablename__ = "resources"
@@ -92,15 +107,18 @@ class Resource(Base):
         String, default="article"
     )  # article | video | course | doc | repo
 
-    # Which skills (and at what level) this resource serves.
-    skill_ids: Mapped[list[str]] = mapped_column(JSONB, default=list)
-    target_level: Mapped[int] = mapped_column(Integer, default=1)  # suited L0-4 tier
-
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # pgvector Vector on Postgres (HNSW search); stored as JSON list on SQLite,
+    # where retrieval falls back to in-memory cosine (see resource_service).
     embedding: Mapped[list[float] | None] = mapped_column(
-        Vector(settings.embedding_dim), nullable=True
+        Vector(settings.embedding_dim).with_variant(JSON(), "sqlite"), nullable=True
     )
     quality_score: Mapped[float] = mapped_column(Float, default=0.0)  # rerank signal
+    # Soft-delete / unpublish: keep the row (and its freshness history) but exclude
+    # it from recommendations. We never hard-delete a resource.
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=text("true")
+    )
 
     # --- Freshness block (maintained by the periodic verifier) ---
     published_at: Mapped[datetime | None] = mapped_column(
@@ -122,9 +140,21 @@ class Resource(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    # HNSW index for fast approximate nearest-neighbour cosine search (pgvector).
-    # Built only on Postgres; ignored by other dialects.
+    # Per-skill mapping (replaces the old skill_ids JSONB array). Loaded eagerly
+    # so callers can read levels without an extra round-trip.
+    skills: Mapped[list["ResourceSkill"]] = relationship(
+        back_populates="resource",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
     __table_args__ = (
+        CheckConstraint(
+            "freshness_status IN ('unverified', 'fresh', 'stale', 'dead')",
+            name="ck_resource_freshness_status",
+        ),
+        # HNSW index for fast approximate nearest-neighbour cosine search (pgvector).
+        # Built only on Postgres; ignored by other dialects.
         Index(
             "ix_resources_embedding_hnsw",
             "embedding",
@@ -133,3 +163,31 @@ class Resource(Base):
             postgresql_ops={"embedding": "vector_cosine_ops"},
         ),
     )
+
+
+class ResourceSkill(Base):
+    """Association: which skills a resource serves, and the target level for each.
+
+    Replaces the former `Resource.skill_ids` JSONB array + single `target_level`.
+    The composite PK (resource_id, skill_id) keeps each pairing unique, and the
+    per-row `target_level` lets one resource be L1 for one skill and L3 for
+    another. `skill_id` is validated against the skill graph at the service layer
+    (the catalog lives in skill_graph.json, not the DB — by design), so there is
+    deliberately no FK to a skills table.
+    """
+
+    __tablename__ = "resource_skills"
+    __table_args__ = (
+        CheckConstraint(
+            "target_level >= 0 AND target_level <= 4", name="ck_resource_skill_level"
+        ),
+        Index("ix_resource_skills_skill_id", "skill_id"),
+    )
+
+    resource_id: Mapped[str] = mapped_column(
+        ForeignKey("resources.id", ondelete="CASCADE"), primary_key=True
+    )
+    skill_id: Mapped[str] = mapped_column(String, primary_key=True)
+    target_level: Mapped[int] = mapped_column(Integer, default=1)  # suited L0-4 tier
+
+    resource: Mapped["Resource"] = relationship(back_populates="skills")

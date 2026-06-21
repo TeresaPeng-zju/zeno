@@ -4,14 +4,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.core.db import init_db
+from app.core.startup_checks import validate_skill_references
 from app.routers import catalog, explain, resources, sessions
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Enable pgvector + create tables. Alembic migrations land later in Week 3.
-    init_db()
+    # Schema is owned by Alembic now (`alembic upgrade head` on deploy / locally),
+    # NOT by create_all — that's what fixed the silent schema drift. The app only
+    # fails fast if any resource/requirement references a skill absent from the
+    # graph (our application-layer stand-in for a skills foreign key).
+    validate_skill_references()
     yield
 
 

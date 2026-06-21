@@ -22,7 +22,12 @@ class Base(DeclarativeBase):
 
 
 def init_db() -> None:
-    """Enable pgvector then create tables. Called once on app startup.
+    """Create the schema directly from the ORM models.
+
+    NOTE: production/dev schema is managed by Alembic (`alembic upgrade head`);
+    the app no longer calls this on startup. It is kept ONLY as a convenience
+    for tests and throwaway local bootstrap (e.g. the pg_only curation test),
+    where spinning up a one-shot schema is simpler than running migrations.
 
     The `vector` extension MUST exist before `create_all`, because the
     ``resources`` table declares a ``Vector`` column.

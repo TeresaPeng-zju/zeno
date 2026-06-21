@@ -55,6 +55,11 @@ dmypy.json
 .env.local
 .env.*.local
 
+# Local SQLite (dev only; 真实 schema 由 Alembic + Postgres 管理)
+*.db
+*.sqlite
+*.sqlite3
+
 # ============================
 # Node.js / Next.js
 # ============================
@@ -96,3 +101,4 @@ Thumbs.db
 # 私有文档（不推进仓库）
 # ============================
 apps/STRATEGY.md
+apps/INTERVIEW.md
