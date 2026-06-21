@@ -1,20 +1,26 @@
 import type { Metadata } from "next";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
+
 import "./globals.css";
 import { TopNav } from "@/components/site/top-nav";
 
-export const metadata: Metadata = {
-  title: "Zeno · See where you are. Navigate where you could go.",
-  description:
-    "Zeno maps your skills into a living career constellation — revealing your strengths, your gaps, and the most effective path to your target role.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("meta");
+  return {
+    title: t("title"),
+    description: t("description"),
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getLocale();
   return (
-    <html lang="zh-CN" className="dark">
+    <html lang={locale} className="dark">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -24,8 +30,10 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen font-sans antialiased" suppressHydrationWarning>
-        <TopNav />
-        {children}
+        <NextIntlClientProvider>
+          <TopNav />
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   );

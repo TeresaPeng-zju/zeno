@@ -4,13 +4,14 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { CATEGORY_LABELS, type QuestionOut } from "@/lib/api";
+import { type QuestionOut } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const schema = z.object({
-  answer_value: z.string().min(1, "请选择一个选项"),
+  answer_value: z.string().min(1),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -23,6 +24,8 @@ export function QuestionCard({
   submitting: boolean;
   onSubmit: (answerValue: string) => void;
 }) {
+  const t = useTranslations("question");
+  const tcat = useTranslations("categories");
   const {
     handleSubmit,
     setValue,
@@ -45,7 +48,7 @@ export function QuestionCard({
     <form onSubmit={handleSubmit((v) => onSubmit(v.answer_value))} className="space-y-6">
       <div className="space-y-2">
         <span className="inline-block rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
-          {CATEGORY_LABELS[question.category] ?? question.category}
+          {tcat.has(question.category) ? tcat(question.category) : question.category}
         </span>
         <h2 className="text-2xl font-semibold leading-snug">{question.text}</h2>
         <p className="text-sm text-muted-foreground">{question.help_text}</p>
@@ -81,11 +84,11 @@ export function QuestionCard({
       </div>
 
       {errors.answer_value && (
-        <p className="text-sm text-red-500">{errors.answer_value.message}</p>
+        <p className="text-sm text-red-500">{t("pickOption")}</p>
       )}
 
       <Button type="submit" size="lg" className="w-full" disabled={submitting || !selected}>
-        {submitting ? "提交中..." : "下一步"}
+        {submitting ? t("submitting") : t("next")}
       </Button>
     </form>
   );

@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from app.domain import competency
-from app.domain.question_bank import ANSWER_OPTIONS
+from app.domain.question_bank import ANSWER_OPTIONS, option_label
+from app.i18n import Lang, get_lang, t
 from app.schemas import (
     OrientationOut,
     ProficiencyOptionOut,
@@ -12,32 +13,43 @@ from app.schemas import (
 
 router = APIRouter(prefix="/api", tags=["catalog"])
 
-# Display order + Chinese labels for the four competency areas.
-CATEGORY_ORDER: list[tuple[str, str, str]] = [
-    ("foundation", "工程地基", "可从前端迁移的能力"),
-    ("data", "数据与检索", "RAG 的地基"),
-    ("llm", "LLM 应用", "把模型变成产品能力"),
-    ("eval", "评估与迭代", "最容易被忽略的差异点"),
-]
+# Display order for the four competency areas; labels/hints come from the i18n
+# catalog (category.<cat>.label / .hint).
+CATEGORY_ORDER: list[str] = ["foundation", "data", "llm", "eval"]
 
 
 @router.get("/skills", response_model=SkillCatalogResponse)
-def list_skills() -> SkillCatalogResponse:
+def list_skills(lang: Lang = Depends(get_lang)) -> SkillCatalogResponse:
     groups: list[SkillGroupOut] = []
-    for category, label, hint in CATEGORY_ORDER:
+    for category in CATEGORY_ORDER:
         items = [
-            SkillItemOut(skill_id=s.id, name=s.name, learnability=s.learnability)
+            SkillItemOut(
+                skill_id=s.id,
+                name=competency.skill_name(s.id, lang),
+                learnability=s.learnability,
+            )
             for s in competency.SKILLS
             if s.category == category
         ]
-        groups.append(SkillGroupOut(category=category, label=label, hint=hint, skills=items))
+        groups.append(
+            SkillGroupOut(
+                category=category,
+                label=t(lang, f"category.{category}.label"),
+                hint=t(lang, f"category.{category}.hint"),
+                skills=items,
+            )
+        )
 
     proficiency = [
-        ProficiencyOptionOut(value=o.value, label=o.label, level=o.level)
+        ProficiencyOptionOut(value=o.value, label=option_label(o.value, lang), level=o.level)
         for o in ANSWER_OPTIONS
     ]
     orientations = [
-        OrientationOut(id=o.id, label=o.label, description=o.description)
+        OrientationOut(
+            id=o.id,
+            label=competency.orientation_label(o, lang),
+            description=competency.orientation_description(o, lang),
+        )
         for o in competency.ORIENTATIONS.values()
     ]
     return SkillCatalogResponse(

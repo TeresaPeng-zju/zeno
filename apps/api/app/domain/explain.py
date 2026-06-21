@@ -25,6 +25,7 @@ from pathlib import Path
 
 from app.domain import competency, decision
 from app.domain.decision import NextStep, SkillObservation
+from app.i18n import t
 
 _EVIDENCE_FILE = Path(__file__).resolve().parent.parent / "data" / "jd_evidence.json"
 _GRAPH_FILE = competency._SKILL_GRAPH_FILE
@@ -85,34 +86,50 @@ def plan_fingerprint(
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
 
 
-def _name(skill_id: str) -> str:
-    s = competency.SKILLS_BY_ID.get(skill_id)
-    return s.name if s else skill_id
+def _name(skill_id: str, lang: str = "en") -> str:
+    return competency.skill_name(skill_id, lang)
 
 
-def _explain_one(step: NextStep) -> dict:
+def _explain_one(step: NextStep, lang: str = "en") -> dict:
     """The full provenance record for a single ranked step."""
     comp = step.score_components
     jd = _jd_evidence_for(step.skill_id)
+    sep = t(lang, "join.sep")
 
     # The dependency constraint that pinned its position (the topological reason).
     if step.blocked_by:
-        dep_reason = (
-            f"它的前置「{'、'.join(_name(d) for d in step.blocked_by)}」尚未补齐，"
-            f"因此被排在这些前置之后（拓扑约束，非打分）。"
+        dep_reason = t(
+            lang,
+            "explain.dep.blocked",
+            names=sep.join(_name(d, lang) for d in step.blocked_by),
         )
     else:
-        dep_reason = "无未补齐前置，位置完全由打分决定。"
+        dep_reason = t(lang, "explain.dep.clear")
 
     # Plain-language attribution of the score, term by term.
     score_breakdown = [
-        f"缺口项 0.5×{comp.get('gap_score_norm', 0)} = {comp.get('gap_term', 0)}",
-        f"依赖紧迫 0.3×{comp.get('dependency_urgency', 0)} = {comp.get('dependency_term', 0)}",
-        f"可学性 0.2×{comp.get('learnability', 0)} = {comp.get('learnability_term', 0)}",
+        t(
+            lang,
+            "explain.score.gap",
+            a=comp.get("gap_score_norm", 0),
+            b=comp.get("gap_term", 0),
+        ),
+        t(
+            lang,
+            "explain.score.dep",
+            a=comp.get("dependency_urgency", 0),
+            b=comp.get("dependency_term", 0),
+        ),
+        t(
+            lang,
+            "explain.score.learn",
+            a=comp.get("learnability", 0),
+            b=comp.get("learnability_term", 0),
+        ),
     ]
     if comp.get("blocked_penalty", 1.0) != 1.0:
         score_breakdown.append(
-            f"被前置阻塞，整体×{comp.get('blocked_penalty')}（降权让前置先出）"
+            t(lang, "explain.score.blocked", p=comp.get("blocked_penalty"))
         )
 
     return {
@@ -127,8 +144,8 @@ def _explain_one(step: NextStep) -> dict:
         "score_breakdown": score_breakdown,
         "jd_evidence": jd,
         "dependency": {
-            "blocked_by": [{"skill_id": d, "name": _name(d)} for d in step.blocked_by],
-            "unblocks": [{"skill_id": d, "name": _name(d)} for d in step.unblocks],
+            "blocked_by": [{"skill_id": d, "name": _name(d, lang)} for d in step.blocked_by],
+            "unblocks": [{"skill_id": d, "name": _name(d, lang)} for d in step.unblocks],
             "reason": dep_reason,
         },
         "why": step.why,
@@ -140,16 +157,17 @@ def explain_plan(
     obs: dict[str, SkillObservation],
     orientation_id: str = competency.ORIENTATION_BASE,
     max_steps: int = decision.MAX_NEXT_STEPS,
+    lang: str = "en",
 ) -> dict:
     """Full auditable evidence chain for a plan: fingerprint + per-step provenance."""
-    steps = decision.select_next_steps(role_id, obs, max_steps, orientation_id)
+    steps = decision.select_next_steps(role_id, obs, max_steps, orientation_id, lang)
     return {
         "fingerprint": plan_fingerprint(role_id, obs, orientation_id),
         "graph_version": _graph_digest(),
         "role_id": role_id,
         "orientation": orientation_id,
         "n_jds": _evidence().get("n_jds", 0),
-        "steps": [_explain_one(s) for s in steps],
+        "steps": [_explain_one(s, lang) for s in steps],
     }
 
 
@@ -159,6 +177,7 @@ def diff_plans(
     obs_after: dict[str, SkillObservation],
     orientation_id: str = competency.ORIENTATION_BASE,
     max_steps: int = decision.MAX_NEXT_STEPS,
+    lang: str = "en",
 ) -> dict:
     """Causally-attributed diff between two plans.
 
@@ -169,6 +188,7 @@ def diff_plans(
     """
     fp_before = plan_fingerprint(role_id, obs_before, orientation_id)
     fp_after = plan_fingerprint(role_id, obs_after, orientation_id)
+    sep = t(lang, "join.sep")
 
     # (a) Which inputs changed.
     input_changes: list[dict] = []
@@ -179,12 +199,12 @@ def diff_plans(
         a_lvl = a.level if a else None
         if b_lvl != a_lvl:
             input_changes.append(
-                {"skill_id": sid, "skill_name": _name(sid), "from": b_lvl, "to": a_lvl}
+                {"skill_id": sid, "skill_name": _name(sid, lang), "from": b_lvl, "to": a_lvl}
             )
 
     # (b) How the ordering shifted.
-    before = decision.select_next_steps(role_id, obs_before, max_steps, orientation_id)
-    after = decision.select_next_steps(role_id, obs_after, max_steps, orientation_id)
+    before = decision.select_next_steps(role_id, obs_before, max_steps, orientation_id, lang)
+    after = decision.select_next_steps(role_id, obs_after, max_steps, orientation_id, lang)
     rank_before = {s.skill_id: s.rank for s in before}
     rank_after = {s.skill_id: s.rank for s in after}
 
@@ -200,16 +220,18 @@ def diff_plans(
             else:
                 kind = "moved"
             order_changes.append(
-                {"skill_id": sid, "skill_name": _name(sid), "rank_before": rb, "rank_after": ra, "change": kind}
+                {"skill_id": sid, "skill_name": _name(sid, lang), "rank_before": rb, "rank_after": ra, "change": kind}
             )
 
     if fp_before == fp_after:
-        attribution = "输入指纹一致 → 计划逐位相同（确定性保证：同输入必然同输出）。"
+        attribution = t(lang, "explain.diff.identical")
     elif not order_changes:
-        attribution = "输入变了，但展示层 top-N 顺序未变（变化发生在更深处）。"
+        attribution = t(lang, "explain.diff.no_order")
     else:
-        drivers = "、".join(f"{c['skill_name']} L{c['from']}→L{c['to']}" for c in input_changes) or "（无可见输入变化）"
-        attribution = f"顺序变化完全由输入变化驱动：{drivers}。无输入变化则计划不会变。"
+        drivers = sep.join(
+            f"{c['skill_name']} L{c['from']}→L{c['to']}" for c in input_changes
+        ) or t(lang, "explain.diff.no_visible")
+        attribution = t(lang, "explain.diff.drivers", drivers=drivers)
 
     return {
         "fingerprint_before": fp_before,

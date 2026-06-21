@@ -1,15 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
-const NAV_LINKS = [
-  { label: "Career Graph", href: "/#graph" },
-  { label: "Skills", href: "/skills" },
-  { label: "Gap Analysis", href: "/#gap" },
-  { label: "Roadmap", href: "/#roadmap" },
-];
+import { LanguageSwitcher } from "@/components/site/language-switcher";
 
 export function TopNav() {
+  const t = useTranslations("nav");
+  const navLinks = [
+    { label: t("careerGraph"), href: "/#graph" },
+    { label: t("skills"), href: "/skills" },
+    { label: t("gapAnalysis"), href: "/#gap" },
+    { label: t("roadmap"), href: "/#roadmap" },
+  ];
+
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
@@ -19,9 +23,9 @@ export function TopNav() {
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
-          {NAV_LINKS.map((l) => (
+          {navLinks.map((l) => (
             <Link
-              key={l.label}
+              key={l.href}
               href={l.href}
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
@@ -30,18 +34,19 @@ export function TopNav() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-4">
+          <LanguageSwitcher />
           <Link
             href="/skills"
             className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline"
           >
-            Sign in
+            {t("signIn")}
           </Link>
           <Link
             href="/skills"
             className="rounded-lg bg-cyan px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-cyan/90"
           >
-            Get started
+            {t("getStarted")}
           </Link>
         </div>
       </div>
