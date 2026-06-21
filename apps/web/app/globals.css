@@ -4,6 +4,19 @@
 
 @layer base {
   :root {
+    /* Typography — Inter for Latin, system CJK fallbacks (PingFang SC on
+       macOS, Microsoft Yahei on Windows, Hiragino Sans GB …). Mirrors the
+       anygen stack so Chinese renders with high-quality native faces. */
+    --font-inter: "Inter Variable", "Inter";
+    --font-source-code-pro: "Source Code Pro";
+    --default-font-family: var(--font-inter), -apple-system, BlinkMacSystemFont,
+      "Helvetica Neue", Tahoma, "PingFang SC", "Microsoft Yahei",
+      "Hiragino Sans GB", Arial, sans-serif, "Apple Color Emoji",
+      "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --default-font-family-monospace: var(--font-source-code-pro), ui-monospace,
+      SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+      monospace;
+
     /* Zeno dark-first theme (deep space navy) */
     --background: 222 33% 6%; /* #0A0D14 */
     --foreground: 220 30% 92%;
@@ -39,8 +52,10 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    font-family: var(--default-font-family);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
 }

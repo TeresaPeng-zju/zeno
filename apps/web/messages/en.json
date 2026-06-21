@@ -21,6 +21,8 @@
     "loadFailed": "Failed to load.",
     "submitFailed": "Failed to submit.",
     "missingSession": "Missing session parameter.",
+    "sessionExpired": "This assessment session has expired. Let's start a fresh one.",
+    "restart": "Start a new assessment",
     "backendDown": "Couldn't reach the backend. Make sure the API is running."
   },
   "roles": {
@@ -48,7 +50,7 @@
     "titleNavigate": "Navigate",
     "titleLine2": " where you could go.",
     "subtitle": "Zeno maps your skills into a living career constellation — revealing your strengths, your gaps, and the most effective path to your target role.",
-    "mapMyCareer": "Map my career →",
+    "mapMyCareer": "Map my career",
     "mapping": "Mapping…",
     "exploreGraph": "Explore the graph",
     "targetOrientation": "Target orientation",
@@ -134,6 +136,18 @@
     "calibrateDefault": "Pick your weekly hours and the roadmap re-sequences instantly.",
     "resourcesEmpty": "No resources have passed the freshness check yet — they'll appear here automatically once the library is topped up.",
     "resourcesTitle": "Recommended resources (passed the link freshness check)",
-    "verifiedOn": "Verified {date}"
+    "verifiedOn": "Verified {date}",
+    "targetTitle": "Already eyeing a specific role?",
+    "targetSubtitle": "By default we assess you against a general AI Engineer profile. Got a job posting in mind? Paste its description below — we'll figure out what that role actually emphasizes and re-score your gaps and roadmap accordingly. Nothing is locked in; clear it anytime.",
+    "targetPlaceholder": "Paste the job description here — responsibilities, requirements, tech stack…",
+    "targetAnalyze": "Re-score for this role",
+    "targetAnalyzing": "Reading the job description…",
+    "targetRecomputing": "Recomputing for this role…",
+    "targetReset": "Clear · back to general",
+    "targetEmpty": "Paste a job description first, then we'll tailor your gaps to it.",
+    "targetMatched": "Detected a <b>{label}</b> role.",
+    "targetMatchedHint": "Your gaps and roadmap below are now re-scored for what this role emphasizes.",
+    "targetSignals": "Picked up on: {signals}",
+    "targetNoMatch": "No strong specialty stood out in this description — keeping the general assessment, which already fits."
   }
 }

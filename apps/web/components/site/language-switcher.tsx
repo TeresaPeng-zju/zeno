@@ -14,6 +14,11 @@ export function LanguageSwitcher() {
     if (locale === active) return;
     startTransition(async () => {
       await setUserLocale(locale);
+      // The skill catalog (and other content) is fetched client-side from the
+      // API and localized via Accept-Language. router.refresh() only re-renders
+      // Server Components, leaving that client-fetched data stale. A full reload
+      // remounts every client component so it re-fetches in the new locale.
+      window.location.reload();
     });
   }
 

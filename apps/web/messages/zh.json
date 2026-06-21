@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Zeno · 看清你在哪，导航你能去哪。",
+    "title": "Zeno · 看清当下，导航远方。",
     "description": "Zeno 把你的技能映射成一张动态的职业星图，揭示你的优势、差距，以及通往目标岗位最有效的路径。"
   },
   "nav": {
@@ -21,6 +21,8 @@
     "loadFailed": "加载失败",
     "submitFailed": "提交失败",
     "missingSession": "缺少 session 参数",
+    "sessionExpired": "本次测评会话已失效，我们重新开始一次吧。",
+    "restart": "重新开始测评",
     "backendDown": "无法连接后端，请确认 API 已启动"
   },
   "roles": {
@@ -44,9 +46,9 @@
   },
   "home": {
     "badge": "面向工程师的 AI 职业智能",
-    "titleLine1": "看清你在哪。",
+    "titleLine1": "看清你当下的位置。",
     "titleNavigate": "导航",
-    "titleLine2": "你能去哪。",
+    "titleLine2": "你能抵达的远方。",
     "subtitle": "Zeno 把你的技能映射成一张动态的职业星图，揭示你的优势、差距，以及通往目标岗位最有效的路径。",
     "mapMyCareer": "绘制我的职业路径 →",
     "mapping": "绘制中…",
@@ -134,6 +136,18 @@
     "calibrateDefault": "选择每周可投入的时间，路线会即时重排。",
     "resourcesEmpty": "暂无通过保鲜校验的推荐资源，资源库补充后会自动出现在这里。",
     "resourcesTitle": "推荐资源（已通过链接保鲜校验）",
-    "verifiedOn": "核验于 {date}"
+    "verifiedOn": "核验于 {date}",
+    "targetTitle": "已经有心仪的岗位了吗？",
+    "targetSubtitle": "默认按通用 AI Engineer 的画像评估你。如果你已经有看上的岗位，把它的招聘描述（JD）贴进来——我们会自动看出这个岗位真正看重什么，并据此重新精算你的缺口与成长路线。不会锁定，随时可清除。",
+    "targetPlaceholder": "把岗位的招聘描述（JD）贴在这里——职责、要求、技术栈都行…",
+    "targetAnalyze": "按这份 JD 精算",
+    "targetAnalyzing": "正在读这份 JD…",
+    "targetRecomputing": "正在按该岗位重新精算…",
+    "targetReset": "清除 · 恢复通用",
+    "targetEmpty": "先贴一段岗位描述（JD），我们才能据此为你定制缺口。",
+    "targetMatched": "识别为 <b>{label}</b> 方向的岗位。",
+    "targetMatchedHint": "下方的缺口与成长路线，已按这个岗位看重的能力重新精算。",
+    "targetSignals": "命中信号：{signals}",
+    "targetNoMatch": "这份描述里没看出明显的方向侧重——维持通用评估即可，已经契合。"
   }
 }
