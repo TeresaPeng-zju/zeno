@@ -21,13 +21,20 @@ Run:
 
 from __future__ import annotations
 
+import json
 import re
 from collections import Counter
 from pathlib import Path
 
-import pandas as pd
-
-from scripts.build_jd_evidence import _XLSX, _norm, SKILL_KEYWORDS
+from scripts.build_jd_evidence import (
+    _RAW_DIR,
+    _XLSX,
+    _classify_jd,
+    _HARD_EXCLUDE_TITLES,
+    _norm,
+    discover_jd_sources,
+    SKILL_KEYWORDS,
+)
 
 # A non-graph umbrella we already know about; its keywords also count as "covered".
 UMBRELLA = "llm.core"
@@ -67,12 +74,46 @@ def _is_covered(token: str, covered: list[str]) -> bool:
     return any(token in c or c in token for c in covered)
 
 
-def main() -> None:
-    df = pd.read_excel(_XLSX)
+def _load_all_engineering_docs() -> list[str]:
+    """Load engineering JDs from all sources (xlsx legacy + auto-discovered JSONL)."""
     docs: list[str] = []
-    for _, row in df.iterrows():
-        blob = " ".join(_norm(row.get(col, "")) for col in ("职位名称", "职位描述", "职位要求"))
-        docs.append(blob)
+
+    # Legacy xlsx source
+    if _XLSX.exists():
+        import pandas as pd
+        df = pd.read_excel(_XLSX)
+        for _, row in df.iterrows():
+            blob = " ".join(_norm(row.get(col, "")) for col in ("职位名称", "职位描述", "职位要求"))
+            docs.append(blob)
+        print(f"  [xlsx legacy] {len(docs)} docs")
+
+    # Auto-discovered JSONL sources (engineering only)
+    for dir_path, src in discover_jd_sources():
+        jsonl_path = dir_path / "jds.jsonl"
+        if not jsonl_path.exists():
+            continue
+        count = 0
+        for line in jsonl_path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            obj = json.loads(line)
+            title = obj.get("title", "")
+            if title.lower() in _HARD_EXCLUDE_TITLES:
+                continue
+            if _classify_jd(title) != "engineering":
+                continue
+            blob = " ".join(
+                _norm(obj.get(f, "")) for f in ("title", "description", "requirements")
+            )
+            docs.append(blob)
+            count += 1
+        print(f"  [{src.source_id}] {count} engineering docs")
+
+    return docs
+
+
+def main() -> None:
+    docs = _load_all_engineering_docs()
     n = len(docs)
     covered = _covered_terms()
 

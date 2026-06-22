@@ -37,8 +37,13 @@ from dataclasses import dataclass
 from pathlib import Path
 
 _API_ROOT = Path(__file__).resolve().parent.parent
-_XLSX = _API_ROOT / "app" / "data" / "raw" / "bytedance_ai_jobs.xlsx"
+_RAW_DIR = _API_ROOT / "app" / "data" / "raw"
+_XLSX = _RAW_DIR / "bytedance_ai_jobs.xlsx"
 _OUT = _API_ROOT / "app" / "data" / "jd_evidence.json"
+
+# Default trust/date for JSONL sources when manifest.json is absent or incomplete.
+_DEFAULT_JD_TRUST = 0.65
+_DEFAULT_COLLECTED_AT = "2026-01-01"
 
 SCHEMA_VERSION = 2
 
@@ -179,9 +184,13 @@ def _norm(text: str) -> str:
 def run_jd_keyword_source() -> tuple[Source, dict[str, Contribution]]:
     """Source #1 — deterministic keyword substring match over the JD spreadsheet.
 
-    Lossless port of the original builder: same numbers, now emitted as a single
-    registered, weighted source rather than the whole ledger.
+    Legacy source: the xlsx file has been migrated to jd_documents DB table.
+    If the file no longer exists on disk, this source is skipped gracefully.
     """
+    if not _XLSX.exists():
+        print(f"  [skip] {_XLSX.name} not found (migrated to DB)")
+        return JD_KEYWORD_SOURCE, {}
+
     import pandas as pd  # local import: only the live corpus pass needs pandas
 
     df = pd.read_excel(_XLSX)
@@ -202,6 +211,127 @@ def run_jd_keyword_source() -> tuple[Source, dict[str, Contribution]]:
             "frequency": round(hits / n, 4) if n else 0.0,
         }
     return JD_KEYWORD_SOURCE, contribs
+
+
+# --- JD classification: filter engineering roles from product/algorithm/support ---
+# Title-based rules; description is NOT filtered (per README §4.1).
+_EXCLUDE_IDS: set[str] = set()  # populated at runtime if needed
+
+_PRODUCT_KEYWORDS = [
+    "产品经理", "产品运营", "运营专家", "策略运营", "产品负责人",
+    "产品专家", "战略合作", "设计师", "产品工程师",
+]
+_ALGO_KEYWORDS = [
+    "算法研究", "researcher", "预训练", "模型训练", "nlp算法",
+    "训练工程师", "推理算子优化", "推理工程师",
+    "vlm/aigc训练", "llm/vlm/aigc训练", "llm/vlm/aigc推理",
+]
+
+
+def _classify_jd(title: str) -> str:
+    """Classify a JD by title into: engineering | product | algorithm | support."""
+    t = title.lower()
+    for kw in _ALGO_KEYWORDS:
+        if kw in t:
+            return "algorithm"
+    for kw in _PRODUCT_KEYWORDS:
+        if kw in t:
+            return "product"
+    if "运营" in t and not re.search(r"工程师|开发|架构", t):
+        return "product"
+    if "评测运营" in t or "数据运营" in t:
+        return "product"
+    if "技术支持" in t:
+        return "support"
+    return "engineering"
+
+
+# IDs to hard-exclude (manual review 2026-06-22):
+# - official_7615128609917143349: 法务AI应用专家 (non-technical)
+# - official_*: 网管平台运维产品经理 (noise, not AI)
+# - official_*: AI芯片测试 (hardware, not application)
+_HARD_EXCLUDE_TITLES = ["法务ai应用专家", "网管平台运维产品经理", "高级测试开发工程师-ai芯片"]
+
+
+def discover_jd_sources() -> list[tuple[Path, Source]]:
+    """Auto-discover JSONL JD sources under raw/.
+
+    Convention: any subdirectory of raw/ containing a `jds.jsonl` file is a JD
+    source. Source metadata (trust, collected_at) is read from `manifest.json`
+    in the same directory; missing fields fall back to safe defaults.
+
+    This means adding a new JD dump is: mkdir, drop jds.jsonl + manifest.json,
+    re-run build — zero code changes.
+    """
+    found: list[tuple[Path, Source]] = []
+    for jsonl_path in sorted(_RAW_DIR.glob("*/jds.jsonl")):
+        dir_path = jsonl_path.parent
+        source_id = f"jd/{dir_path.name}"
+        manifest_path = dir_path / "manifest.json"
+
+        trust = _DEFAULT_JD_TRUST
+        collected_at = _DEFAULT_COLLECTED_AT
+        if manifest_path.exists():
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            trust = manifest.get("trust", trust)
+            # collected_at: prefer explicit field, else first date in range
+            collected_at = manifest.get(
+                "collected_at",
+                (manifest.get("collected_at_range") or [collected_at])[0],
+            )
+
+        src = Source(
+            source_id=source_id,
+            source_type="jd",
+            signal="keyword",
+            trust=trust,
+            collected_at=collected_at,
+        )
+        found.append((dir_path, src))
+    return found
+
+
+def run_jd_jsonl_source(
+    dir_path: Path, source: Source
+) -> tuple[Source, dict[str, Contribution]]:
+    """Generic JSONL JD source — deterministic keyword match with role filtering.
+
+    Only engineering-classified JDs are fed into the keyword LF.
+    Product/algorithm/support roles are excluded from frequency calculation
+    but preserved in the raw JSONL for future use.
+    """
+    jsonl_path = dir_path / "jds.jsonl"
+    docs: list[str] = []
+    skipped = {"product": 0, "algorithm": 0, "support": 0, "hard_exclude": 0}
+    for line in jsonl_path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        obj = json.loads(line)
+        title = obj.get("title", "")
+        if title.lower() in _HARD_EXCLUDE_TITLES:
+            skipped["hard_exclude"] += 1
+            continue
+        cat = _classify_jd(title)
+        if cat != "engineering":
+            skipped[cat] += 1
+            continue
+        blob = " ".join(
+            _norm(obj.get(f, "")) for f in ("title", "description", "requirements")
+        )
+        docs.append(blob)
+
+    print(f"  [{source.source_id}] {len(docs)} engineering JDs loaded, skipped: {dict(skipped)}")
+
+    n = len(docs)
+    contribs: dict[str, Contribution] = {}
+    for skill_id, kws in SKILL_KEYWORDS.items():
+        hits = sum(1 for doc in docs if any(kw in doc for kw in kws))
+        contribs[skill_id] = {
+            "doc_count": hits,
+            "doc_total": n,
+            "frequency": round(hits / n, 4) if n else 0.0,
+        }
+    return source, contribs
 
 
 def run_article_source(source: Source) -> tuple[Source, dict[str, Contribution]]:
@@ -301,12 +431,11 @@ def assemble(runs: list[tuple[Source, dict[str, Contribution]]]) -> dict:
         for s, _ in runs
     ]
 
-    # JD corpus size — kept at top level for back-compat (explain.py reads n_jds).
+    # JD corpus size — sum across all JD sources for back-compat (explain.py reads n_jds).
     n_jds = 0
     for s, contribs in runs:
         if s.source_type == "jd" and contribs:
-            n_jds = int(next(iter(contribs.values()))["doc_total"])
-            break
+            n_jds += int(next(iter(contribs.values()))["doc_total"])
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -327,6 +456,9 @@ def build(include_article_skeleton: bool = False) -> dict:
     the registered article sources through the schema (no token spend yet).
     """
     runs = [run_jd_keyword_source()]
+    # Auto-discover all JSONL JD sources under raw/*/jds.jsonl
+    for dir_path, src in discover_jd_sources():
+        runs.append(run_jd_jsonl_source(dir_path, src))
     if include_article_skeleton:
         runs += [run_article_source(s) for s in ARTICLE_SOURCES]
     return assemble(runs)

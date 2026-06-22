@@ -106,5 +106,16 @@ apps/INTERVIEW.md
 # 方案讨论记录（设计决策 / 与外部工具的交叉讨论，仅本地留存）
 docs/decisions/
 
-# 爬虫 dump 规范（操作性文字文档，仅本地留存；dump 产物 jds.jsonl / manifest.json 仍进仓）
-apps/api/app/data/raw/jd_multi_2026h1/README.md
+# 爬虫 dump 规范（操作性文字文档，仅本地留存）
+apps/api/app/data/raw/*/README.md
+
+# JD 原始数据（护城河，只存 DB，不进仓）
+apps/api/app/data/raw/*/jds.jsonl
+apps/api/app/data/raw/*/manifest.json
+apps/api/app/data/raw/bytedance_ai_jobs.xlsx
+
+# JD evidence 派生数据（从 DB 重建，不进仓）
+apps/api/app/data/jd_evidence.json
+
+# 根目录临时数据文件
+jds.jsonl
