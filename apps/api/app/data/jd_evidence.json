@@ -7,7 +7,11 @@
       "source_id": "bytedance/ai_jobs.xlsx",
       "source_type": "jd",
       "signal": "keyword",
-      "trust": 0.6
+      "trust": 0.6,
+      "collected_at": "2026-01-22",
+      "published_at": null,
+      "provider": "",
+      "weak_gold_anchor": false
     }
   ],
   "skills": {
