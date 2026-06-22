@@ -102,3 +102,9 @@ Thumbs.db
 # ============================
 apps/STRATEGY.md
 apps/INTERVIEW.md
+
+# 方案讨论记录（设计决策 / 与外部工具的交叉讨论，仅本地留存）
+docs/decisions/
+
+# 爬虫 dump 规范（操作性文字文档，仅本地留存；dump 产物 jds.jsonl / manifest.json 仍进仓）
+apps/api/app/data/raw/jd_multi_2026h1/README.md
