@@ -203,8 +203,8 @@ export default function HomePage() {
                     className={
                       "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all duration-200 " +
                       (active
-                        ? "border-cyan/60 bg-cyan/10 text-cyan shadow-[0_0_16px_hsl(183_86%_52%/0.15)]"
-                        : "border-border/60 bg-surface/40 text-muted-foreground hover:border-cyan/30 hover:text-foreground")
+                        ? "border-cyan/60 bg-cyan/10 text-cyan shadow-[0_2px_12px_hsl(183_86%_52%/0.25),0_1px_2px_hsl(183_86%_52%/0.15),inset_0_1px_0_hsl(183_86%_52%/0.1)]"
+                        : "border-border/60 bg-surface/40 text-muted-foreground shadow-[0_1px_3px_hsl(0_0%_0%/0.25),inset_0_1px_0_hsl(0_0%_100%/0.03)] hover:border-cyan/30 hover:text-foreground hover:shadow-[0_2px_8px_hsl(183_86%_52%/0.1),inset_0_1px_0_hsl(0_0%_100%/0.05)] active:translate-y-px")
                     }
                   >
                     {active && <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-cyan" />}
