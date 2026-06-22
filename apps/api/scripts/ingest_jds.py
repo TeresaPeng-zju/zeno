@@ -18,10 +18,8 @@ from sqlalchemy import select
 from app.core.db import SessionLocal
 from app.models import JdDocument
 from scripts.build_jd_evidence import (
-    _RAW_DIR,
     _classify_jd,
     _HARD_EXCLUDE_TITLES,
-    _norm,
     discover_jd_sources,
 )
 

@@ -51,11 +51,7 @@
     "titleLine2": " where you could go.",
     "subtitle": "Zeno maps your skills into a living career constellation — revealing your strengths, your gaps, and the most effective path to your target role.",
     "mapMyCareer": "Map my career",
-    "mapping": "Mapping…",
-    "exploreGraph": "Explore the graph",
-    "targetOrientation": "Target orientation",
-    "constellationTitle": "Your career constellation",
-    "generateMyGraph": "Generate my graph →"
+    "mapping": "Mapping…"
   },
   "graph": {
     "legendHave": "Have",

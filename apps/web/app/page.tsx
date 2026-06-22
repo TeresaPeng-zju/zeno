@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -8,7 +7,6 @@ import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { RoleJourney } from "@/components/zeno/role-journey";
-import { CareerGraph } from "@/components/zeno/career-graph";
 import { api } from "@/lib/api";
 
 const fadeUp = {
@@ -23,7 +21,6 @@ const fadeUp = {
 export default function HomePage() {
   const router = useRouter();
   const t = useTranslations("home");
-  const tg = useTranslations("graph");
   const tr = useTranslations("roles");
   const tc = useTranslations("common");
   const [loading, setLoading] = useState(false);
@@ -99,11 +96,6 @@ export default function HomePage() {
           <Button size="lg" variant="solid" onClick={mapCareer} disabled={loading}>
             {loading ? t("mapping") : t("mapMyCareer")}
           </Button>
-          <Link href="/#graph">
-            <Button size="lg" variant="outline">
-              {t("exploreGraph")}
-            </Button>
-          </Link>
         </motion.div>
         {error && <p className="mt-3 text-sm text-magenta">{error}</p>}
 
@@ -117,34 +109,7 @@ export default function HomePage() {
           <RoleJourney current={tr("frontend")} target={tr("aiEngineer")} progress={0.4} />
         </motion.div>
       </section>
-
-      {/* Career graph below the fold */}
-      <section id="graph" className="container relative mt-20 pb-28">
-        <div className="mb-6 flex items-end justify-between">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">{t("constellationTitle")}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              <Legend dot="bg-cyan" label={tg("legendHave")} /> ·{" "}
-              <Legend dot="bg-gold" label={tg("legendInProgress")} /> ·{" "}
-              <Legend dot="bg-magenta" label={tg("legendGap")} /> — {tg("legendHint")}
-            </p>
-          </div>
-          <Link href="/skills" className="hidden text-sm text-cyan hover:underline sm:block">
-            {t("generateMyGraph")}
-          </Link>
-        </div>
-        <CareerGraph height={460} />
-      </section>
     </main>
-  );
-}
-
-function Legend({ dot, label }: { dot: string; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className={"inline-block h-1.5 w-1.5 rounded-full " + dot} />
-      {label}
-    </span>
   );
 }
 

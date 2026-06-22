@@ -24,10 +24,8 @@ from __future__ import annotations
 import json
 import re
 from collections import Counter
-from pathlib import Path
 
 from scripts.build_jd_evidence import (
-    _RAW_DIR,
     _XLSX,
     _classify_jd,
     _HARD_EXCLUDE_TITLES,
