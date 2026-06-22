@@ -175,6 +175,21 @@ pnpm dev            # http://localhost:3000
 
 ---
 
+## 本地自查（提交前跑一遍）
+
+后端用 [ruff](https://docs.astral.sh/ruff/) 做静态检查、[pytest](https://docs.pytest.org/) 跑测试。装一次 dev 依赖后，收尾时一行命令搞定：
+
+```bash
+cd apps/api
+pip install -e ".[dev]"          # 一次性：装 ruff + pytest
+ruff check . && pytest -q        # 提交前自查：lint 通过再跑测试
+```
+
+- `ruff check .`：未使用导入、未定义名字等问题，零告警才往下走。
+- `pytest -q`：48 个用例。其中资源策展的全链路用例（`test_agent_pipeline_is_idempotent`）只在 **Postgres + pgvector 可用时**才跑（靠 `docker compose up -d`），否则自动跳过——它会先清掉自己要写入的资源，保证与历史库状态无关。
+
+---
+
 ## 切换到 OpenAI（可选）
 
 在 `apps/api/.env` 中：

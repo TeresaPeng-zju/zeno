@@ -70,11 +70,29 @@ pg_only = pytest.mark.skipif(
 
 @pg_only
 def test_agent_pipeline_is_idempotent():
+    from sqlalchemy import select
+
     from app.core.db import SessionLocal, init_db
+    from app.models import Resource, ResourceSkill
 
     init_db()
     db = SessionLocal()
     try:
+        # Self-contained slate: the `resources` table persists across test
+        # sessions on Postgres, so a prior run would leave this skill's resources
+        # behind and make even the *first* run dedup (stored == 0). Drop them up
+        # front so the "first stores, second dedups" invariant holds regardless
+        # of prior DB state. Deleting the Resource cascades to resource_skills.
+        stale_ids = db.scalars(
+            select(ResourceSkill.resource_id).where(
+                ResourceSkill.skill_id == "data.vector_search"
+            )
+        ).all()
+        if stale_ids:
+            for res in db.scalars(select(Resource).where(Resource.id.in_(stale_ids))):
+                db.delete(res)
+            db.commit()
+
         first = curation_agent.run(
             db, skill_id="data.vector_search", skill_name="向量检索", target_level=3
         )
