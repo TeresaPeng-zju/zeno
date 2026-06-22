@@ -45,13 +45,17 @@
     "4": "可设计治理"
   },
   "home": {
-    "badge": "面向工程师的 AI 职业智能",
+    "badge": "AI 驱动的职业路径智能",
     "titleLine1": "看清你当下的位置。",
     "titleNavigate": "导航",
     "titleLine2": "你能抵达的远方。",
     "subtitle": "Zeno 把你的技能映射成一张动态的职业星图，揭示你的优势、差距，以及通往目标岗位最有效的路径。",
     "mapMyCareer": "绘制我的职业路径 →",
-    "mapping": "绘制中…"
+    "mapping": "绘制中…",
+    "miniTitle": "试试看 — 点选你已掌握的技能：",
+    "miniAnalyze": "分析 →",
+    "miniHint": "选几个看看你的差距",
+    "miniCTA": "获取完整成长路线"
   },
   "graph": {
     "legendHave": "已掌握",

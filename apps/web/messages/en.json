@@ -45,13 +45,17 @@
     "4": "Can design & govern"
   },
   "home": {
-    "badge": "AI Career Intelligence for engineers",
+    "badge": "AI-powered career path intelligence",
     "titleLine1": "See where you are.",
     "titleNavigate": "Navigate",
     "titleLine2": " where you could go.",
     "subtitle": "Zeno maps your skills into a living career constellation — revealing your strengths, your gaps, and the most effective path to your target role.",
     "mapMyCareer": "Map my career",
-    "mapping": "Mapping…"
+    "mapping": "Mapping…",
+    "miniTitle": "Try it — tap the skills you already have:",
+    "miniAnalyze": "Analyze →",
+    "miniHint": "pick a few to see your gaps",
+    "miniCTA": "Get my full roadmap"
   },
   "graph": {
     "legendHave": "Have",
