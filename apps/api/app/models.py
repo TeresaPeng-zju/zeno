@@ -191,3 +191,72 @@ class ResourceSkill(Base):
     target_level: Mapped[int] = mapped_column(Integer, default=1)  # suited L0-4 tier
 
     resource: Mapped["Resource"] = relationship(back_populates="skills")
+
+
+# --------------------------------------------------------------------------- #
+# JD corpus (护城河 — DB only, never in git)
+# --------------------------------------------------------------------------- #
+
+
+class JdDocument(Base):
+    """A single JD scraped from a job platform or company career site.
+
+    This table is Zeno's moat: real JD text lives only in the database,
+    never in the git repository. The codebase ships only schema + seed.
+    """
+
+    __tablename__ = "jd_documents"
+    __table_args__ = (
+        UniqueConstraint("source_id", "external_id", name="uq_jd_source_external"),
+        Index("ix_jd_documents_source_id", "source_id"),
+        Index("ix_jd_documents_company", "company"),
+    )
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    # external_id: the original id from the crawl (e.g. "official_7516456131112454407")
+    external_id: Mapped[str] = mapped_column(String, nullable=False)
+    # source_id: matches Source.source_id in build_jd_evidence (e.g. "jd/jd_multi_2026h1")
+    source_id: Mapped[str] = mapped_column(String, nullable=False)
+    company: Mapped[str] = mapped_column(String, nullable=False)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    requirements: Mapped[str | None] = mapped_column(Text, nullable=True)
+    platform: Mapped[str] = mapped_column(String, default="official")
+    search_keyword: Mapped[str] = mapped_column(String, default="")
+    city: Mapped[str] = mapped_column(String, default="")
+    url: Mapped[str | None] = mapped_column(String, nullable=True)
+    recruit_type: Mapped[str] = mapped_column(String, default="社招")
+    # classification: engineering | product | algorithm | support | hard_exclude
+    role_category: Mapped[str] = mapped_column(String, default="engineering")
+    collected_at: Mapped[str] = mapped_column(String, nullable=False)  # YYYY-MM-DD
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class JdEvidence(Base):
+    """Materialized skill-frequency evidence derived from JdDocument rows.
+
+    One row per (source_id, skill_id). Rebuilt by `build_jd_evidence` whenever
+    the corpus changes. The evidence ledger JSON is generated FROM this table
+    at startup (or on rebuild), so `explain.py` keeps its in-memory fast path.
+    """
+
+    __tablename__ = "jd_evidence"
+    __table_args__ = (
+        Index("ix_jd_evidence_skill_id", "skill_id"),
+    )
+
+    source_id: Mapped[str] = mapped_column(String, primary_key=True)
+    skill_id: Mapped[str] = mapped_column(String, primary_key=True)
+    doc_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    doc_total: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    frequency: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    trust: Mapped[float] = mapped_column(Float, nullable=False, default=0.6)
+    signal: Mapped[str] = mapped_column(String, default="keyword")
+    in_graph: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=text("true")
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
