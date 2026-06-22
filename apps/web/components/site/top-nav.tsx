@@ -58,7 +58,7 @@ export function TopNav() {
           </Link>
           <Link
             href="/skills"
-            className="rounded-lg bg-cyan px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-cyan/90"
+            className="rounded-lg bg-cyan px-4 py-2 text-sm font-medium text-background shadow-[0_2px_8px_hsl(183_86%_52%/0.35),0_1px_2px_hsl(183_86%_52%/0.2)] transition-all hover:bg-cyan/90 hover:shadow-[0_4px_16px_hsl(183_86%_52%/0.4),0_1px_3px_hsl(183_86%_52%/0.25)] active:translate-y-px active:shadow-[0_1px_4px_hsl(183_86%_52%/0.3)]"
           >
             {t("getStarted")}
           </Link>
