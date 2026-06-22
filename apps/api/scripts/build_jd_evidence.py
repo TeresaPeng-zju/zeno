@@ -53,9 +53,27 @@ class Source:
     """
 
     source_id: str
-    source_type: str  # "jd" | "article" | ...
+    source_type: str  # "jd" | "article" | ...  (COARSE — H/refresh bucket on this)
     signal: str  # "keyword" | "embedding" | "llm_extract"
     trust: float  # source-level weight in [0, 1]
+    # Time-awareness (Step 1). `collected_at` is the Δt anchor for the future
+    # time-decay layer: ISO date (YYYY-MM-DD) the corpus was harvested. It is
+    # required so every new source is forced to declare its age. `published_at`
+    # is the original publish date when a source actually has one (articles,
+    # course updates, repo releases); for JDs it stays None — collected_at is the
+    # only reliable, uniform anchor for this batch (see docs decision §9 ⑤).
+    # For `article` sources the decay layer should PREFER `published_at` as the Δt
+    # anchor and fall back to `collected_at` only when it is missing.
+    collected_at: str
+    published_at: str | None = None
+    # Health-score metadata (see docs/article-sources.md §1). `provider` is the
+    # fine-grained site/provider label (e.g. "openai.com/blog", "juejin.cn"). It is
+    # deliberately NOT a bucketing key: H and refresh_period bucket by `source_type`
+    # only — sub-bucketing is deferred while per-site frequency is still sparse.
+    provider: str = ""
+    # May this source seed weak-gold alignment anchors? Structured/official sources
+    # (official blogs, GitHub docs) → True; fragmentary sources (社区短文/小红书) → False.
+    weak_gold_anchor: bool = False
 
 
 # --- Source registry -------------------------------------------------------
@@ -66,7 +84,47 @@ JD_KEYWORD_SOURCE = Source(
     source_type="jd",
     signal="keyword",
     trust=0.6,  # JDs are real but noisy/vague — moderate trust by design.
+    collected_at="2026-01-22",  # harvest date of this market_source JD snapshot
+    # published_at left None: JDs carry no reliable, uniform publish date.
 )
+
+# Source #2 (skeleton) — curated `article` corpus. Per docs/article-sources.md the
+# FIRST batch concentrates 5k token on high-trust, value-retaining sources (official
+# engineering blogs + GitHub docs); community/fragmentary sources are skipped or
+# lightly sampled this round. `source_type` stays the COARSE "article" — the site is
+# carried in `provider` (health-score metadata, not a bucketing key). Official/GitHub
+# sources are flagged `weak_gold_anchor=True` (structured enough to seed gold anchors);
+# trust starts at 0.7 (above JD's 0.6 but not dominating it), to be recalibrated on
+# backtest — same "no hand-cranked high values" discipline as H.
+ARTICLE_SOURCES: list[Source] = [
+    Source(
+        source_id="article/openai_engineering_blog",
+        source_type="article",
+        signal="llm_extract",
+        trust=0.7,
+        collected_at="2026-06-22",
+        provider="openai.com/blog",
+        weak_gold_anchor=True,
+    ),
+    Source(
+        source_id="article/anthropic_blog",
+        source_type="article",
+        signal="llm_extract",
+        trust=0.7,
+        collected_at="2026-06-22",
+        provider="anthropic.com/news",
+        weak_gold_anchor=True,
+    ),
+    Source(
+        source_id="article/github_docs",
+        source_type="article",
+        signal="llm_extract",
+        trust=0.7,
+        collected_at="2026-06-22",
+        provider="github.com",
+        weak_gold_anchor=True,
+    ),
+]
 
 # Deterministic skill -> keyword table. Matching is case-insensitive substring on
 # the concatenated 职位描述 + 职位要求. Keep this table in version control: it IS
@@ -76,8 +134,15 @@ SKILL_KEYWORDS: dict[str, list[str]] = {
     "eng.auth": ["鉴权", "认证", "权限", "oauth", "安全基线", "登录态"],
     "eng.error_handling": ["错误处理", "异常", "重试", "容错", "稳定性", "降级"],
     "eng.observability": ["可观测", "日志", "监控", "trace", "埋点", "指标采集", "telemetry"],
-    "eng.deploy": ["部署", "ci/cd", "持续集成", "容器", "docker", "k8s", "kubernetes", "上线", "发布"],
-    "eng.typescript": ["typescript", "ts ", "前端", "react", "node", "web", "javascript", "工程化", "lynx", "跨端"],
+    # recall-hole fix (2026-06-22, open-vocab probe): serverless/vercel/cloudflare are
+    # deployment targets that landed in the residual only because they were unlisted —
+    # they belong to eng.deploy, NOT a missing graph node. See docs decision §coverage-probe.
+    "eng.deploy": ["部署", "ci/cd", "持续集成", "容器", "docker", "k8s", "kubernetes", "上线", "发布", "serverless", "vercel", "cloudflare"],
+    # recall-hole fix (2026-06-22, open-vocab probe): css/html/es6/vue/angular are core
+    # frontend-web tech that map to eng.typescript; they surfaced as residual only because
+    # the table previously listed only typescript/react/node/web. ("dom" intentionally
+    # NOT added — bare substring collides with 域名/domain/random and would over-count.)
+    "eng.typescript": ["typescript", "ts ", "前端", "react", "node", "web", "javascript", "工程化", "lynx", "跨端", "css", "html", "es6", "vue", "angular"],
     "data.text_processing": ["文本清洗", "数据清洗", "预处理", "nlp", "文本处理", "语料"],
     "data.chunking": ["切分", "chunk", "分块", "chunking"],
     "data.embedding": ["embedding", "向量化", "向量", "嵌入", "表征"],
@@ -137,6 +202,30 @@ def run_jd_keyword_source() -> tuple[Source, dict[str, Contribution]]:
             "frequency": round(hits / n, 4) if n else 0.0,
         }
     return JD_KEYWORD_SOURCE, contribs
+
+
+def run_article_source(source: Source) -> tuple[Source, dict[str, Contribution]]:
+    """Source #2 (skeleton) — curated article corpus as a weighted labeling function.
+
+    SCHEMA-ONLY for now: it registers the source and emits the same
+    `dict[skill_id -> Contribution]` shape as the JD source, but with NO
+    contributions yet. That makes the article source flow end-to-end through
+    `aggregate`/`assemble` (provenance, sources_meta, evidence_score) without
+    spending any token, so we can validate the schema before extraction is wired.
+
+    Wiring plan (the actual token spend, next step):
+      1. fetch the article texts for `source.provider` (curation agent / fetch tool);
+      2. extract per-skill signals (LLM `llm_extract`, or a keyword LF as a cheap
+         first pass), producing `doc_count / doc_total / frequency` per skill —
+         identical Contribution shape, so `aggregate` needs no change;
+      3. Δt anchor for the decay layer PREFERS `source.published_at`, falling back to
+         `collected_at` only when the article carries no reliable publish date.
+
+    Because contributions are empty, `aggregate` records this source in
+    `sources` meta but adds it to no skill's provenance — a clean no-op on scores.
+    """
+    contribs: dict[str, Contribution] = {}  # TODO(step-next): fill via fetch + extract
+    return source, contribs
 
 
 def aggregate(runs: list[tuple[Source, dict[str, Contribution]]]) -> dict:
@@ -204,6 +293,10 @@ def assemble(runs: list[tuple[Source, dict[str, Contribution]]]) -> dict:
             "source_type": s.source_type,
             "signal": s.signal,
             "trust": s.trust,
+            "collected_at": s.collected_at,
+            "published_at": s.published_at,
+            "provider": s.provider,
+            "weak_gold_anchor": s.weak_gold_anchor,
         }
         for s, _ in runs
     ]
@@ -227,12 +320,23 @@ def assemble(runs: list[tuple[Source, dict[str, Contribution]]]) -> dict:
     }
 
 
-def build() -> dict:
-    return assemble([run_jd_keyword_source()])
+def build(include_article_skeleton: bool = False) -> dict:
+    """Assemble the ledger. Default = JD source only, so the committed
+    jd_evidence.json is byte-for-byte unchanged. Pass include_article_skeleton=True
+    (or `python -m scripts.build_jd_evidence --with-article-skeleton`) to also flow
+    the registered article sources through the schema (no token spend yet).
+    """
+    runs = [run_jd_keyword_source()]
+    if include_article_skeleton:
+        runs += [run_article_source(s) for s in ARTICLE_SOURCES]
+    return assemble(runs)
 
 
 def main() -> None:
-    data = build()
+    import sys
+
+    include_article = "--with-article-skeleton" in sys.argv[1:]
+    data = build(include_article_skeleton=include_article)
     _OUT.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Wrote {_OUT.relative_to(_API_ROOT)}  (schema v{data['schema_version']}, N={data['n_jds']} JDs)")
     print(f"Sources: {', '.join(s['source_id'] + ' [' + s['signal'] + ']' for s in data['sources'])}")
