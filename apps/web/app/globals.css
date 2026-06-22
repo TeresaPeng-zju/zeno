@@ -68,6 +68,47 @@
       radial-gradient(40% 40% at 85% 15%, hsl(43 100% 50% / 0.06), transparent 70%);
   }
 
+  /* Starfield: layered radial gradient glows */
+  .bg-starfield {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, hsl(183 86% 52% / 0.10), transparent 60%),
+      radial-gradient(ellipse 40% 40% at 80% 10%, hsl(43 100% 50% / 0.06), transparent 60%),
+      radial-gradient(ellipse 30% 30% at 15% 85%, hsl(335 100% 65% / 0.04), transparent 60%);
+  }
+
+  /* Floating star particles */
+  .stars-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .star-dot {
+    position: absolute;
+    border-radius: 50%;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  @keyframes float-1 {
+    0%, 100% { transform: translate(0, 0); opacity: 0.4; }
+    25%      { transform: translate(6px, -10px); opacity: 0.8; }
+    50%      { transform: translate(-4px, -18px); opacity: 0.5; }
+    75%      { transform: translate(8px, -8px); opacity: 0.9; }
+  }
+  @keyframes float-2 {
+    0%, 100% { transform: translate(0, 0); opacity: 0.5; }
+    33%      { transform: translate(-8px, -14px); opacity: 0.9; }
+    66%      { transform: translate(5px, -6px); opacity: 0.4; }
+  }
+
+  /* Scan-line reveal — a subtle horizontal light sweep */
+  @keyframes scan-reveal {
+    0%   { left: -30%; opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { left: 130%; opacity: 0; }
+  }
+
   .text-gradient {
     background: linear-gradient(180deg, #ffffff 0%, #b9c2d6 100%);
     -webkit-background-clip: text;
