@@ -120,8 +120,8 @@ For advanced setup (native Postgres without Docker, contributor guidelines), see
 
 ## Roadmap
 
-- [ ] Company-specific JD calibration (skill weight optimization)
-- [ ] More target roles (Tech Lead, AI PM)
-- [ ] Career Constellation visualization (interactive star-map)
+- [ ] Company-specific JD calibration
+- [ ] More target roles
+- [ ] Career Constellation visualization
 - [ ] Agent-assisted questionnaire optimization
-- [ ] Resource freshness verifier (automated link health checks)
+- [ ] Resource freshness verifier
