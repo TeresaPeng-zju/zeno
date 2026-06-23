@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
 import type { Edge, Node } from "@xyflow/react";
 
@@ -13,7 +13,7 @@ import { CareerGraph, type ZenoNodeData } from "@/components/zeno/career-graph";
 import { CircularProgress } from "@/components/zeno/circular-progress";
 import { RoleJourney } from "@/components/zeno/role-journey";
 import { Centered } from "@/components/site/centered";
-import { api, type JdMatchResponse, type OrientationOut, type ResourceOut, type ResultResponse, type TimeBudget } from "@/lib/api";
+import { api, type JdMatchResponse, type OrientationOut, type ProgressEvent, type ResourceOut, type ResultResponse, type StreamEvent, type TimeBudget } from "@/lib/api";
 
 function buildGraph(
   data: ResultResponse,
@@ -127,32 +127,69 @@ function ResultInner() {
     });
   };
 
+  // Progress steps from SSE stream
+  const [progressSteps, setProgressSteps] = useState<ProgressEvent[]>([]);
+  const initialLoadDone = useRef(false);
+
   useEffect(() => {
     if (!sessionId) {
       setError(tc("missingSession"));
       return;
     }
-    let active = true;
     setRefreshing(true);
-    api
-      .result(sessionId, budget, targetRole ?? undefined)
-      .then((d) => active && setData(d))
-      .catch((e) => {
-        if (!active) return;
-        const msg = e instanceof Error ? e.message : "";
-        // A stale/expired session id (e.g. an old /result URL after the DB was
-        // reset) → guide the user to start over instead of dumping a raw error.
-        if (/\b404\b/.test(msg) || msg.includes("session not found")) {
-          setExpired(true);
-        } else {
-          setError(msg || tc("loadFailed"));
-        }
-      })
-      .finally(() => active && setRefreshing(false));
-    return () => {
-      active = false;
-    };
-  }, [sessionId, budget, targetRole, tc]);
+
+    // First load: use SSE stream for staged reveal
+    // Subsequent loads (budget/orientation change): use regular API
+    if (!initialLoadDone.current) {
+      setProgressSteps([]);
+      const cleanup = api.resultStream(
+        sessionId,
+        (event: StreamEvent) => {
+          if (event.type === "progress") {
+            setProgressSteps((prev) => [...prev, event]);
+          } else if (event.type === "result") {
+            setData(event.data);
+            setRefreshing(false);
+            initialLoadDone.current = true;
+          }
+        },
+        (err) => {
+          const msg = err.message;
+          if (/\b404\b/.test(msg) || msg.includes("session not found")) {
+            setExpired(true);
+          } else {
+            // Fallback to regular API if stream fails
+            api
+              .result(sessionId, budget, targetRole ?? undefined)
+              .then((d) => setData(d))
+              .catch((e2) => setError(e2 instanceof Error ? e2.message : tc("loadFailed")))
+              .finally(() => {
+                setRefreshing(false);
+                initialLoadDone.current = true;
+              });
+          }
+        },
+        budget,
+        targetRole ?? undefined,
+      );
+      return cleanup;
+    } else {
+      // Budget / orientation change: quick refresh via regular API
+      api
+        .result(sessionId, budget, targetRole ?? undefined)
+        .then((d) => setData(d))
+        .catch((e) => {
+          const msg = e instanceof Error ? e.message : "";
+          if (/\b404\b/.test(msg) || msg.includes("session not found")) {
+            setExpired(true);
+          } else {
+            setError(msg || tc("loadFailed"));
+          }
+        })
+        .finally(() => setRefreshing(false));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, budget, targetRole]);
 
   const graph = useMemo(
     () => (data ? buildGraph(data, { current: tr("frontend"), target: tr("aiEngineer") }) : null),
@@ -168,7 +205,38 @@ function ResultInner() {
       </Centered>
     );
   if (error) return <Centered text={error} tone="error" />;
-  if (!data || !graph) return <Centered text={t("generatingPath")} />;
+  if (!data || !graph)
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6">
+        <div className="relative h-10 w-10">
+          <span className="absolute inset-0 animate-ping rounded-full bg-cyan/30" />
+          <span className="absolute inset-2 rounded-full bg-cyan/60" />
+        </div>
+        <div className="w-full max-w-xs space-y-2">
+          <AnimatePresence mode="popLayout">
+            {progressSteps.map((step, i) => (
+              <motion.div
+                key={step.step}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: 0.05 }}
+                className="flex items-center gap-2.5 text-sm"
+              >
+                <span className={i === progressSteps.length - 1 ? "text-cyan" : "text-cyan/50"}>
+                  {step.step === "done" ? "✓" : "●"}
+                </span>
+                <span className={i === progressSteps.length - 1 ? "text-foreground" : "text-muted-foreground"}>
+                  {step.message}
+                </span>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+          {progressSteps.length === 0 && (
+            <p className="text-center text-sm text-muted-foreground">{t("generatingPath")}</p>
+          )}
+        </div>
+      </div>
+    );
 
   return (
     <main className="relative overflow-hidden">
