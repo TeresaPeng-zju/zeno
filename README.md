@@ -1,202 +1,127 @@
 # Zeno
 
-**别再凭感觉规划转型。** Zeno 帮你看清当前能力、找出与目标岗位的差距，并给出有真实学习资源的行动路线 —— 面向开发者与产品经理。
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-它不回答「该学什么」，而是回答「**为什么是你该学这个**」和「**下一步最值得学的是什么**」。
+> AI-powered career navigation for developers and product builders.
 
-> 示例场景：前端工程师 → AI Engineer
-
----
-
-## 它解决什么问题
-
-转型时最难的不是找资料，而是判断方向：
-
-- 我现在的能力，离目标岗位还差多少？
-- 一堆该补的东西里，**先学哪个收益最大**？
-- 找到的教程到底靠不靠谱、过没过时？
-
-Zeno 把这三个问题拆成一份可执行的报告：**优势 / 差距 / 下一步**，每一步都附带经过筛选的学习资源。
+**Understand your skills. Discover your gaps. Build what's next.**
 
 ---
 
-## 能力图谱
+## Why Zeno?
 
-按 foundation / data / llm / eval 四个维度组织技能，箭头表示先修依赖：
+Named after **Zeno of Citium**, founder of Stoicism.
 
-```mermaid
-graph LR
-  classDef foundation fill:#e8f0fe,stroke:#4285f4,color:#1a73e8;
-  classDef data fill:#e6f4ea,stroke:#34a853,color:#137333;
-  classDef llm fill:#fef7e0,stroke:#fbbc04,color:#b06000;
-  classDef eval fill:#fce8e6,stroke:#ea4335,color:#c5221f;
+Stoicism teaches that while we cannot control everything around us, we can understand ourselves and choose how we grow.
 
-  subgraph FOUNDATION[基础工程 foundation]
-    api[API 设计与契约]
-    auth[鉴权与安全基线]
-    err[错误处理与重试]
-    obs[可观测性]
-    deploy[部署与 CI/CD]
-    ts[TypeScript 工程化]
-  end
+In an era shaped by AI and constant change, Zeno helps builders make deliberate decisions about what to learn next.
 
-  subgraph DATA[数据与检索 data]
-    text[文本清洗与预处理]
-    chunk[文档切分]
-    embed[向量化与 embedding 选型]
-    vsearch[向量检索 pgvector/HNSW]
-    rerank[召回与重排]
-    quality[数据质量与去重]
-  end
+---
 
-  subgraph LLM[LLM 应用 llm]
-    prompt[Prompt 结构设计]
-    struct[结构化输出 / JSON schema]
-    fc[函数 / 工具调用]
-    tool[多工具编排]
-    state[Agent 状态与记忆]
-    cost[成本与延迟优化]
-    stream[流式输出与前端集成]
-  end
+## The Problem
 
-  subgraph EVAL[评估 eval]
-    eoff[离线评估集构建]
-    eon[在线反馈采集]
-    eab[A/B 实验]
-    emetric[质量指标]
-  end
+Career transitions are rarely blocked by lack of resources. The real challenge is knowing:
 
-  text --> chunk
-  text --> embed
-  text --> quality
-  embed --> vsearch
-  vsearch --> rerank
+- What skills do I already have that transfer?
+- What am I actually missing for my target role?
+- Of everything I could learn, **what should I learn first**?
 
-  prompt --> struct
-  prompt --> fc
-  err --> fc
-  fc --> tool
-  api --> tool
-  tool --> cost
-  tool --> state
-  vsearch --> state
+Zeno turns these questions into an actionable report: **Strengths → Gaps → Next Steps**, with curated learning resources.
 
-  embed --> eoff
-  eoff --> emetric
-  rerank --> emetric
-  eon --> eab
+---
 
-  class api,auth,err,obs,deploy,ts foundation;
-  class text,chunk,embed,vsearch,rerank,quality data;
-  class prompt,struct,fc,tool,state,cost,stream llm;
-  class eoff,eon,eab,emetric eval;
+## How It Works
+
+1. **Choose your path** — select your current role and target role
+2. **Confirm your skills** — answer a path-tailored capability check
+3. **See your constellation** — a skill graph showing strengths, gaps, and dependencies
+4. **Get your roadmap** — prioritized next steps with learning resources
+
+---
+
+## How Zeno Thinks
+
+Zeno models career growth as a **skill graph**:
+
+```
+Current Skills → Missing Capabilities → Learning Path
 ```
 
+Each skill is connected through prerequisite relationships, helping identify what to learn first — not just what to learn.
+
+```
+Engineering Foundation          Data & Retrieval          LLM Applications
+ ├── API Design                  ├── Embedding             ├── Prompt Design
+ ├── TypeScript                  ├── Vector Search         ├── Function Calling
+ ├── Deployment                  ├── Retrieval & Rerank    ├── Agent Orchestration
+ └── Error Handling              └── Data Quality          └── Cost Optimization
+
+Evaluation
+ ├── Offline Eval
+ └── Quality Metrics
+```
+
+The full graph (23 skills, 4 dimensions, skill dependencies) is defined in [`apps/api/app/data/skill_graph.json`](apps/api/app/data/skill_graph.json).
+
 ---
 
-## 技术栈
+## Tech Stack
 
-| 层 | 选型 |
+| Layer | Choice |
 | --- | --- |
-| 前端 | Next.js 15、React Flow |
-| 后端 | FastAPI |
-| 数据库 | Postgres 16 + pgvector |
-| LLM | 可选 OpenAI，未配置时使用内置模板 |
+| Frontend | Next.js 15, React Flow, Framer Motion |
+| Backend | FastAPI (Python) |
+| Database | Postgres 16 + pgvector |
+| LLM | OpenAI-compatible providers |
 
 ```
 zeno/
-├── docker-compose.yml      # Postgres 16 + pgvector
+├── docker-compose.yml
 └── apps/
-    ├── api/                # 后端 API
-    └── web/                # 前端 Web
+    ├── api/                # Backend API
+    └── web/                # Frontend Web
 ```
 
 ---
 
-## 本地启动
+## Local Development
 
-### 0. 起数据库（Postgres + pgvector）
+### Requirements
+
+- Node.js 20+
+- Python 3.11+
+- Docker (for Postgres + pgvector)
+
+### Setup
 
 ```bash
+# Database
 docker compose up -d
-```
 
-<details>
-<summary>不用 Docker：本机 Homebrew Postgres 16 + pgvector</summary>
-
-Homebrew 的 `pgvector` formula 默认只为最新的 pg 版本编译，可能不含 pg16。可从源码针对 pg16 编译安装一次：
-
-```bash
-brew install postgresql@16
-brew services start postgresql@16
-
-# 针对 pg16 编译安装 pgvector（写入 pg16 扩展目录）
-cd /tmp && git clone --depth 1 --branch v0.8.3 https://github.com/pgvector/pgvector.git
-cd pgvector
-make        PG_CONFIG=/opt/homebrew/opt/postgresql@16/bin/pg_config
-make install PG_CONFIG=/opt/homebrew/opt/postgresql@16/bin/pg_config
-
-# 建库 + 用超级用户启用扩展（CREATE EXTENSION 需超级用户，一次即可）
-/opt/homebrew/opt/postgresql@16/bin/createdb zeno
-/opt/homebrew/opt/postgresql@16/bin/psql -U "$(whoami)" -d zeno \
-  -c "CREATE EXTENSION IF NOT EXISTS vector;"
-```
-
-之后把 `apps/api/.env` 的 `DATABASE_URL` 指向本机库（如 `postgresql+psycopg://<user>@localhost:5432/zeno`）即可。应用启动用的 `CREATE EXTENSION IF NOT EXISTS` 在非超级用户下仅在扩展已存在时不报错，所以这一步要用超级用户先建好。
-
-</details>
-
-### 1. 后端 API（FastAPI）
-
-```bash
+# Backend
 cd apps/api
 python -m venv .venv && source .venv/bin/activate
-pip install -e .                 # 或: pip install -e ".[openai]"
+pip install -e .
 cp .env.example .env
-alembic upgrade head             # 建表
+alembic upgrade head
 uvicorn app.main:app --reload --port 8000
-```
 
-> 数据库 schema 的唯一事实源是 Alembic 迁移（`apps/api/migrations/`）。应用启动时不再 `create_all`，只做技能引用完整性校验（fail-fast）。新增 / 修改模型后用 `alembic revision --autogenerate -m "..."` 生成迁移，再 `alembic upgrade head`。
-
-- 健康检查：http://localhost:8000/health
-- 接口文档：http://localhost:8000/docs
-
-### 2. 前端 Web（Next.js）
-
-```bash
+# Frontend
 cd apps/web
-cp .env.local.example .env.local
-pnpm install        # 或 npm install
-pnpm dev            # http://localhost:3000
+pnpm install
+pnpm dev
 ```
 
-打开 http://localhost:3000 → 点击 "Map my career" → 选择技能与熟练度（胶囊式，无需打字）→ 查看能力画像与职业图谱。
+Open http://localhost:3000.
+
+For advanced setup (native Postgres without Docker, contributor guidelines), see [`docs/`](docs/).
 
 ---
 
-## 本地自查（提交前跑一遍）
+## Roadmap
 
-后端用 [ruff](https://docs.astral.sh/ruff/) 做静态检查、[pytest](https://docs.pytest.org/) 跑测试。装一次 dev 依赖后，收尾时一行命令搞定：
-
-```bash
-cd apps/api
-pip install -e ".[dev]"          # 一次性：装 ruff + pytest
-ruff check . && pytest -q        # 提交前自查：lint 通过再跑测试
-```
-
-- `ruff check .`：未使用导入、未定义名字等问题，零告警才往下走。
-- `pytest -q`：48 个用例。其中资源策展的全链路用例（`test_agent_pipeline_is_idempotent`）只在 **Postgres + pgvector 可用时**才跑（靠 `docker compose up -d`），否则自动跳过——它会先清掉自己要写入的资源，保证与历史库状态无关。
-
----
-
-## 切换到 OpenAI（可选）
-
-在 `apps/api/.env` 中：
-
-```
-LLM_PROVIDER=openai
-OPENAI_API_KEY=sk-...
-```
-
-未配置时使用内置模板文案，可随时切换。
+- [ ] Company-specific JD calibration (skill weight optimization)
+- [ ] More target roles (Tech Lead, AI PM)
+- [ ] Career Constellation visualization (interactive star-map)
+- [ ] Agent-assisted questionnaire optimization
+- [ ] Resource freshness verifier (automated link health checks)

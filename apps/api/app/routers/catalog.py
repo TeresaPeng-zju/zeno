@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends
+import json
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, Query
 
 from app.domain import competency
 from app.domain.question_bank import ANSWER_OPTIONS, option_label
@@ -19,9 +22,31 @@ router = APIRouter(prefix="/api", tags=["catalog"])
 # catalog (category.<cat>.label / .hint).
 CATEGORY_ORDER: list[str] = ["foundation", "data", "llm", "eval"]
 
+# Path config for role-based skill filtering
+_PATH_CONFIG_FILE = Path(__file__).resolve().parent.parent / "data" / "path_config.json"
+_PATH_CONFIG: dict = json.loads(_PATH_CONFIG_FILE.read_text(encoding="utf-8"))
+
+
+def _get_path_filter(current_role: str | None, target_role: str | None) -> set[str] | None:
+    """Return the set of skill_ids to assess for a given path, or None (show all)."""
+    if not current_role:
+        return None
+    target = target_role or "ai_engineer_applied"
+    key = f"{current_role} → {target}"
+    path = _PATH_CONFIG.get("paths", {}).get(key)
+    if not path:
+        return None
+    return set(path.get("assess", []))
+
 
 @router.get("/skills", response_model=SkillCatalogResponse)
-def list_skills(lang: Lang = Depends(get_lang)) -> SkillCatalogResponse:
+def list_skills(
+    lang: Lang = Depends(get_lang),
+    current_role: str | None = Query(default=None, description="Filter skills by career path"),
+    target_role: str | None = Query(default=None),
+) -> SkillCatalogResponse:
+    assess_filter = _get_path_filter(current_role, target_role)
+
     groups: list[SkillGroupOut] = []
     for category in CATEGORY_ORDER:
         items = [
@@ -32,15 +57,17 @@ def list_skills(lang: Lang = Depends(get_lang)) -> SkillCatalogResponse:
             )
             for s in competency.SKILLS
             if s.category == category
+            and (assess_filter is None or s.id in assess_filter)
         ]
-        groups.append(
-            SkillGroupOut(
-                category=category,
-                label=t(lang, f"category.{category}.label"),
-                hint=t(lang, f"category.{category}.hint"),
-                skills=items,
+        if items:  # skip empty categories after filtering
+            groups.append(
+                SkillGroupOut(
+                    category=category,
+                    label=t(lang, f"category.{category}.label"),
+                    hint=t(lang, f"category.{category}.hint"),
+                    skills=items,
+                )
             )
-        )
 
     proficiency = [
         ProficiencyOptionOut(value=o.value, label=option_label(o.value, lang), level=o.level)
@@ -57,6 +84,15 @@ def list_skills(lang: Lang = Depends(get_lang)) -> SkillCatalogResponse:
     return SkillCatalogResponse(
         groups=groups, proficiency=proficiency, orientations=orientations
     )
+
+
+@router.get("/paths")
+def list_paths(lang: Lang = Depends(get_lang)):
+    """Return available current/target roles for the career path selector."""
+    return {
+        "current_roles": _PATH_CONFIG.get("current_roles", []),
+        "target_roles": _PATH_CONFIG.get("target_roles", []),
+    }
 
 
 @router.post("/match-orientation", response_model=JdMatchResponse)

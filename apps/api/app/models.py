@@ -41,6 +41,9 @@ class SurveySession(Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
     role_id: Mapped[str] = mapped_column(String, default="ai_engineer_applied")
+    # The user's current role (e.g. "frontend_engineer"). Used for path-based
+    # skill filtering. NULL = legacy session (pre-path-config), treated as generic.
+    current_role: Mapped[str | None] = mapped_column(String, nullable=True)
     # target_orientation: sub-specialization modifier over the base role
     # requirements ("base" | "rag" | ...). server_default keeps create_all-only
     # schemas (no migration) backward-compatible; the service treats NULL as base.
