@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Border Beam: @property must be top-level, outside @layer ── */
+@property --beam-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0turn;
+}
+
 @layer base {
   :root {
     /* Typography — Inter for Latin, system CJK fallbacks (PingFang SC on
@@ -61,6 +68,42 @@
 }
 
 @layer utilities {
+  /* ── Border Beam (conic-gradient rotating light) ────────────── */
+  .border-beam {
+    position: relative;
+  }
+  .border-beam::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: conic-gradient(
+      from var(--beam-angle) at 50% 50%,
+      transparent 0%,
+      transparent 72%,
+      hsl(183 86% 52% / 0.5) 77%,
+      hsl(183 86% 52% / 1) 80%,
+      hsl(183 86% 52% / 0.5) 83%,
+      transparent 88%,
+      transparent 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    animation: beam-spin 4s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+  @keyframes beam-spin {
+    to { --beam-angle: 1turn; }
+  }
+
   /* Aurora ambient glow used sparingly (one per screen) */
   /* Floating star particles */
   .stars-layer {
@@ -71,9 +114,16 @@
   }
   .star-dot {
     position: absolute;
-    border-radius: 50%;
     animation-timing-function: linear;
     animation-iteration-count: infinite;
+    clip-path: polygon(
+      50% 0%, 62% 38%, 100% 50%, 62% 62%,
+      50% 100%, 38% 62%, 0% 50%, 38% 38%
+    );
+  }
+  .star-dot.star-round {
+    clip-path: none;
+    border-radius: 50%;
   }
 
   @keyframes float-1 {

@@ -1,12 +1,13 @@
-export const locales = ["en", "zh"] as const;
+export const locales = ["en", "zh", "zh-TW"] as const;
 export type Locale = (typeof locales)[number];
 
 export const defaultLocale: Locale = "en";
 
-// Short label shown in the language switcher.
+// Labels shown in the language dropdown.
 export const localeNames: Record<Locale, string> = {
-  en: "EN",
-  zh: "中文",
+  en: "English",
+  zh: "简体中文",
+  "zh-TW": "繁體中文",
 };
 
 // Cookie that persists the user's chosen locale (no i18n routing — we keep

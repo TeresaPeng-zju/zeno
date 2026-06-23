@@ -11,17 +11,18 @@ interface Star {
   anim: string;
   dur: string;
   delay: string;
+  readonly round?: boolean;
 }
 
 interface Props {
-  stars: Star[];
+  stars: readonly Star[];
 }
 
 const GLOW_RADIUS = 140; // px
 
 /**
  * Starfield with mouse-proximity glow.
- * Uses refs + RAF to avoid re-renders.
+ * Large stars are 4-pointed (CSS clip-path), tiny dust stays round.
  */
 export function Starfield({ stars }: Props) {
   const layerRef = useRef<HTMLDivElement>(null);
@@ -60,7 +61,7 @@ export function Starfield({ stars }: Props) {
           const pulse = Math.sin(performance.now() * 0.004) * 0.15 + 0.85;
           const glow = intensity * pulse;
           const extraGlow = glow * 80;
-          const scale = 1 + glow * 1.0;
+          const scale = 1 + glow * 0.8;
           dot.style.boxShadow = `0 0 ${baseGlow + extraGlow}px ${color}, 0 0 ${baseGlow + extraGlow * 1.8}px ${color}`;
           dot.style.transform = `scale(${scale})`;
         } else {
@@ -86,16 +87,16 @@ export function Starfield({ stars }: Props) {
       {stars.map((s, i) => (
         <span
           key={i}
-          className="star-dot"
-          data-base-glow={s.glow * 1.6}
+          className={`star-dot${s.round ? " star-round" : ""}`}
+          data-base-glow={s.glow}
           data-color={s.color}
           style={{
             left: s.x,
             top: s.y,
-            width: s.size * 1.8,
-            height: s.size * 1.8,
+            width: s.size,
+            height: s.size,
             background: s.color,
-            boxShadow: `0 0 ${s.glow * 1.6}px ${s.color}`,
+            boxShadow: `0 0 ${s.glow}px ${s.color}`,
             transition: "box-shadow 0.08s linear, transform 0.08s linear",
             animationName: s.anim,
             animationDuration: s.dur,

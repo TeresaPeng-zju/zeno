@@ -106,8 +106,11 @@ apps/INTERVIEW.md
 # 方案讨论记录（设计决策 / 与外部工具的交叉讨论，仅本地留存）
 docs/decisions/
 
-# 爬虫 dump 规范（操作性文字文档，仅本地留存）
+# 数据层内部文档（语料规范 / 标注规范 / 爬虫规范，商业机密，仅本地留存）
+apps/api/app/data/raw/README.md
 apps/api/app/data/raw/*/README.md
+apps/api/app/data/gold/
+apps/api/app/data/gold/README.md
 
 # JD 原始数据（护城河，只存 DB，不进仓）
 apps/api/app/data/raw/*/jds.jsonl
