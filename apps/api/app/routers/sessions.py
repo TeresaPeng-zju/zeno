@@ -1,4 +1,8 @@
+import asyncio
+import json
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
@@ -74,4 +78,54 @@ def get_result(
         raise HTTPException(status_code=404, detail="session not found")
     return session_service.build_result(
         db, sess, time_budget=time_budget, lang=lang, orientation=orientation
+    )
+
+
+@router.get("/{session_id}/result-stream")
+async def get_result_stream(
+    session_id: str,
+    time_budget: str | None = None,
+    orientation: str | None = None,
+    db: Session = Depends(get_db),
+    lang: Lang = Depends(get_lang),
+) -> StreamingResponse:
+    """SSE endpoint: streams progress events then the full result as NDJSON."""
+    sess = session_service.get_session(db, session_id)
+    if sess is None:
+        raise HTTPException(status_code=404, detail="session not found")
+
+    async def event_stream():
+        def emit(data: dict) -> str:
+            return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+        yield emit({"type": "progress", "step": "profile", "message": "Analyzing your skill profile…"})
+        await asyncio.sleep(0.4)
+
+        yield emit({"type": "progress", "step": "strengths", "message": "Identifying your strengths…"})
+        await asyncio.sleep(0.3)
+
+        yield emit({"type": "progress", "step": "gaps", "message": "Computing skill gaps…"})
+        await asyncio.sleep(0.3)
+
+        yield emit({"type": "progress", "step": "roadmap", "message": "Building your learning roadmap…"})
+        await asyncio.sleep(0.3)
+
+        # Actually compute the result
+        result = session_service.build_result(
+            db, sess, time_budget=time_budget, lang=lang, orientation=orientation
+        )
+
+        yield emit({"type": "progress", "step": "resources", "message": "Checking recommended resources…"})
+        await asyncio.sleep(0.2)
+
+        yield emit({"type": "progress", "step": "done", "message": "Done ✓"})
+        await asyncio.sleep(0.15)
+
+        # Final event: the full result payload
+        yield emit({"type": "result", "data": result.model_dump(mode="json")})
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
