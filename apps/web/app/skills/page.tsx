@@ -34,6 +34,9 @@ function SkillsInner() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const currentRole = params.get("current_role") || undefined;
+  const targetRole = params.get("target_role") || undefined;
+
   // Ensure a session exists, then load the skill catalog.
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +48,7 @@ function SkillsInner() {
           sid = created.session_id;
           if (!cancelled) setSessionId(sid);
         }
-        const cat = await api.skills();
+        const cat = await api.skills(currentRole, targetRole);
         if (!cancelled) setCatalog(cat);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : tc("backendDown"));

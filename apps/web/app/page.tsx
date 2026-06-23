@@ -7,6 +7,8 @@ import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { InteractiveAurora } from "@/components/interactive-aurora";
+import { Starfield } from "@/components/starfield";
 import { api, type PathRole } from "@/lib/api";
 
 /* ---------- star particles ----------------------------------------------- */
@@ -105,36 +107,18 @@ export default function HomePage() {
   return (
     <main className="relative min-h-screen overflow-x-hidden">
       {/* ── Aurora + Starfield ──────────────────────────────────────── */}
-      <AuroraRibbons />
-      <div className="stars-layer">
-        {STARS.map((s, i) => (
-          <span
-            key={i}
-            className="star-dot"
-            style={{
-              left: s.x,
-              top: s.y,
-              width: s.size,
-              height: s.size,
-              background: s.color,
-              boxShadow: `0 0 ${s.glow}px ${s.color}`,
-              animationName: s.anim,
-              animationDuration: s.dur,
-              animationDelay: s.delay,
-            }}
-          />
-        ))}
-      </div>
+      <InteractiveAurora />
+      <Starfield stars={STARS} />
 
       {/* ── Hero ─────────────────────────────────────────────────── */}
-      <section className="container relative flex flex-col items-center pt-28 text-center sm:pt-36">
+      <section className="container relative z-10 flex flex-col items-center pt-28 text-center sm:pt-36 before:pointer-events-none before:absolute before:inset-0 before:-z-[1] before:rounded-full before:bg-[radial-gradient(ellipse_at_center,rgba(10,15,30,0.4)_0%,transparent_70%)]">
         {/* title */}
         <motion.h1
           custom={0}
           variants={fadeUp}
           initial="hidden"
           animate="show"
-          className="mt-8 max-w-5xl pb-3 text-5xl font-extrabold leading-[1.08] tracking-tight text-gradient sm:text-7xl"
+          className="mt-8 max-w-5xl cursor-default pb-3 text-5xl font-extrabold leading-[1.08] tracking-tight text-gradient sm:text-7xl"
         >
           {t("titleLine1")}
           <br />
@@ -152,7 +136,7 @@ export default function HomePage() {
           variants={fadeUp}
           initial="hidden"
           animate="show"
-          className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground"
+          className="mt-6 max-w-2xl cursor-default text-lg leading-relaxed text-muted-foreground"
         >
           {t("subtitle")}
         </motion.p>
@@ -215,46 +199,4 @@ export default function HomePage() {
     </main>
   );
 }
-
-/* ---------- aurora ribbons ------------------------------------------------ */
-
-function AuroraRibbons() {
-  return (
-    <div
-      className="pointer-events-none fixed inset-0 z-0"
-      aria-hidden="true"
-      style={{ overflow: "hidden" }}
-    >
-      {/* Ribbon 1 — main cyan band */}
-      <div style={{
-        position: "absolute", width: "120%", height: "200px",
-        top: "8%", left: "-10%",
-        background: "linear-gradient(90deg, transparent 0%, hsl(183 86% 52% / 0.15) 20%, hsl(183 86% 52% / 0.28) 50%, hsl(183 86% 52% / 0.15) 80%, transparent 100%)",
-        filter: "blur(40px)", borderRadius: "50% / 100%",
-      }} />
-      {/* Ribbon 2 */}
-      <div style={{
-        position: "absolute", width: "100%", height: "150px",
-        top: "22%", left: "5%",
-        background: "linear-gradient(90deg, transparent 0%, hsl(183 70% 45% / 0.12) 25%, hsl(183 86% 52% / 0.22) 50%, hsl(183 70% 45% / 0.12) 75%, transparent 100%)",
-        filter: "blur(35px)", borderRadius: "50% / 100%",
-      }} />
-      {/* Ribbon 3 */}
-      <div style={{
-        position: "absolute", width: "90%", height: "130px",
-        top: "38%", left: "10%",
-        background: "linear-gradient(90deg, transparent 0%, hsl(43 100% 50% / 0.08) 20%, hsl(183 86% 52% / 0.16) 50%, hsl(43 100% 50% / 0.08) 80%, transparent 100%)",
-        filter: "blur(30px)", borderRadius: "50% / 100%",
-      }} />
-      {/* Ribbon 4 */}
-      <div style={{
-        position: "absolute", width: "110%", height: "170px",
-        top: "56%", left: "-5%",
-        background: "linear-gradient(90deg, transparent 0%, hsl(183 86% 52% / 0.10) 25%, hsl(195 80% 45% / 0.18) 50%, hsl(183 86% 52% / 0.10) 75%, transparent 100%)",
-        filter: "blur(45px)", borderRadius: "50% / 100%",
-      }} />
-    </div>
-  );
-}
-
 
