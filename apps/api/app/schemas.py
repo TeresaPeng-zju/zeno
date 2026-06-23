@@ -5,12 +5,18 @@ class SessionCreateRequest(BaseModel):
     orientation: str | None = Field(
         default=None, description="Target orientation modifier, e.g. 'base' | 'rag'."
     )
+    current_role: str | None = Field(
+        default=None,
+        description="User's current role id (e.g. 'frontend_engineer'). "
+        "Used for path-based skill assessment filtering.",
+    )
 
 
 class SessionCreateResponse(BaseModel):
     session_id: str
     role_id: str
     orientation: str = "base"
+    current_role: str | None = None
 
 
 class OrientationOut(BaseModel):
