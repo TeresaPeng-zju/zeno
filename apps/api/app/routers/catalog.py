@@ -31,9 +31,16 @@ def _get_path_filter(current_role: str | None, target_role: str | None) -> set[s
     """Return the set of skill_ids to assess for a given path, or None (show all)."""
     if not current_role:
         return None
-    target = target_role or "ai_engineer_applied"
+    target = target_role or "ai_engineer"
+    # Try exact key first, then fallback without _applied suffix
+    paths = _PATH_CONFIG.get("paths", {})
     key = f"{current_role} → {target}"
-    path = _PATH_CONFIG.get("paths", {}).get(key)
+    path = paths.get(key)
+    if not path:
+        # Strip common suffixes for flexible matching
+        target_short = target.replace("_applied", "").replace("_general", "")
+        key = f"{current_role} → {target_short}"
+        path = paths.get(key)
     if not path:
         return None
     return set(path.get("assess", []))
