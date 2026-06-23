@@ -20,9 +20,15 @@ def create_session(
     payload: SessionCreateRequest | None = None, db: Session = Depends(get_db)
 ) -> SessionCreateResponse:
     orientation = payload.orientation if payload else None
-    sess = session_service.create_session(db, orientation=orientation)
+    current_role = payload.current_role if payload else None
+    sess = session_service.create_session(
+        db, orientation=orientation, current_role=current_role
+    )
     return SessionCreateResponse(
-        session_id=sess.id, role_id=sess.role_id, orientation=sess.orientation
+        session_id=sess.id,
+        role_id=sess.role_id,
+        orientation=sess.orientation,
+        current_role=sess.current_role,
     )
 
 
