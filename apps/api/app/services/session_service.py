@@ -34,9 +34,15 @@ def create_session(
     db: Session,
     role_id: str = competency.ROLE_AI_ENGINEER_APPLIED,
     orientation: str | None = None,
+    current_role: str | None = None,
 ) -> SurveySession:
     orient = competency.get_orientation(orientation).id
-    sess = SurveySession(role_id=role_id, orientation=orient, status="in_progress")
+    sess = SurveySession(
+        role_id=role_id,
+        orientation=orient,
+        current_role=current_role,
+        status="in_progress",
+    )
     db.add(sess)
     db.commit()
     db.refresh(sess)

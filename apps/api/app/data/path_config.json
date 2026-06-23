@@ -1,0 +1,145 @@
+{
+  "_comment": "Per-path skill assessment configuration. For each (current_role → target_role), defines which skills to default, assess, or skip. v0: hand-curated, to be calibrated with multi-company JD data.",
+  "paths": {
+    "frontend_engineer → ai_engineer": {
+      "current_role": "frontend_engineer",
+      "target_role": "ai_engineer_applied",
+      "default_have": {
+        "eng.typescript": 3,
+        "eng.api_design": 2,
+        "llm.streaming": 2
+      },
+      "assess": [
+        "eng.error_handling",
+        "eng.observability",
+        "eng.deploy",
+        "data.text_processing",
+        "data.chunking",
+        "data.embedding",
+        "data.vector_search",
+        "data.retrieval_rerank",
+        "data.quality",
+        "llm.prompt",
+        "llm.structured_output",
+        "llm.function_calling",
+        "llm.tool_use",
+        "llm.agent_state",
+        "llm.cost_latency",
+        "eval.offline",
+        "eval.metrics"
+      ],
+      "skip": [
+        "eng.auth",
+        "eval.ab",
+        "eval.online"
+      ]
+    },
+    "backend_engineer → ai_engineer": {
+      "current_role": "backend_engineer",
+      "target_role": "ai_engineer_applied",
+      "default_have": {
+        "eng.api_design": 3,
+        "eng.error_handling": 2,
+        "eng.deploy": 2,
+        "eng.observability": 2,
+        "eng.auth": 2
+      },
+      "assess": [
+        "eng.typescript",
+        "data.text_processing",
+        "data.chunking",
+        "data.embedding",
+        "data.vector_search",
+        "data.retrieval_rerank",
+        "data.quality",
+        "llm.prompt",
+        "llm.structured_output",
+        "llm.function_calling",
+        "llm.tool_use",
+        "llm.agent_state",
+        "llm.cost_latency",
+        "llm.streaming",
+        "eval.offline",
+        "eval.online",
+        "eval.metrics"
+      ],
+      "skip": [
+        "eval.ab"
+      ]
+    },
+    "fullstack_engineer → ai_engineer": {
+      "current_role": "fullstack_engineer",
+      "target_role": "ai_engineer_applied",
+      "default_have": {
+        "eng.api_design": 3,
+        "eng.typescript": 3,
+        "eng.error_handling": 2,
+        "eng.deploy": 2,
+        "eng.auth": 2,
+        "llm.streaming": 2
+      },
+      "assess": [
+        "eng.observability",
+        "data.text_processing",
+        "data.chunking",
+        "data.embedding",
+        "data.vector_search",
+        "data.retrieval_rerank",
+        "data.quality",
+        "llm.prompt",
+        "llm.structured_output",
+        "llm.function_calling",
+        "llm.tool_use",
+        "llm.agent_state",
+        "llm.cost_latency",
+        "eval.offline",
+        "eval.metrics"
+      ],
+      "skip": [
+        "eval.ab",
+        "eval.online"
+      ]
+    },
+    "student → ai_engineer": {
+      "current_role": "student",
+      "target_role": "ai_engineer_applied",
+      "default_have": {},
+      "assess": [
+        "eng.api_design",
+        "eng.error_handling",
+        "eng.deploy",
+        "eng.typescript",
+        "data.text_processing",
+        "data.embedding",
+        "data.vector_search",
+        "data.retrieval_rerank",
+        "llm.prompt",
+        "llm.structured_output",
+        "llm.function_calling",
+        "llm.tool_use",
+        "llm.agent_state",
+        "llm.cost_latency",
+        "llm.streaming",
+        "eval.offline",
+        "eval.metrics"
+      ],
+      "skip": [
+        "eng.auth",
+        "eng.observability",
+        "data.chunking",
+        "data.quality",
+        "eval.ab",
+        "eval.online"
+      ]
+    }
+  },
+  "current_roles": [
+    { "id": "frontend_engineer", "label": "Frontend Engineer", "label_zh": "前端工程师" },
+    { "id": "backend_engineer", "label": "Backend Engineer", "label_zh": "后端工程师" },
+    { "id": "fullstack_engineer", "label": "Full Stack Engineer", "label_zh": "全栈工程师" },
+    { "id": "student", "label": "Student", "label_zh": "学生" }
+  ],
+  "target_roles": [
+    { "id": "ai_engineer_applied", "label": "AI Engineer (Applied)", "label_zh": "AI 应用工程师" }
+  ]
+}
