@@ -42,7 +42,7 @@ export function Select({ value, options, onChange, placeholder, className }: Sel
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
-          "flex w-full items-center justify-between rounded-lg border px-4 py-2.5 text-left text-sm font-medium transition-all",
+          "flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left text-base font-medium transition-all",
           "border-border/60 bg-surface/60 text-foreground backdrop-blur-sm",
           "shadow-[0_1px_3px_hsl(0_0%_0%/0.25),inset_0_1px_0_hsl(0_0%_100%/0.03)]",
           "hover:border-cyan/40 hover:shadow-[0_2px_8px_hsl(183_86%_52%/0.1)]",
@@ -74,7 +74,7 @@ export function Select({ value, options, onChange, placeholder, className }: Sel
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex w-full items-center rounded-lg px-3.5 py-2.5 text-left text-sm font-medium transition-colors",
+                  "flex w-full items-center rounded-lg px-3.5 py-2.5 text-left text-base font-medium transition-colors",
                   option.value === value
                     ? "bg-cyan/10 text-cyan"
                     : "text-foreground hover:bg-accent/60",

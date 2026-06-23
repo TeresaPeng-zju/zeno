@@ -1,0 +1,151 @@
+{
+  "meta": {
+    "title": "Zeno · 看清當下，導航遠方。",
+    "description": "Zeno 把你的技能映射成一張動態的職業星圖，揭示你的優勢、差距，以及通往目標崗位最有效的路徑。"
+  },
+  "nav": {
+    "careerGraph": "職業圖譜",
+    "skills": "技能",
+    "gapAnalysis": "差距分析",
+    "roadmap": "成長路線",
+    "signIn": "登入",
+    "getStarted": "開始使用"
+  },
+  "lang": {
+    "label": "語言",
+    "en": "EN",
+    "zh": "中文",
+    "zh-TW": "繁體中文"
+  },
+  "common": {
+    "loading": "載入中…",
+    "loadFailed": "載入失敗",
+    "submitFailed": "提交失敗",
+    "missingSession": "缺少 session 參數",
+    "sessionExpired": "本次測評會話已失效，我們重新開始一次吧。",
+    "restart": "重新開始測評",
+    "backendDown": "無法連線後端，請確認 API 已啟動"
+  },
+  "roles": {
+    "current": "目前角色",
+    "target": "目標角色",
+    "frontend": "前端工程師",
+    "aiEngineer": "AI Engineer"
+  },
+  "categories": {
+    "foundation": "工程基礎",
+    "data": "資料與檢索",
+    "llm": "LLM 應用",
+    "eval": "評估與迭代"
+  },
+  "levels": {
+    "0": "未接觸",
+    "1": "入門",
+    "2": "可獨立做",
+    "3": "可交付",
+    "4": "可設計治理"
+  },
+  "home": {
+    "titleLine1": "看清你當下的位置。",
+    "titleNavigate": "導航",
+    "titleLine2": "你能抵達的遠方。",
+    "subtitle": "你的下一步，從你已有的能力開始。",
+    "iAmA": "我目前是：",
+    "iWantTo": "我想成為：",
+    "showMyPath": "為我規劃路徑 →",
+    "mapping": "分析中…"
+  },
+  "graph": {
+    "legendHave": "已掌握",
+    "legendInProgress": "進行中 / 目標",
+    "legendGap": "能力缺口",
+    "legendHint": "點擊節點查看路徑",
+    "nodeCurrent": "目前",
+    "nodeTarget": "目標",
+    "demo": {
+      "apiDesign": "API 設計",
+      "streaming": "串流整合",
+      "promptStructure": "Prompt 結構",
+      "vectorSearch": "向量檢索",
+      "functionCalling": "函式呼叫",
+      "offlineEval": "離線評估"
+    }
+  },
+  "skills": {
+    "title": "選擇你已有的技能",
+    "subtitle": "點擊技能選擇熟練度即可，無需打字。整個過程通常不到 60 秒。",
+    "preparing": "正在準備技能圖譜…",
+    "selectedCount": "已選 <c>{count}</c> 項",
+    "pickAtLeastOne": " · 至少選 1 項以生成路徑",
+    "generating": "生成中…",
+    "generatePath": "生成我的成長路徑 →"
+  },
+  "survey": {
+    "assessment": "能力評估",
+    "progress": "第 {current} 題 · 最多 {max} 題",
+    "preparingFirst": "正在準備你的第一道問題…",
+    "noMoreQuestions": "沒有更多問題了。"
+  },
+  "question": {
+    "pickOption": "請選擇一個選項",
+    "submitting": "提交中…",
+    "next": "下一步"
+  },
+  "result": {
+    "generatingPath": "正在生成你的成長路徑…",
+    "title": "你的 AI Engineer 成長路徑",
+    "generatedFrom": "基於 {count} 項技能畫像，由確定性決策引擎生成",
+    "orientationTag": "目標方向 · {label}",
+    "statStrengths": "優勢",
+    "statGaps": "缺口",
+    "statNextSteps": "下一步",
+    "section1Title": "你的優勢",
+    "section1Subtitle": "為什麼是你學這個",
+    "section1Empty": "本輪還沒採集到明顯優勢項，多補充一些已有經驗會更準。",
+    "section2Title": "能力差距",
+    "section2Subtitle": "必要 / 加分",
+    "section2Empty": "目標崗位的必要能力你已基本覆蓋，繼續鞏固即可。",
+    "required": "必要",
+    "bonus": "加分",
+    "section3Title": "學習路線",
+    "section3Subtitle": "按時間預算展示的最高槓桿動作（按依賴排序）",
+    "stepsDone": "已完成 <c>{done}</c> / {total} 步",
+    "section3Empty": "暫無需要優先攻克的動作。",
+    "step": "第 {rank} 步",
+    "estWeeks": "預計 ~{weeks} 週",
+    "actionSteps": "行動步驟",
+    "acceptanceCriteria": "完成標準（可提交證據）",
+    "doneMet": "已達成上面的完成標準 ✓",
+    "doneHint": "達成上面的完成標準後，標記一下",
+    "doneUndo": "已完成 · 點擊撤銷",
+    "markDone": "標記完成",
+    "viewFullProfile": "查看完整能力畫像",
+    "reassess": "重新評估",
+    "backHome": "返回首頁",
+    "careerReadiness": "職業就緒度",
+    "confidence": "信心 {percent}%",
+    "budgetLight": "每週 3h",
+    "budgetLightHint": "聚焦少而專",
+    "budgetStandard": "每週 6h",
+    "budgetStandardHint": "穩步推進",
+    "budgetIntense": "每週 10h+",
+    "budgetIntenseHint": "可並行多線",
+    "calibrateTitle": "按你的時間預算校準路線",
+    "calibrateDefault": "選擇每週可投入的時間，路線會即時重排。",
+    "resourcesEmpty": "暫無通過保鮮校驗的推薦資源，資源庫補充後會自動出現在這裡。",
+    "resourcesTitle": "推薦資源（已通過連結保鮮校驗）",
+    "verifiedOn": "核驗於 {date}",
+    "targetTitle": "已經有心儀的崗位了嗎？",
+    "targetSubtitle": "預設按通用 AI Engineer 的畫像評估你。如果你已經有看上的崗位，把它的招聘描述（JD）貼進來——我們會自動看出這個崗位真正看重什麼，並據此重新精算你的缺口與成長路線。不會鎖定，隨時可清除。",
+    "targetPlaceholder": "把崗位的招聘描述（JD）貼在這裡——職責、要求、技術棧都行…",
+    "targetAnalyze": "按這份 JD 精算",
+    "targetAnalyzing": "正在讀這份 JD…",
+    "targetRecomputing": "正在按該崗位重新精算…",
+    "targetReset": "清除 · 恢復通用",
+    "targetEmpty": "先貼一段崗位描述（JD），我們才能據此為你定製缺口。",
+    "targetMatched": "識別為 <b>{label}</b> 方向的崗位。",
+    "targetMatchedHint": "下方的缺口與成長路線，已按這個崗位看重的能力重新精算。",
+    "targetSignals": "命中訊號：{signals}",
+    "targetNoMatch": "這份描述裡沒看出明顯的方向側重——維持通用評估即可，已經契合。"
+  }
+}
