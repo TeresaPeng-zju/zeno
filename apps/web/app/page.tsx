@@ -137,31 +137,33 @@ export default function HomePage() {
                   <RolePixelIcon roleId={role.id} size={32} />
                 </span>
                 <span className="text-base font-semibold text-foreground group-hover:text-cyan">
-                  {role.label}
+                  {locale === "en" ? role.label : role.label_zh}
                 </span>
               </button>
             ))}
           </div>
 
-          {/* Target role (explicit, card style matching above) */}
-          <div className="mt-10 flex flex-col items-center gap-3">
-            <p className="text-lg font-semibold text-foreground/80 sm:text-xl">{t("targetRole")}</p>
-            <div className="flex flex-col items-center gap-2 rounded-2xl border border-cyan/40 bg-cyan/[0.06] px-8 py-5 backdrop-blur-xl">
-              <span className="flex h-9 items-center justify-center">
-                <Image
-                  src="/icons/icon-ai-engineer.png"
-                  alt="AI Application Engineer"
-                  width={32}
-                  height={32}
-                  style={{ imageRendering: "pixelated" }}
-                  className="pointer-events-none"
-                />
-              </span>
-              <span className="text-base font-semibold text-cyan">
-                AI Application Engineer
-              </span>
+          {/* Target role (from API, card style matching above) */}
+          {targetRoles.length > 0 && (
+            <div className="mt-10 flex flex-col items-center gap-3">
+              <p className="text-lg font-semibold text-foreground/80 sm:text-xl">{t("targetRole")}</p>
+              <div className="flex flex-col items-center gap-2 rounded-2xl border border-cyan/40 bg-cyan/[0.06] px-8 py-5 backdrop-blur-xl">
+                <span className="flex h-9 items-center justify-center">
+                  <Image
+                    src="/icons/icon-ai-engineer.png"
+                    alt={targetRoles[0].label}
+                    width={32}
+                    height={32}
+                    style={{ imageRendering: "pixelated" }}
+                    className="pointer-events-none"
+                  />
+                </span>
+                <span className="text-base font-semibold text-cyan">
+                  {locale === "en" ? targetRoles[0].label : targetRoles[0].label_zh}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* CTA Button — always visible, disabled until role selected */}
           <button
