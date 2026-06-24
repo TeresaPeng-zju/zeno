@@ -137,6 +137,34 @@ export function AuroraCss() {
             animationDelay: "-4s",
           }}
         />
+        {/* Layer 4: Bottom cyan ribbon */}
+        <div
+          className="aurora-layer"
+          style={{
+            width: "140%",
+            height: "300px",
+            bottom: "5%",
+            left: "-20%",
+            top: "auto",
+            background: "radial-gradient(ellipse at 30% 20%, transparent 40%, hsl(183 86% 52% / 0.3) 55%, hsl(183 70% 40% / 0.15) 70%, transparent 85%)",
+            transform: "rotate(6deg) scaleX(1.4)",
+            animationDelay: "-6s",
+          }}
+        />
+        {/* Layer 5: Bottom violet accent */}
+        <div
+          className="aurora-layer"
+          style={{
+            width: "110%",
+            height: "250px",
+            bottom: "10%",
+            left: "0%",
+            top: "auto",
+            background: "radial-gradient(ellipse at 70% 30%, transparent 45%, hsl(270 60% 50% / 0.2) 58%, hsl(280 50% 40% / 0.1) 72%, transparent 88%)",
+            transform: "rotate(-4deg) scaleX(1.3)",
+            animationDelay: "-8s",
+          }}
+        />
       </div>
     </>
   );
