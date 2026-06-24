@@ -1,66 +1,18 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
-import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
-import { InteractiveAurora } from "@/components/interactive-aurora";
+import RotatingText from "@/components/ui/rotating-text";
+import { AuroraCss } from "@/components/aurora-css";
 import { Starfield } from "@/components/starfield";
 import { api, type PathRole } from "@/lib/api";
+import { RolePixelIcon } from "@/components/ui/pixel-icons";
 
-/* ---------- star particles ----------------------------------------------- */
-
-const C = "hsl(183 86% 52%)";
-const G = "hsl(43 100% 50%)";
-const M = "hsl(335 100% 65%)";
-const W = "hsl(210 25% 80%)";
-
-// size tiers: 1-2 = distant dust (round), 3-5 = near stars (4-pointed), 7-10 = bright stars (4-pointed + strong glow)
-// "round" flag: tiny stars stay as circles for realism
-const STARS = [
-  // — bright anchor stars (few, large, prominent) —
-  { x: "50%", y: "25%", size: 10, color: C, glow: 14, anim: "float-2", dur: "7s",  delay: "0s" },
-  { x: "70%", y: "11%", size: 8,  color: C, glow: 12, anim: "float-2", dur: "7s",  delay: "0.2s" },
-  { x: "5%",  y: "30%", size: 8,  color: C, glow: 12, anim: "float-2", dur: "8s",  delay: "1s" },
-  { x: "86%", y: "68%", size: 7,  color: M, glow: 10, anim: "float-1", dur: "8s",  delay: "0.8s" },
-  // — medium stars (4-pointed, varied) —
-  { x: "3%",  y: "5%",  size: 5, color: C, glow: 8, anim: "float-1", dur: "8s",  delay: "0s" },
-  { x: "18%", y: "6%",  size: 5, color: G, glow: 8, anim: "float-1", dur: "12s", delay: "1s" },
-  { x: "40%", y: "12%", size: 5, color: C, glow: 7, anim: "float-2", dur: "8s",  delay: "1.5s" },
-  { x: "60%", y: "36%", size: 5, color: M, glow: 8, anim: "float-1", dur: "12s", delay: "1.4s" },
-  { x: "13%", y: "75%", size: 5, color: C, glow: 7, anim: "float-2", dur: "8s",  delay: "1.9s" },
-  { x: "75%", y: "38%", size: 4, color: G, glow: 7, anim: "float-1", dur: "8s",  delay: "2.6s" },
-  { x: "44%", y: "40%", size: 4, color: C, glow: 6, anim: "float-1", dur: "8s",  delay: "0.7s" },
-  { x: "30%", y: "80%", size: 4, color: C, glow: 6, anim: "float-2", dur: "9s",  delay: "0.6s" },
-  { x: "91%", y: "33%", size: 4, color: C, glow: 6, anim: "float-1", dur: "10s", delay: "1.6s" },
-  // — small stars (4-pointed, subtle) —
-  { x: "25%", y: "18%", size: 3, color: C, glow: 4, anim: "float-2", dur: "9s",  delay: "2s" },
-  { x: "55%", y: "16%", size: 3, color: W, glow: 4, anim: "float-2", dur: "9s",  delay: "0.8s" },
-  { x: "85%", y: "15%", size: 3, color: W, glow: 4, anim: "float-2", dur: "9s",  delay: "2.2s" },
-  { x: "20%", y: "35%", size: 3, color: W, glow: 4, anim: "float-2", dur: "10s", delay: "0.4s" },
-  { x: "54%", y: "70%", size: 3, color: C, glow: 4, anim: "float-1", dur: "10s", delay: "2.7s" },
-  { x: "70%", y: "66%", size: 3, color: C, glow: 4, anim: "float-1", dur: "9s",  delay: "1.7s" },
-  // — distant dust (round, tiny — background depth) —
-  { x: "10%", y: "14%", size: 1.5, color: W, glow: 2, anim: "float-2", dur: "10s", delay: "0.5s", round: true },
-  { x: "33%", y: "4%",  size: 1,   color: W, glow: 1, anim: "float-1", dur: "11s", delay: "0.3s", round: true },
-  { x: "48%", y: "7%",  size: 1.5, color: W, glow: 2, anim: "float-1", dur: "10s", delay: "2.5s", round: true },
-  { x: "63%", y: "3%",  size: 1,   color: W, glow: 1, anim: "float-1", dur: "12s", delay: "3s",   round: true },
-  { x: "78%", y: "8%",  size: 1.5, color: W, glow: 2, anim: "float-1", dur: "11s", delay: "1.8s", round: true },
-  { x: "93%", y: "6%",  size: 1,   color: W, glow: 1, anim: "float-1", dur: "10s", delay: "0.6s", round: true },
-  { x: "12%", y: "42%", size: 1.5, color: W, glow: 2, anim: "float-1", dur: "12s", delay: "2.8s", round: true },
-  { x: "28%", y: "48%", size: 1,   color: W, glow: 1, anim: "float-1", dur: "9s",  delay: "1.2s", round: true },
-  { x: "36%", y: "32%", size: 1.5, color: W, glow: 2, anim: "float-2", dur: "11s", delay: "3.2s", round: true },
-  { x: "52%", y: "50%", size: 1,   color: W, glow: 1, anim: "float-2", dur: "10s", delay: "2s",   round: true },
-  { x: "67%", y: "45%", size: 1.5, color: W, glow: 2, anim: "float-2", dur: "9s",  delay: "0.9s", round: true },
-  { x: "83%", y: "48%", size: 1,   color: W, glow: 1, anim: "float-2", dur: "11s", delay: "0.1s", round: true },
-  { x: "4%",  y: "62%", size: 1.5, color: W, glow: 2, anim: "float-1", dur: "10s", delay: "0.3s", round: true },
-  { x: "22%", y: "68%", size: 1,   color: W, glow: 1, anim: "float-1", dur: "12s", delay: "2.4s", round: true },
-  { x: "46%", y: "78%", size: 1.5, color: W, glow: 2, anim: "float-2", dur: "8s",  delay: "1.3s", round: true },
-  { x: "94%", y: "80%", size: 1,   color: W, glow: 1, anim: "float-2", dur: "10s", delay: "1.1s", round: true },
-] as const;
+/* ---------- star particles (now auto-generated in Starfield component) ---- */
 
 /* ---------- animation variants ------------------------------------------- */
 
@@ -77,6 +29,7 @@ const fadeUp = {
 
 export default function HomePage() {
   const router = useRouter();
+  const locale = useLocale();
   const t = useTranslations("home");
   const tc = useTranslations("common");
   const [loading, setLoading] = useState(false);
@@ -86,122 +39,147 @@ export default function HomePage() {
   const [currentRoles, setCurrentRoles] = useState<PathRole[]>([]);
   const [targetRoles, setTargetRoles] = useState<PathRole[]>([]);
   const [currentRole, setCurrentRole] = useState("");
-  const [targetRole, setTargetRole] = useState("");
 
   useEffect(() => {
     api.paths().then((data) => {
       setCurrentRoles(data.current_roles);
       setTargetRoles(data.target_roles);
-      if (data.current_roles.length > 0) setCurrentRole(data.current_roles[0].id);
-      if (data.target_roles.length > 0) setTargetRole(data.target_roles[0].id);
     }).catch(() => {});
   }, []);
 
-  async function startPath() {
-    if (!currentRole) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const { session_id } = await api.createSession("base", currentRole);
-      router.push(`/skills?session=${session_id}&current_role=${currentRole}&target_role=${targetRole}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : tc("backendDown"));
-      setLoading(false);
-    }
-  }
+
 
   return (
     <main className="relative min-h-screen overflow-x-hidden">
       {/* ── Aurora + Starfield ──────────────────────────────────────── */}
-      <InteractiveAurora />
-      <Starfield stars={STARS} />
+      <AuroraCss />
+      <Starfield />
 
       {/* ── Hero ─────────────────────────────────────────────────── */}
-      <section className="container relative z-10 flex flex-col items-center pt-28 text-center sm:pt-36 before:pointer-events-none before:absolute before:inset-0 before:-z-[1] before:rounded-full before:bg-[radial-gradient(ellipse_at_center,rgba(10,15,30,0.4)_0%,transparent_70%)]">
+      <section className="container relative z-10 flex min-h-screen flex-col items-center justify-center text-center before:pointer-events-none before:absolute before:inset-0 before:-z-[1] before:rounded-full before:bg-[radial-gradient(ellipse_at_center,rgba(10,15,30,0.4)_0%,transparent_70%)]">
         {/* title */}
         <motion.h1
           custom={0}
           variants={fadeUp}
           initial="hidden"
           animate="show"
-          className="mt-8 max-w-5xl cursor-default pb-3 text-5xl font-extrabold leading-[1.08] tracking-tight text-gradient sm:text-7xl"
+          className="mt-8 cursor-default pb-3 text-6xl font-extrabold leading-[1.3] tracking-tight sm:text-8xl"
         >
-          {t("titleLine1")}
-          <br />
-          <span className="whitespace-nowrap">
-            <span className="text-cyan [-webkit-text-fill-color:hsl(183_86%_52%)]">
-              {t("titleNavigate")}
-            </span>
-            {t("titleLine2")}
-          </span>
+          {locale === "en" ? (
+            <>
+              <RotatingText
+                texts={["Discover", "Explore", "Build", "Transform"]}
+                mainClassName="text-cyan [-webkit-text-fill-color:hsl(183_86%_52%)] overflow-hidden py-3"
+                staggerFrom="last"
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "-120%" }}
+                staggerDuration={0.025}
+                splitLevelClassName="overflow-hidden pb-2"
+                transition={{ type: "spring", damping: 30, stiffness: 400 }}
+                rotationInterval={2500}
+              />{" "}
+              <span className="text-gradient">what&apos;s next.</span>
+            </>
+          ) : (
+            <span className="text-gradient">{t("title")}</span>
+          )}
         </motion.h1>
 
-        {/* subtitle */}
+        {/* subtitle (static) */}
         <motion.p
           custom={1}
           variants={fadeUp}
           initial="hidden"
           animate="show"
-          className="mt-6 max-w-2xl cursor-default text-lg leading-relaxed text-muted-foreground"
+          className="mt-6 max-w-2xl cursor-default text-xl leading-relaxed text-muted-foreground sm:text-2xl"
         >
           {t("subtitle")}
         </motion.p>
 
-        {/* ── Path Selector Card ────────────────────────────────────── */}
+        {/* ── Identity Cards ────────────────────────────────────────── */}
         <motion.div
           custom={2}
           variants={fadeUp}
           initial="hidden"
           animate="show"
-          className="mt-14 w-full max-w-xl"
+          className="mt-14 w-full max-w-3xl"
         >
-          <div className="border-beam relative rounded-2xl bg-card/40 p-6 backdrop-blur-xl sm:p-8">
-
-            <div className="space-y-6">
-              {/* Current Role */}
-              <div>
-                <label className="mb-2.5 block text-base font-semibold text-foreground">
-                  {t("iAmA")}
-                </label>
-                <Select
-                  value={currentRole}
-                  options={currentRoles.map((r) => ({ value: r.id, label: r.label }))}
-                  onChange={setCurrentRole}
-                  placeholder="Select your current role…"
-                />
-              </div>
-
-              {/* Target Role */}
-              <div>
-                <label className="mb-2.5 block text-base font-semibold text-foreground">
-                  {t("iWantTo")}
-                </label>
-                <Select
-                  value={targetRole}
-                  options={targetRoles.map((r) => ({ value: r.id, label: r.label }))}
-                  onChange={setTargetRole}
-                  placeholder="Select your target role…"
-                />
-              </div>
-
-              {/* CTA */}
-              {error && <p className="text-sm text-magenta">{error}</p>}
-              <Button
-                size="lg"
-                variant="primary"
-                onClick={startPath}
-                disabled={loading || !currentRole}
-                className="w-full text-base"
+          <p className="mb-6 text-center text-lg font-semibold text-foreground/80 sm:text-xl">
+            {t("iAmA")}
+          </p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {currentRoles.map((role) => (
+              <button
+                key={role.id}
+                type="button"
+                onClick={() => setCurrentRole(role.id)}
+                disabled={loading}
+                className={
+                  "group relative flex flex-col items-center gap-2 rounded-2xl border border-border/60 bg-card/40 px-4 py-6 backdrop-blur-xl transition-all hover:border-cyan/50 hover:bg-cyan/[0.06] hover:shadow-[0_0_20px_hsl(183_86%_52%/0.1)] active:scale-[0.97] disabled:opacity-60 " +
+                  (currentRole === role.id
+                    ? "border-cyan/60 bg-cyan/[0.08] shadow-[0_0_20px_hsl(183_86%_52%/0.15)]"
+                    : "border-beam")
+                }
               >
-                {loading ? t("mapping") : t("showMyPath")}
-              </Button>
+                <span className="flex h-9 items-center justify-center">
+                  <RolePixelIcon roleId={role.id} size={32} />
+                </span>
+                <span className="text-base font-semibold text-foreground group-hover:text-cyan">
+                  {role.label}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Target role (explicit, card style matching above) */}
+          <div className="mt-10 flex flex-col items-center gap-3">
+            <p className="text-lg font-semibold text-foreground/80 sm:text-xl">{t("targetRole")}</p>
+            <div className="flex flex-col items-center gap-2 rounded-2xl border border-cyan/40 bg-cyan/[0.06] px-8 py-5 backdrop-blur-xl">
+              <span className="flex h-9 items-center justify-center">
+                <Image
+                  src="/icons/icon-ai-engineer.png"
+                  alt="AI Application Engineer"
+                  width={32}
+                  height={32}
+                  style={{ imageRendering: "pixelated" }}
+                  className="pointer-events-none"
+                />
+              </span>
+              <span className="text-base font-semibold text-cyan">
+                AI Application Engineer
+              </span>
             </div>
           </div>
+
+          {/* CTA Button — always visible, disabled until role selected */}
+          <button
+            type="button"
+            disabled={!currentRole || loading}
+            onClick={() => {
+              const target = targetRoles[0]?.id || "ai_engineer_applied";
+              setLoading(true);
+              api.createSession("base", currentRole).then(({ session_id }) => {
+                router.push(`/skills?session=${session_id}&current_role=${currentRole}&target_role=${target}`);
+              }).catch((e) => {
+                setError(e instanceof Error ? e.message : tc("backendDown"));
+                setLoading(false);
+              });
+            }}
+            className="mt-8 rounded-full bg-cyan px-8 py-3.5 text-lg font-bold text-[hsl(222_47%_6%)] shadow-[0_0_24px_hsl(183_86%_52%/0.3)] transition-all hover:brightness-110 hover:shadow-[0_0_40px_hsl(183_86%_52%/0.4)] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+          >
+            {loading ? t("mapping") : t("cta")}
+          </button>
+
+          {error && <p className="mt-3 text-center text-sm text-magenta">{error}</p>}
         </motion.div>
 
-        <div className="pb-20" />
       </section>
     </main>
   );
 }
+
+
+
+
 
