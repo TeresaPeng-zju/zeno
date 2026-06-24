@@ -11,13 +11,12 @@
 
 @layer base {
   :root {
-    /* Typography — Inter for Latin, system CJK fallbacks (PingFang SC on
-       macOS, Microsoft Yahei on Windows, Hiragino Sans GB …). Mirrors the
-       anygen stack so Chinese renders with high-quality native faces. */
-    --font-inter: "Inter Variable", "Inter";
+    /* Typography — Plus Jakarta Sans for Latin, Noto Sans SC for CJK */
+    --font-jakarta: "Plus Jakarta Sans";
+    --font-noto-sc: "Noto Sans SC";
     --font-source-code-pro: "Source Code Pro";
-    --default-font-family: var(--font-inter), -apple-system, BlinkMacSystemFont,
-      "Helvetica Neue", Tahoma, "PingFang SC", "Microsoft Yahei",
+    --default-font-family: var(--font-jakarta), var(--font-noto-sc),
+      -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft Yahei",
       "Hiragino Sans GB", Arial, sans-serif, "Apple Color Emoji",
       "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --default-font-family-monospace: var(--font-source-code-pro), ui-monospace,
@@ -143,6 +142,15 @@
   .star-dot.star-round {
     clip-path: none;
     border-radius: 50%;
+  }
+
+  /* Typewriter cursor blink */
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  .animate-blink {
+    animation: blink 0.6s step-end infinite;
   }
 
   @keyframes twinkle {
