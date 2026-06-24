@@ -46,12 +46,12 @@
     "4": "可設計治理"
   },
   "home": {
-    "titleLine1": "看清你當下的位置。",
-    "titleNavigate": "導航",
-    "titleLine2": "你能抵達的遠方。",
-    "subtitle": "你的下一步，從你已有的能力開始。",
-    "iAmA": "我目前是：",
+    "title": "發現你的下一步。",
+    "subtitle": "從你現有的技能出發，抵達下一個 AI 角色。",
+    "iAmA": "你現在是？",
+    "targetRole": "你的目標：",
     "iWantTo": "我想成為：",
+    "cta": "規劃我的轉型路徑 →",
     "showMyPath": "為我規劃路徑 →",
     "mapping": "分析中…"
   },
