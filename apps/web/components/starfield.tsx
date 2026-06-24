@@ -1,33 +1,78 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-interface Star {
-  x: string;
-  y: string;
+const COLORS = [
+  "hsl(183 86% 52%)",   // cyan
+  "hsl(183 86% 52%)",   // cyan (weighted)
+  "hsl(210 25% 80%)",   // white-blue
+  "hsl(210 25% 80%)",   // white-blue (weighted)
+  "hsl(43 100% 50%)",   // gold
+  "hsl(335 100% 65%)",  // magenta
+];
+
+const STAR_COUNT = 50;
+const GLOW_RADIUS = 140;
+
+interface GeneratedStar {
+  x: number; // percentage
+  y: number;
   size: number;
   color: string;
   glow: number;
-  anim: string;
-  dur: string;
-  delay: string;
-  readonly round?: boolean;
+  round: boolean;
+  delay: number; // animation delay in seconds
+  duration: number; // twinkle duration
 }
 
-interface Props {
-  stars: readonly Star[];
-}
+function generateStars(count: number): GeneratedStar[] {
+  const stars: GeneratedStar[] = [];
+  for (let i = 0; i < count; i++) {
+    const x = Math.random() * 100;
+    const y = Math.random() * 100;
+    const tier = Math.random();
+    let size: number, glow: number, round: boolean;
 
-const GLOW_RADIUS = 140; // px
+    if (tier < 0.08) {
+      // Bright anchor stars (few, large)
+      size = 7 + Math.random() * 4;
+      glow = 10 + Math.random() * 5;
+      round = false;
+    } else if (tier < 0.3) {
+      // Medium stars (4-pointed)
+      size = 3.5 + Math.random() * 2.5;
+      glow = 5 + Math.random() * 4;
+      round = false;
+    } else {
+      // Distant dust (round, tiny)
+      size = 1 + Math.random() * 1.5;
+      glow = 1 + Math.random() * 2;
+      round = true;
+    }
+
+    const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+    const delay = Math.random() * 4;
+    const duration = 2 + Math.random() * 3;
+
+    stars.push({ x, y, size, color, glow, round, delay, duration });
+  }
+  return stars;
+}
 
 /**
- * Starfield with mouse-proximity glow.
- * Large stars are 4-pointed (CSS clip-path), tiny dust stays round.
+ * Randomized starfield with twinkle animation + mouse-proximity glow.
+ * Large stars: 4-pointed (clip-path). Tiny dust: round.
  */
-export function Starfield({ stars }: Props) {
+export function Starfield() {
   const layerRef = useRef<HTMLDivElement>(null);
   const mouseRef = useRef({ x: -9999, y: -9999 });
   const rafRef = useRef(0);
+
+  // Generate stars only on client mount to avoid hydration mismatch
+  const [stars, setStars] = useState<GeneratedStar[]>([]);
+  useEffect(() => {
+    setStars(generateStars(STAR_COUNT));
+  }, []);
 
   useEffect(() => {
     const layer = layerRef.current;
@@ -54,7 +99,7 @@ export function Starfield({ stars }: Props) {
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         const color = dot.dataset.color || "white";
-        const baseGlow = parseFloat(dot.dataset.baseGlow || "6");
+        const baseGlow = parseFloat(dot.dataset.baseGlow || "4");
 
         if (dist < GLOW_RADIUS) {
           const intensity = (1 - dist / GLOW_RADIUS) ** 1.5;
@@ -91,16 +136,16 @@ export function Starfield({ stars }: Props) {
           data-base-glow={s.glow}
           data-color={s.color}
           style={{
-            left: s.x,
-            top: s.y,
+            left: `${s.x}%`,
+            top: `${s.y}%`,
             width: s.size,
             height: s.size,
             background: s.color,
             boxShadow: `0 0 ${s.glow}px ${s.color}`,
             transition: "box-shadow 0.08s linear, transform 0.08s linear",
-            animationName: s.anim,
-            animationDuration: s.dur,
-            animationDelay: s.delay,
+            animationName: "twinkle",
+            animationDuration: `${s.duration}s`,
+            animationDelay: `${s.delay}s`,
           }}
         />
       ))}

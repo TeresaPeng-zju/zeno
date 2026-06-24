@@ -45,12 +45,12 @@
     "4": "Can design & govern"
   },
   "home": {
-    "titleLine1": "See where you are.",
-    "titleNavigate": "Navigate",
-    "titleLine2": " where you could go.",
-    "subtitle": "Your path forward starts from what you already know.",
-    "iAmA": "I am a:",
+    "title": "Discover what's next.",
+    "subtitle": "From your current skills to your next AI role.",
+    "iAmA": "Who are you today?",
+    "targetRole": "Your goal:",
     "iWantTo": "I want to become:",
+    "cta": "Map my transition →",
     "showMyPath": "Show me my path →",
     "mapping": "Analyzing…"
   },
