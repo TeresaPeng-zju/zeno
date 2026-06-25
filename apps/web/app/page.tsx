@@ -14,7 +14,20 @@ import { api, type PathRole } from "@/lib/api";
 import { RolePixelIcon } from "@/components/ui/pixel-icons";
 
 
-/* ---------- star particles (now auto-generated in Starfield component) ---- */
+/* ---------- Simplified → Traditional Chinese map for role labels --------- */
+const ZH_TW_LABELS: Record<string, string> = {
+  "前端工程师": "前端工程師",
+  "后端工程师": "後端工程師",
+  "全栈工程师": "全端工程師",
+  "学生": "學生",
+  "AI 应用工程师": "AI 應用工程師",
+};
+
+function roleLabel(role: { label: string; label_zh: string }, locale: string) {
+  if (locale === "en") return role.label;
+  if (locale === "zh-TW") return ZH_TW_LABELS[role.label_zh] || role.label_zh;
+  return role.label_zh;
+}
 
 /* ---------- animation variants ------------------------------------------- */
 
@@ -85,7 +98,10 @@ export default function HomePage() {
             </>
           ) : (
             <TextType
-              text={["发现新的方向", "探索更多可能", "打造核心能力", "开启职业转型"]}
+              text={locale === "zh-TW"
+                ? ["發現新的方向", "探索更多可能", "打造核心能力", "開啟職業轉型"]
+                : ["发现新的方向", "探索更多可能", "打造核心能力", "开启职业转型"]
+              }
               className="text-gradient"
               typingSpeed={75}
               deletingSpeed={50}
@@ -139,7 +155,7 @@ export default function HomePage() {
                   <RolePixelIcon roleId={role.id} size={32} />
                 </span>
                 <span className="text-base font-semibold text-foreground group-hover:text-cyan">
-                  {locale === "en" ? role.label : role.label_zh}
+                  {roleLabel(role, locale)}
                 </span>
               </button>
             ))}
@@ -161,7 +177,7 @@ export default function HomePage() {
                   />
                 </span>
                 <span className="text-base font-semibold text-cyan">
-                  {locale === "en" ? targetRoles[0].label : targetRoles[0].label_zh}
+                  {roleLabel(targetRoles[0], locale)}
                 </span>
               </div>
             </div>
