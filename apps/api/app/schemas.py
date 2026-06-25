@@ -201,3 +201,114 @@ class ResultResponse(BaseModel):
     gaps: list[GapOut]
     next_steps: list[NextStepOut]
     note: str
+
+
+# --------------------------------------------------------------------------- #
+# Assessment plan (Loop-1 migration assessment)
+# --------------------------------------------------------------------------- #
+
+
+class TransferSkillOut(BaseModel):
+    """A skill the user likely already has from their current role."""
+
+    skill_id: str
+    name: str
+    category: str
+    tier: str  # direct_transfer | adjacent_transfer
+    default_level: int
+    learnability: float
+    reason: str
+
+
+class AssessSkillOut(BaseModel):
+    """A skill the user needs to self-evaluate — a core gap for the target role."""
+
+    skill_id: str
+    name: str
+    category: str
+    learnability: float
+    weight: float  # importance in the target role
+    type: str  # required | bonus
+
+
+class SkipSkillOut(BaseModel):
+    """A skill excluded from the first-pass assessment."""
+
+    skill_id: str
+    name: str
+    category: str
+
+
+class AssessmentPlanResponse(BaseModel):
+    """Structured migration assessment plan — the engine of Loop 1."""
+
+    current_role: str
+    target_role: str
+    transfer_skills: list[TransferSkillOut]
+    assess_skills: list[AssessSkillOut]
+    skip_skills: list[SkipSkillOut]
+
+
+# --------------------------------------------------------------------------- #
+# Experience capsules v3.1 (Loop-1 UX — career transition discovery)
+# --------------------------------------------------------------------------- #
+
+
+class SkillMapping(BaseModel):
+    skill_id: str
+    base_level: int
+    confidence: float
+
+
+class DepthTierOut(BaseModel):
+    id: str  # none | touched | independent | led
+    label: str
+    level_offset: int
+
+
+class CapsuleOut(BaseModel):
+    """A single observable behavior in user language."""
+
+    id: str
+    text: str
+    capability: str  # human-readable transferable capability name
+    maps_to: list[SkillMapping]
+
+
+class CategoryOut(BaseModel):
+    """An experience category (e.g. 'What I've built and shipped')."""
+
+    id: str
+    label: str
+    icon: str
+    hint: str  # decision-oriented explanation
+    capsules: list[CapsuleOut]
+
+
+class AiExplorationOut(BaseModel):
+    """Optional AI exploration section (start-point calibrator)."""
+
+    label: str
+    icon: str
+    hint: str
+    capsules: list[CapsuleOut]
+
+
+class ConfirmProbeOut(BaseModel):
+    """Extreme-short AI-specific probe with pre-defined options."""
+
+    skill_id: str
+    name: str
+    explain: str
+    options: list[str]
+    option_levels: list[int]
+
+
+class ExperienceCapsulesResponse(BaseModel):
+    """v3.1: category-based capsules + depth tiers + AI probes."""
+
+    current_role: str
+    depth_tiers: list[DepthTierOut]
+    categories: list[CategoryOut]
+    ai_exploration: AiExplorationOut | None = None
+    confirm_probes: list[ConfirmProbeOut]

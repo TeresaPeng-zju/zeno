@@ -3,9 +3,9 @@ services:
     image: pgvector/pgvector:pg16
     container_name: zeno-postgres
     environment:
-      POSTGRES_USER: zeno
-      POSTGRES_PASSWORD: zeno
-      POSTGRES_DB: zeno
+      POSTGRES_USER: ${POSTGRES_USER:-zeno}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zeno}
+      POSTGRES_DB: ${POSTGRES_DB:-zeno}
     ports:
       - "5432:5432"
     volumes:
