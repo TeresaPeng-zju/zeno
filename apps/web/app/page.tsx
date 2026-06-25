@@ -7,11 +7,12 @@ import { motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
 
 import RotatingText from "@/components/ui/rotating-text";
+import TextType from "@/components/ui/text-type";
 import { AuroraCss } from "@/components/aurora-css";
 import { Starfield } from "@/components/starfield";
 import { api, type PathRole } from "@/lib/api";
 import { RolePixelIcon } from "@/components/ui/pixel-icons";
-import TextType from "@/components/ui/text-type";
+
 
 /* ---------- star particles (now auto-generated in Starfield component) ---- */
 
@@ -83,7 +84,18 @@ export default function HomePage() {
               <span className="text-gradient">what&apos;s next.</span>
             </>
           ) : (
-            <span className="text-gradient">{t("title")}</span>
+            <TextType
+              text={["发现新的方向_", "探索更多可能_", "打造核心能力_", "开启职业转型_"]}
+              className="text-gradient"
+              typingSpeed={80}
+              deletingSpeed={40}
+              pauseDuration={1800}
+              showCursor={true}
+              cursorCharacter="▎"
+              cursorClassName="text-cyan/60"
+              cursorBlinkDuration={0.5}
+              loop={true}
+            />
           )}
         </motion.h1>
 
@@ -95,17 +107,7 @@ export default function HomePage() {
           animate="show"
           className="mt-6 max-w-2xl cursor-default text-xl leading-relaxed text-muted-foreground sm:text-2xl"
         >
-          {locale === "en" ? (
-            t("subtitle")
-          ) : (
-            <TextType
-              text={t("subtitle")}
-              typingSpeed={60}
-              initialDelay={600}
-              cursorCharacter="▎"
-              cursorClassName="ml-0.5 text-cyan/60"
-            />
-          )}
+          {t("subtitle")}
         </motion.p>
 
         {/* ── Identity Cards ────────────────────────────────────────── */}
