@@ -76,6 +76,7 @@ apps/api/app/data/raw/*.xlsx
 apps/api/app/data/jd_evidence.json
 apps/api/app/data/skill_graph.json
 apps/api/app/data/path_config.json
+apps/api/app/data/experience_capsules.json
 jds.jsonl
 Icons.png
 Zippi.png

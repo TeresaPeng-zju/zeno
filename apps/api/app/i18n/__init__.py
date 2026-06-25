@@ -56,4 +56,37 @@ def t(lang: Lang, key: str, **kwargs: object) -> str:
     return template.format(**kwargs) if kwargs else template
 
 
-__all__ = ["Lang", "DEFAULT_LANG", "resolve_lang", "get_lang", "t"]
+Region = Literal["cn", "intl"]
+DEFAULT_REGION: Region = "intl"
+
+
+def get_region(x_zeno_region: str | None = Header(default=None)) -> Region:
+    """FastAPI dependency: resolve market region from X-Zeno-Region header.
+
+    Used for weighting JD evidence sources: 'cn' prefers domestic JD data,
+    'intl' prefers Field Guide / international data. Default is 'intl'.
+    """
+    if x_zeno_region and x_zeno_region.lower() == "cn":
+        return "cn"
+    return DEFAULT_REGION
+
+
+# Source trust weights by region — used when evidence from multiple
+# markets (domestic vs international) is available.
+REGION_SOURCE_WEIGHTS: dict[Region, dict[str, float]] = {
+    "cn": {
+        "jd/jd_multi_2026h1": 1.0,        # domestic JD corpus → full weight
+        "field_guide/builtin_2026q1": 0.3,  # international → dampened
+    },
+    "intl": {
+        "jd/jd_multi_2026h1": 0.3,         # domestic → dampened
+        "field_guide/builtin_2026q1": 1.0,  # international → full weight
+    },
+}
+
+
+__all__ = [
+    "Lang", "DEFAULT_LANG", "resolve_lang", "get_lang",
+    "Region", "DEFAULT_REGION", "get_region", "REGION_SOURCE_WEIGHTS",
+    "t",
+]
