@@ -89,6 +89,12 @@
     "confirmBack": "← Back to edit experiences",
     "selectedCount": "<c>{count}</c> selected",
     "pickAtLeastOne": " · pick at least 1 to generate a path",
+    "capsuleAcked": "Got it",
+    "inferStrong": "Strong",
+    "inferTransferable": "Transferable",
+    "inferBasic": "Foundation",
+    "adjustLower": "Lower",
+    "adjustHigher": "Higher",
     "generating": "Generating…",
     "generatePath": "Generate my roadmap →"
   },
