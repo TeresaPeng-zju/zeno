@@ -7,7 +7,7 @@ and the same gap universe, then scores each on the SAME neutral rulers:
     - dependency violation rate   (lower better; Zeno = 0 by construction)
     - prerequisite coverage       (higher better)
   Market alignment (JD-grounded, anygen's A + B):
-    - gap precision / recall      (vs real market_source JD weak labels)
+    - gap precision / recall      (vs JD-derived weak labels)
     - nDCG@10                     (gain = JD demand frequency)
 
 The headline is NOT "Zeno scores 0 violations" — that's tautological. It's the
