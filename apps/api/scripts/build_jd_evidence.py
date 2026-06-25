@@ -21,8 +21,8 @@ real text + a reviewable trust table, not a vibe. Adding a source later (a curat
 article corpus, an embedding-similarity LF, an LLM extractor) means registering one
 more `run_*` function below — the decision kernel and its readers do not change.
 
-Source #1 (this version): deterministic keyword substring match over the market_source
-JD spreadsheet — a lossless port of the original builder, now as a weighted source.
+Source #1 (this version): deterministic keyword substring match over the
+JD corpus — a lossless port of the original builder, now as a weighted source.
 
 Run:
     cd apps/api && python -m scripts.build_jd_evidence
@@ -32,13 +32,14 @@ Emits: app/data/jd_evidence.json
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
 
 _API_ROOT = Path(__file__).resolve().parent.parent
 _RAW_DIR = _API_ROOT / "app" / "data" / "raw"
-_XLSX = _RAW_DIR / "market_source_ai_jobs.xlsx"
+_XLSX = _RAW_DIR / os.environ.get("JD_XLSX_NAME", "source_jd.xlsx")
 _OUT = _API_ROOT / "app" / "data" / "jd_evidence.json"
 
 # Default trust/date for JSONL sources when manifest.json is absent or incomplete.
@@ -85,11 +86,11 @@ class Source:
 # The curated trust table. Adding a row here (plus its run_* function) is how the
 # ledger grows to more information sources without touching the decision kernel.
 JD_KEYWORD_SOURCE = Source(
-    source_id="market_source/ai_jobs.xlsx",
+    source_id=os.environ.get("JD_SOURCE_ID", "jd/multi_source"),
     source_type="jd",
     signal="keyword",
-    trust=0.6,  # JDs are real but noisy/vague — moderate trust by design.
-    collected_at="2026-01-22",  # harvest date of this market_source JD snapshot
+    trust=0.6,
+    collected_at=os.environ.get("JD_COLLECTED_AT", "2026-01-22"),
     # published_at left None: JDs carry no reliable, uniform publish date.
 )
 

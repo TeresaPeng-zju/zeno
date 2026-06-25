@@ -63,7 +63,9 @@ apps/INTERVIEW.md
 docs/interview.md
 docs/article-sources.md
 docs/decisions/
+docs/data-privacy-*.md
 apps/api/app/llm/prompts_private.py
+.workbuddy/
 apps/api/app/data/raw/README.md
 apps/api/app/data/raw/*/README.md
 apps/api/app/data/gold/

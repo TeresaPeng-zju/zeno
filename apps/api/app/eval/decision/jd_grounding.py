@@ -1,7 +1,7 @@
 """JD-grounded scorers — market alignment (anygen's A + B).
 
 These turn the deterministic JD weak labels (app/data/jd_evidence.json, built by
-scripts/build_jd_evidence.py from the real market_source JD spreadsheet) into two
+scripts/build_jd_evidence.py from the JD corpus) into two
 soft-but-quantified metrics:
 
   * A. gap precision / recall — does the planner recommend skills the market

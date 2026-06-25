@@ -31,6 +31,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 
 from scripts.build_jd_evidence import _XLSX, _norm
@@ -39,7 +40,7 @@ _API_ROOT = Path(__file__).resolve().parent.parent
 _GOLD_DIR = _API_ROOT / "app" / "data" / "gold"
 _OUT = _GOLD_DIR / "extraction_gold.template.jsonl"
 
-_SOURCE_ID = "market_source/ai_jobs.xlsx"
+_SOURCE_ID = os.environ.get("JD_SOURCE_ID", "jd/multi_source")
 _JD_COLS = ("职位名称", "职位描述", "职位要求")
 
 
