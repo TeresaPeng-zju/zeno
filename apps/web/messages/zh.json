@@ -90,6 +90,12 @@
     "confirmBack": "← 返回修改经验",
     "selectedCount": "已选 <c>{count}</c> 项",
     "pickAtLeastOne": " · 至少选 1 项以生成路径",
+    "capsuleAcked": "已了解",
+    "inferStrong": "很强",
+    "inferTransferable": "可迁移",
+    "inferBasic": "有基础",
+    "adjustLower": "低了",
+    "adjustHigher": "高了",
     "generating": "生成中…",
     "generatePath": "生成我的成长路径 →"
   },
