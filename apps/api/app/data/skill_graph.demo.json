@@ -1,0 +1,58 @@
+{
+  "_comment": "Demo skill graph with sample weights. Replace with your production data for calibrated results.",
+  "role": {
+    "id": "ai_engineer_applied",
+    "label": "→ AI Engineer（应用向）",
+    "label_en": "→ AI Engineer (applied)"
+  },
+  "level_rubric": {
+    "0": "不了解",
+    "1": "跟教程可跑通",
+    "2": "能独立做小功能",
+    "3": "能在真实项目交付并排障",
+    "4": "能设计系统、优化与治理"
+  },
+  "level_rubric_en": {
+    "0": "Not familiar",
+    "1": "Can follow a tutorial",
+    "2": "Can build small features independently",
+    "3": "Can ship & debug in real projects",
+    "4": "Can design, optimize & govern systems"
+  },
+  "skills": [
+    { "id": "eng.api_design", "name": "API 设计与契约", "name_en": "API design & contracts", "category": "foundation", "learnability": 0.8 },
+    { "id": "eng.error_handling", "name": "错误处理与重试", "name_en": "Error handling & retries", "category": "foundation", "learnability": 0.7 },
+    { "id": "data.embedding", "name": "向量化与 embedding 选型", "name_en": "Embedding & model selection", "category": "data", "learnability": 0.5 },
+    { "id": "data.vector_search", "name": "向量检索", "name_en": "Vector search", "category": "data", "learnability": 0.45 },
+    { "id": "data.retrieval_rerank", "name": "召回与重排", "name_en": "Retrieval & reranking", "category": "data", "learnability": 0.4 },
+    { "id": "llm.prompt", "name": "Prompt 结构设计", "name_en": "Prompt structure design", "category": "llm", "learnability": 0.7 },
+    { "id": "llm.function_calling", "name": "函数调用", "name_en": "Function calling", "category": "llm", "learnability": 0.55 },
+    { "id": "eval.offline", "name": "离线评估集构建", "name_en": "Offline eval set construction", "category": "eval", "learnability": 0.4 }
+  ],
+  "role_requirements": [
+    { "skill_id": "eng.api_design", "min_level": 3, "weight": 0.7, "type": "required", "branch_impact": 1 },
+    { "skill_id": "eng.error_handling", "min_level": 2, "weight": 0.5, "type": "required", "branch_impact": 0 },
+    { "skill_id": "data.embedding", "min_level": 2, "weight": 0.7, "type": "required", "branch_impact": 1 },
+    { "skill_id": "data.vector_search", "min_level": 2, "weight": 0.8, "type": "required", "branch_impact": 1 },
+    { "skill_id": "data.retrieval_rerank", "min_level": 2, "weight": 0.7, "type": "required", "branch_impact": 1 },
+    { "skill_id": "llm.prompt", "min_level": 3, "weight": 0.8, "type": "required", "branch_impact": 1 },
+    { "skill_id": "llm.function_calling", "min_level": 2, "weight": 0.7, "type": "required", "branch_impact": 1 },
+    { "skill_id": "eval.offline", "min_level": 2, "weight": 0.6, "type": "required", "branch_impact": 1 }
+  ],
+  "dependencies": [
+    { "skill_id": "data.vector_search", "depends_on": "data.embedding" },
+    { "skill_id": "data.retrieval_rerank", "depends_on": "data.vector_search" },
+    { "skill_id": "llm.function_calling", "depends_on": "llm.prompt" },
+    { "skill_id": "llm.function_calling", "depends_on": "eng.error_handling" },
+    { "skill_id": "eval.offline", "depends_on": "data.embedding" }
+  ],
+  "orientations": [
+    {
+      "id": "base",
+      "label": "通用 AI 应用",
+      "label_en": "General AI apps",
+      "description": "覆盖 AI 应用开发的基础能力。",
+      "description_en": "All-round fundamentals of AI app development."
+    }
+  ]
+}

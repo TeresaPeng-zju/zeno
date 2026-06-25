@@ -1,0 +1,29 @@
+{
+  "_comment": "Demo path config with sample skill mappings. Replace with production data for calibrated results.",
+  "paths": {
+    "frontend_engineer → ai_engineer": {
+      "current_role": "frontend_engineer",
+      "target_role": "ai_engineer_applied",
+      "default_have": {},
+      "assess": [
+        "eng.api_design",
+        "eng.error_handling",
+        "data.embedding",
+        "data.vector_search",
+        "data.retrieval_rerank",
+        "llm.prompt",
+        "llm.function_calling",
+        "eval.offline"
+      ]
+    }
+  },
+  "current_roles": [
+    { "id": "frontend_engineer", "label": "Frontend Engineer", "label_zh": "前端工程师" },
+    { "id": "fullstack_engineer", "label": "Full Stack Engineer", "label_zh": "全栈工程师" },
+    { "id": "backend_engineer", "label": "Backend Engineer", "label_zh": "后端工程师" },
+    { "id": "student", "label": "Student", "label_zh": "学生" }
+  ],
+  "target_roles": [
+    { "id": "ai_engineer_applied", "label": "AI Engineer (Applied)", "label_zh": "AI 应用工程师" }
+  ]
+}

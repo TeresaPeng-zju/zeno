@@ -1,37 +1,33 @@
-"""Decision engine (deterministic) — plan section 6.
+"""Decision engine (deterministic).
 
 Turns the collected skill profile into a three-section result:
-    1. 你的优势 (strengths / why you)
-    2. 能力差距 (gaps: required / bonus)
-    3. 下一步最值得学什么 (1-3 next-steps + action prescription)
+    1. Strengths (why you)
+    2. Gaps (required / bonus)
+    3. Next steps (prioritized learning actions)
 
 Everything here is reproducible (no LLM in the loop). The LLM may later
 rephrase the produced text, but the *decisions* (gap, ranking, selection)
 are pure functions of the competency model + the user's observed profile.
-
-Formulas (plan 6.1 / 6.2):
-    gap        = max(0, min_level - user_level)
-    gap_score  = weight * gap * (0.5 + 0.5 * (1 - confidence))
-    next_score = 0.5 * gap_score_norm
-               + 0.3 * dependency_urgency
-               + 0.2 * learnability
-A skill whose own prerequisites are still unmet is penalised so that the
-prerequisite surfaces first ("先学依赖").
+Scoring parameters are loaded from config (env-injectable).
 """
 
 from dataclasses import dataclass, field
 
+from app.core.config import settings
 from app.domain import competency
 from app.domain.competency import RoleRequirement
 from app.i18n import t
 
 MAX_NEXT_STEPS = 3
-BLOCKED_PENALTY = 0.5
-# A skill counts as a "strength" (leverage point) if level is high, or a
-# moderately-known skill that is highly transferable from a frontend background.
-STRENGTH_LEVEL = 3
-TRANSFER_LEVEL = 2
-TRANSFER_LEARNABILITY = 0.7
+BLOCKED_PENALTY = settings.decision_blocked_penalty
+STRENGTH_LEVEL = settings.decision_strength_level
+TRANSFER_LEVEL = settings.decision_transfer_level
+TRANSFER_LEARNABILITY = settings.decision_transfer_learnability
+
+# Scoring weights (from config, not hardcoded)
+_W_GAP = settings.decision_w_gap
+_W_DEP = settings.decision_w_dependency
+_W_LEARN = settings.decision_w_learnability
 
 
 @dataclass(frozen=True)
@@ -248,17 +244,17 @@ def select_next_steps(
         dep_urgency = min(1.0, dep_urgency_raw / max_gs)
         gs_norm = g.gap_score / max_gs
 
-        base_score = 0.5 * gs_norm + 0.3 * dep_urgency + 0.2 * skill.learnability
+        base_score = _W_GAP * gs_norm + _W_DEP * dep_urgency + _W_LEARN * skill.learnability
         score = base_score * BLOCKED_PENALTY if blocked_by else base_score
 
         # Exact additive contributions to next_score, for the audit trail.
         components = {
             "gap_score_norm": round(gs_norm, 4),
-            "gap_term": round(0.5 * gs_norm, 4),
+            "gap_term": round(_W_GAP * gs_norm, 4),
             "dependency_urgency": round(dep_urgency, 4),
-            "dependency_term": round(0.3 * dep_urgency, 4),
+            "dependency_term": round(_W_DEP * dep_urgency, 4),
             "learnability": round(skill.learnability, 4),
-            "learnability_term": round(0.2 * skill.learnability, 4),
+            "learnability_term": round(_W_LEARN * skill.learnability, 4),
             "base_score": round(base_score, 4),
             "blocked_penalty": BLOCKED_PENALTY if blocked_by else 1.0,
         }

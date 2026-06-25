@@ -1,19 +1,7 @@
 """Questionnaire orchestrator (deterministic).
 
-Goal: with the fewest questions, raise the confidence of *required* skills to a
-decision-ready level.
-
-Next-question scoring (plan 5.2):
-    ask_priority = role_weight * (1 - confidence) * branch_factor
-
-`branch_factor` is derived from branch_impact (0/1). We use a floor so that a
-non-branching skill is not permanently starved:
-    branch_factor = BRANCH_FLOOR + (1 - BRANCH_FLOOR) * branch_impact
-
-Termination (plan 5.2):
-    - answered count >= MAX_QUESTIONS, OR
-    - weighted uncertainty of required skills < UNCERTAINTY_THRESHOLD, OR
-    - no unanswered required/bonus skills remain.
+Selects the next skill to assess and determines when the session has
+enough signal to produce a reliable result. Parameters are env-injectable.
 """
 
 from dataclasses import dataclass
@@ -25,7 +13,9 @@ from app.domain.competency import (
     requirements_for_role,
 )
 
-BRANCH_FLOOR = 0.5
+from app.core.config import settings
+
+BRANCH_FLOOR = getattr(settings, "orchestrator_branch_floor", 0.4)
 
 
 @dataclass(frozen=True)

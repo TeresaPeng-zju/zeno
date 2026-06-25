@@ -125,3 +125,19 @@ For advanced setup (native Postgres without Docker, contributor guidelines), see
 - [ ] Career Constellation visualization
 - [ ] Agent-assisted questionnaire optimization
 - [ ] Resource freshness verifier
+
+---
+
+## Open Core
+
+Zeno is open-source under the **Apache License 2.0**. The repository ships with a **demo skill graph** (`skill_graph.demo.json`) containing sample skills and weights so you can run the entire platform out of the box.
+
+Production data — including the calibrated skill graph, JD corpus, and curated resource library — is maintained separately and not included in this repository. You are welcome to replace the demo data with your own domain-specific skill definitions.
+
+"Zeno" and the Zippi mascot are trademarks of Teresa Peng — see [NOTICE](NOTICE) for details.
+
+---
+
+## License
+
+[Apache License 2.0](LICENSE) © 2026 Teresa Peng

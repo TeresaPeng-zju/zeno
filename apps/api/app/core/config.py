@@ -21,17 +21,31 @@ class Settings(BaseSettings):
     embedding_model: str = "text-embedding-3-small"
     embedding_dim: int = 1536
 
+    # Data files: default to bundled demos; override with env vars for
+    # production versions with calibrated data (never committed to git).
+    skill_graph_path: str = "app/data/skill_graph.demo.json"
+    path_config_path: str = "app/data/path_config.demo.json"
+
+    # Decision engine scoring weights (env-injectable, not in source)
+    decision_w_gap: float = 0.34
+    decision_w_dependency: float = 0.33
+    decision_w_learnability: float = 0.33
+    decision_blocked_penalty: float = 0.6
+    decision_strength_level: int = 3
+    decision_transfer_level: int = 2
+    decision_transfer_learnability: float = 0.65
+
     # Questionnaire orchestrator
     max_questions: int = 18
     uncertainty_threshold: float = 0.2
 
     # Resource engine (RAG retrieval + multi-signal rerank)
-    retrieval_top_k: int = 20  # vector recall fan-out before rerank
-    resources_per_step: int = 3  # how many to attach per next-step
-    # Multi-signal rerank weights (relevance / freshness / role-fit). Sum ~= 1.
-    rerank_w_relevance: float = 0.6
-    rerank_w_freshness: float = 0.25
-    rerank_w_fit: float = 0.15
+    retrieval_top_k: int = 20
+    resources_per_step: int = 3
+    # Rerank weights (env-injectable; defaults are balanced demo values)
+    rerank_w_relevance: float = 0.5
+    rerank_w_freshness: float = 0.3
+    rerank_w_fit: float = 0.2
     # A resource is "stale" once unverified for longer than this.
     freshness_ttl_days: int = 90
 
