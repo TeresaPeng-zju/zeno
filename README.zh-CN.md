@@ -123,3 +123,19 @@ pnpm dev
 - [ ] 职业星图可视化
 - [ ] Agent 辅助问卷优化
 - [ ] 资源保鲜校验
+
+---
+
+## 开放内核（Open Core）
+
+Zeno 在 **Apache License 2.0** 下开源。仓库自带一份**示例技能图谱**（`skill_graph.demo.json`），包含样本技能与权重，开箱即可运行完整平台。
+
+生产数据（包括校准后的技能图谱、JD 语料库和策展资源库）独立维护，不包含在本仓库中。你可以用自己领域的技能定义替换示例数据。
+
+"Zeno"品牌名及 Zippi 吉祥物为 Teresa Peng 的商标——详见 [NOTICE](NOTICE)。
+
+---
+
+## 许可证
+
+[Apache License 2.0](LICENSE) © 2026 Teresa Peng

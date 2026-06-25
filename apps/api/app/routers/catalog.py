@@ -22,8 +22,15 @@ router = APIRouter(prefix="/api", tags=["catalog"])
 # catalog (category.<cat>.label / .hint).
 CATEGORY_ORDER: list[str] = ["foundation", "data", "llm", "eval"]
 
-# Path config for role-based skill filtering
-_PATH_CONFIG_FILE = Path(__file__).resolve().parent.parent / "data" / "path_config.json"
+# Path config for role-based skill filtering (env-injectable path)
+def _resolve_path_config() -> Path:
+    from app.core.config import settings
+    p = Path(settings.path_config_path)
+    if p.is_absolute():
+        return p
+    return Path(__file__).resolve().parent.parent / settings.path_config_path.removeprefix("app/")
+
+_PATH_CONFIG_FILE = _resolve_path_config()
 _PATH_CONFIG: dict = json.loads(_PATH_CONFIG_FILE.read_text(encoding="utf-8"))
 
 
