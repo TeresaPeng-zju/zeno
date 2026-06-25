@@ -318,7 +318,7 @@ function SkillsInner() {
                         animate={{ opacity: 1 }}
                         className="mt-2 text-xs text-cyan"
                       >
-                        ✓ 已了解
+                        ✓ {t("capsuleAcked")}
                       </motion.p>
                     )}
                   </div>
@@ -407,12 +407,12 @@ function SkillsInner() {
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-sm font-medium text-foreground">{inf.capability}</span>
-                    <span className="ml-2 text-xs text-cyan">{inf.level >= 3 ? "很强" : inf.level >= 2 ? "可迁移" : "有基础"}</span>
+                    <span className="ml-2 text-xs text-cyan">{inf.level >= 3 ? t("inferStrong") : inf.level >= 2 ? t("inferTransferable") : t("inferBasic")}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button onClick={() => adjustLevel(inf.skillId, -1)} className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent transition-colors">低了</button>
+                    <button onClick={() => adjustLevel(inf.skillId, -1)} className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent transition-colors">{t("adjustLower")}</button>
                     <span className="text-xs text-cyan font-medium w-6 text-center">L{inf.level}</span>
-                    <button onClick={() => adjustLevel(inf.skillId, 1)} className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent transition-colors">高了</button>
+                    <button onClick={() => adjustLevel(inf.skillId, 1)} className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent transition-colors">{t("adjustHigher")}</button>
                   </div>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">← {inf.sources.slice(0, 2).join("、")}</p>
