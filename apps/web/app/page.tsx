@@ -85,13 +85,13 @@ export default function HomePage() {
             </>
           ) : (
             <TextType
-              text={["发现新的方向_", "探索更多可能_", "打造核心能力_", "开启职业转型_"]}
+              text={["发现新的方向", "探索更多可能", "打造核心能力", "开启职业转型"]}
               className="text-gradient"
-              typingSpeed={80}
-              deletingSpeed={40}
-              pauseDuration={1800}
+              typingSpeed={75}
+              deletingSpeed={50}
+              pauseDuration={1500}
               showCursor={true}
-              cursorCharacter="▎"
+              cursorCharacter="_"
               cursorClassName="text-cyan/60"
               cursorBlinkDuration={0.5}
               loop={true}
