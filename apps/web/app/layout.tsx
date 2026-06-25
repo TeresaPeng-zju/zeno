@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import "./globals.css";
+import { RegionInit } from "@/components/region-init";
 import { TopNav } from "@/components/site/top-nav";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -32,6 +33,7 @@ export default async function RootLayout({
       </head>
       <body className="min-h-screen font-sans antialiased" suppressHydrationWarning>
         <NextIntlClientProvider>
+          <RegionInit />
           <TopNav />
           {children}
         </NextIntlClientProvider>
