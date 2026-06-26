@@ -37,7 +37,12 @@ class Settings(BaseSettings):
 
     # Questionnaire orchestrator
     max_questions: int = 18
+    min_questions_before_early_stop: int = 1
     uncertainty_threshold: float = 0.2
+
+    # Feature flags (runtime toggleable via env vars)
+    feature_score_components_api: bool = False  # expose score_components in API response
+    feature_pm_path: bool = False               # PM → AI PM career path
 
     # Resource engine (RAG retrieval + multi-signal rerank)
     retrieval_top_k: int = 20

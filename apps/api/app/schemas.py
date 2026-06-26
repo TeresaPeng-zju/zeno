@@ -152,6 +152,10 @@ class NextStepOut(BaseModel):
     unblocks: list[str] = Field(default_factory=list)
     blocked_by: list[str] = Field(default_factory=list)
     recommended_resources: list[ResourceOut] = Field(default_factory=list)
+    score_components: dict[str, float] | None = Field(
+        default=None,
+        description="Auditable score breakdown. Only present when FEATURE_SCORE_COMPONENTS_API=true.",
+    )
 
 
 class PacingOut(BaseModel):
