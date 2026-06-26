@@ -98,6 +98,11 @@ async def get_result_stream(
         def emit(data: dict) -> str:
             return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
 
+        def heartbeat() -> str:
+            """SSE comment line — keeps the connection alive through proxies/CDNs
+            without triggering a client-side event (browsers ignore SSE comments)."""
+            return ": heartbeat\n\n"
+
         yield emit({"type": "progress", "step": "profile", "message": "Analyzing your skill profile…"})
         await asyncio.sleep(0.4)
 
@@ -106,15 +111,17 @@ async def get_result_stream(
 
         yield emit({"type": "progress", "step": "gaps", "message": "Computing skill gaps…"})
         await asyncio.sleep(0.3)
+        yield heartbeat()
 
         yield emit({"type": "progress", "step": "roadmap", "message": "Building your learning roadmap…"})
         await asyncio.sleep(0.3)
 
-        # Actually compute the result
+        # Actually compute the result (may take longer when LLM is involved)
         result = session_service.build_result(
             db, sess, time_budget=time_budget, lang=lang, orientation=orientation
         )
 
+        yield heartbeat()
         yield emit({"type": "progress", "step": "resources", "message": "Checking recommended resources…"})
         await asyncio.sleep(0.2)
 
