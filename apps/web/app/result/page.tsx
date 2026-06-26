@@ -447,11 +447,6 @@ function ResultInner() {
           )}
         </Section>
 
-        <details className="hairline rounded-2xl bg-card/50 p-4">
-          <summary className="cursor-pointer text-sm font-medium">{t("viewFullProfile")}</summary>
-          <Profile data={data} />
-        </details>
-
         <TargetRoleSection
           available={orientations.length > 1}
           refreshing={refreshing}
