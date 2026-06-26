@@ -129,9 +129,9 @@ export function CareerGraph({ nodes, edges, height = 420 }: CareerGraphProps) {
         proOptions={{ hideAttribution: true }}
         nodesDraggable={false}
         nodesConnectable={false}
-        zoomOnScroll={false}
+        zoomOnScroll
         panOnScroll={false}
-        preventScrolling={false}
+        preventScrolling
         minZoom={0.5}
         maxZoom={1.2}
       >
