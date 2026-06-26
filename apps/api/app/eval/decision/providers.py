@@ -159,6 +159,9 @@ class DeepSeekPlanProvider(PlanProvider):
             )
             resp.raise_for_status()
             content = resp.json()["choices"][0]["message"]["content"]
+            # Strip <think>…</think> blocks from reasoning models (e.g. DeepSeek R1)
+            import re
+            content = re.sub(r"<think>[\s\S]*?</think>", "", content, flags=re.IGNORECASE).strip()
             data = json.loads(content)
             raw_seq = data.get("sequence", [])
             allowed = set(universe)

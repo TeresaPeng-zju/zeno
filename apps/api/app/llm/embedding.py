@@ -89,7 +89,13 @@ class OpenAIEmbedder(EmbeddingProvider):
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         try:
-            resp = self._client.embeddings.create(model=self._model, input=texts)
+            from app.utils.retry import with_retry
+
+            resp = with_retry(
+                lambda: self._client.embeddings.create(model=self._model, input=texts),
+                max_retries=2,
+                base_delay=1.0,
+            )
             return [_normalize(list(d.embedding)) for d in resp.data]
         except Exception:
             return self._fallback.embed(texts)
