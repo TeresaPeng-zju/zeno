@@ -103,17 +103,38 @@ async def get_result_stream(
             without triggering a client-side event (browsers ignore SSE comments)."""
             return ": heartbeat\n\n"
 
-        yield emit({"type": "progress", "step": "profile", "message": "Analyzing your skill profile…"})
+        # Localized progress messages
+        _pm = {
+            "zh": {
+                "profile": "正在分析你的技能画像…",
+                "strengths": "识别你的优势…",
+                "gaps": "计算技能差距…",
+                "roadmap": "生成学习路线…",
+                "resources": "检查推荐资源…",
+                "done": "完成 ✓",
+            },
+            "en": {
+                "profile": "Analyzing your skill profile…",
+                "strengths": "Identifying your strengths…",
+                "gaps": "Computing skill gaps…",
+                "roadmap": "Building your learning roadmap…",
+                "resources": "Checking recommended resources…",
+                "done": "Done ✓",
+            },
+        }
+        pm = _pm.get(lang, _pm["en"])
+
+        yield emit({"type": "progress", "step": "profile", "message": pm["profile"]})
         await asyncio.sleep(0.4)
 
-        yield emit({"type": "progress", "step": "strengths", "message": "Identifying your strengths…"})
+        yield emit({"type": "progress", "step": "strengths", "message": pm["strengths"]})
         await asyncio.sleep(0.3)
 
-        yield emit({"type": "progress", "step": "gaps", "message": "Computing skill gaps…"})
+        yield emit({"type": "progress", "step": "gaps", "message": pm["gaps"]})
         await asyncio.sleep(0.3)
         yield heartbeat()
 
-        yield emit({"type": "progress", "step": "roadmap", "message": "Building your learning roadmap…"})
+        yield emit({"type": "progress", "step": "roadmap", "message": pm["roadmap"]})
         await asyncio.sleep(0.3)
 
         # Actually compute the result (may take longer when LLM is involved)
@@ -122,10 +143,10 @@ async def get_result_stream(
         )
 
         yield heartbeat()
-        yield emit({"type": "progress", "step": "resources", "message": "Checking recommended resources…"})
+        yield emit({"type": "progress", "step": "resources", "message": pm["resources"]})
         await asyncio.sleep(0.2)
 
-        yield emit({"type": "progress", "step": "done", "message": "Done ✓"})
+        yield emit({"type": "progress", "step": "done", "message": pm["done"]})
         await asyncio.sleep(0.15)
 
         # Final event: the full result payload
