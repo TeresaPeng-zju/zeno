@@ -1,32 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import { LanguageSwitcher } from "@/components/site/language-switcher";
 
 export function TopNav() {
   const t = useTranslations("nav");
-  const pathname = usePathname();
-
-  // The flow sections (skills / gap analysis / roadmap) are *parts of the
-  // result report* — their anchors (#gap / #roadmap) live on /result, and
-  // skill selection is a step inside the flow. So we surface them contextually
-  // instead of as global links pointing at non-existent homepage anchors:
-  //   - result (/result) → in-page anchors to gap analysis & roadmap (a real
-  //     pair of links that reads as a menu)
-  //   - everywhere else (home / mid-flow) → none. On the homepage a lone
-  //     "Career Graph" link sat awkwardly centered, looking neither like a menu
-  //     nor a CTA; the hero's "Explore the graph" button already scrolls there,
-  //     so we keep the bar clean (logo ↔ language/sign-in/CTA).
-  const onResult = pathname?.startsWith("/result");
-  const navLinks = onResult
-    ? [
-        { label: t("gapAnalysis"), href: "#gap" },
-        { label: t("roadmap"), href: "#roadmap" },
-      ]
-    : [];
+  const navLinks: { label: string; href: string }[] = [];
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
