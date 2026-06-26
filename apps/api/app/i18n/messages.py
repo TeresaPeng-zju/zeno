@@ -14,7 +14,7 @@ MESSAGES: Dict[str, Dict[str, str]] = {
     "en": {
         # Competency categories (skill catalog groups)
         "category.foundation.label": "Engineering foundation",
-        "category.foundation.hint": "Skills transferable from frontend",
+        "category.foundation.hint": "Transferable engineering skills",
         "category.data.label": "Data & retrieval",
         "category.data.hint": "The bedrock of RAG",
         "category.llm.label": "LLM applications",
@@ -45,7 +45,7 @@ MESSAGES: Dict[str, Dict[str, str]] = {
             "springboard into AI engineering."
         ),
         "strength.transfer": (
-            "Your frontend background transfers well here ({pct}%); currently "
+            "Your background transfers well here ({pct}%); currently "
             "L{level}, a little practice will amplify the edge."
         ),
         # Next-step action prescription
@@ -56,7 +56,7 @@ MESSAGES: Dict[str, Dict[str, str]] = {
         ),
         "why.blocked": "Note: clear its dependencies {names} first. ",
         "why.transfer": (
-            "Highly transferable from a frontend background ({pct}%), quick to pick up. "
+            "Highly transferable from your background ({pct}%), quick to pick up. "
         ),
         # Pacing summaries
         "pacing.empty": "No actions to schedule yet.",
@@ -115,7 +115,7 @@ MESSAGES: Dict[str, Dict[str, str]] = {
     "zh": {
         # Competency categories
         "category.foundation.label": "工程地基",
-        "category.foundation.hint": "可从前端迁移的能力",
+        "category.foundation.hint": "可从现有背景迁移的工程能力",
         "category.data.label": "数据与检索",
         "category.data.hint": "RAG 的地基",
         "category.llm.label": "LLM 应用",
@@ -142,14 +142,14 @@ MESSAGES: Dict[str, Dict[str, str]] = {
         # Strengths
         "strength.high": "你已能在真实场景交付（L{level}），可作为切入 AI 工程的跳板。",
         "strength.transfer": (
-            "前端背景对该能力迁移度高（{pct}%），当前 L{level}，稍加练习即可放大优势。"
+            "你的背景对该能力迁移度高（{pct}%），当前 L{level}，稍加练习即可放大优势。"
         ),
         # Next-step action prescription
         "blueprint.title": "把「{skill}」从 L{cur} 提升到 L{target}",
         "why.weight": "岗位权重 {weight}（{type}），当前差距 {gap} 级。",
         "why.unblocks": "它是「{names}」的前置依赖，先学能解锁后续路径。",
         "why.blocked": "注意：建议先补齐其依赖「{names}」。",
-        "why.transfer": "前端背景迁移度高（{pct}%），上手快。",
+        "why.transfer": "你的背景迁移度高（{pct}%），上手快。",
         # Pacing summaries
         "pacing.empty": "暂无需要排期的动作。",
         "pacing.parallel": (
