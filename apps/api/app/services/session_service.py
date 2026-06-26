@@ -238,6 +238,8 @@ def build_result(
     plan = pacing.build_plan(steps, budget_key, lang)
     weeks_by_skill = {p.skill_id: p.est_weeks for p in plan.steps}
 
+    from app.core.config import settings as _cfg
+
     next_steps = [
         NextStepOut(
             rank=ns.rank,
@@ -255,6 +257,7 @@ def build_result(
             unblocks=ns.unblocks,
             blocked_by=ns.blocked_by,
             recommended_resources=_resources_for_step(db, ns.skill_id, ns.target_level, lang),
+            score_components=ns.score_components if _cfg.feature_score_components_api else None,
         )
         for ns in steps
     ]

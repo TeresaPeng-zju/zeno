@@ -65,19 +65,34 @@ def weighted_uncertainty(
     return acc / total_weight
 
 
+def _hard_stop(answered: int) -> bool:
+    """Non-overridable hard cap on question count."""
+    return answered >= settings.max_questions
+
+
+def _coverage_complete(
+    role_id: str, states: dict[str, SkillState], orientation_id: str,
+) -> bool:
+    """All requirement skills have been answered — nothing left to ask."""
+    return select_next_skill(role_id, states, orientation_id) is None
+
+
+def _uncertainty_converged(
+    role_id: str, states: dict[str, SkillState], answered: int, orientation_id: str,
+) -> bool:
+    """Enough signal collected — weighted uncertainty below threshold."""
+    return (
+        answered >= settings.min_questions_before_early_stop
+        and weighted_uncertainty(role_id, states, orientation_id) < settings.uncertainty_threshold
+    )
+
+
 def is_complete(
     role_id: str, states: dict[str, SkillState], orientation_id: str = ORIENTATION_BASE
 ) -> bool:
     answered = len(states)
-    if answered >= settings.max_questions:
-        return True
-    if select_next_skill(role_id, states, orientation_id) is None:
-        return True
-    # Only allow early-stop on uncertainty once we have a minimum signal,
-    # so we don't terminate immediately on an empty session.
-    if (
-        answered >= 1
-        and weighted_uncertainty(role_id, states, orientation_id) < settings.uncertainty_threshold
-    ):
-        return True
-    return False
+    return (
+        _hard_stop(answered)
+        or _coverage_complete(role_id, states, orientation_id)
+        or _uncertainty_converged(role_id, states, answered, orientation_id)
+    )
