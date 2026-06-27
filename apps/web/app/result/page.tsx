@@ -301,6 +301,35 @@ function ResultInner() {
                       </div>
                       {/* 一句理由 */}
                       <p className="text-xs text-muted-foreground leading-relaxed">{s.reason}</p>
+                      {/* 三段式：AI里怎么用 + 不能覆盖什么 */}
+                      {s.ai_usage?.length > 0 && (
+                        <details className="group">
+                          <summary className="cursor-pointer list-none text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors flex items-center gap-1 select-none">
+                            <span className="group-open:hidden">↓ {t("expandUsage")}</span>
+                            <span className="hidden group-open:inline">↑ {t("collapseEvidence")}</span>
+                          </summary>
+                          <div className="mt-2 space-y-2 border-t border-border/20 pt-2">
+                            <div>
+                              <p className="text-[10px] font-medium text-cyan/70 uppercase tracking-wide mb-1">{t("aiUsageLabel")}</p>
+                              <ul className="space-y-0.5">
+                                {s.ai_usage.map((u, j) => (
+                                  <li key={j} className="text-xs text-muted-foreground leading-relaxed">· {u}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            {s.non_ai_boundaries?.length > 0 && (
+                              <div>
+                                <p className="text-[10px] font-medium text-amber-400/70 uppercase tracking-wide mb-1">{t("boundaryLabel")}</p>
+                                <ul className="space-y-0.5">
+                                  {s.non_ai_boundaries.map((b, j) => (
+                                    <li key={j} className="text-xs text-muted-foreground/70 leading-relaxed">· {b}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        </details>
+                      )}
                     </CardContent>
                   </Card>
                 </Reveal>

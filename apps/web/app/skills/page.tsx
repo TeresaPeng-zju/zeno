@@ -135,6 +135,7 @@ function SkillsInner() {
       const offset = tierMap[tierId] ?? 0;
       if (offset < 0) continue;
       for (const m of cap.maps_to) {
+        if (m.confidence < 0.4) continue;   // low-confidence mappings don't surface as inferred skills
         const level = Math.min(4, m.base_level + offset);
         const existing = acc[m.skill_id];
         if (!existing || level > existing.level) {

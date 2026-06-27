@@ -208,6 +208,16 @@ def build_result(
             category=s.category,
             level=s.level,
             reason=s.reason,
+            ai_usage=list(
+                competency.SKILLS_BY_ID[s.skill_id].ai_usage_en
+                if lang == "en"
+                else competency.SKILLS_BY_ID[s.skill_id].ai_usage
+            ) if s.skill_id in competency.SKILLS_BY_ID else [],
+            non_ai_boundaries=list(
+                competency.SKILLS_BY_ID[s.skill_id].non_ai_boundaries_en
+                if lang == "en"
+                else competency.SKILLS_BY_ID[s.skill_id].non_ai_boundaries
+            ) if s.skill_id in competency.SKILLS_BY_ID else [],
         )
         for s in decision.compute_strengths(obs, lang)
     ]
@@ -231,9 +241,13 @@ def build_result(
 
     # Time budget is an *expression-layer* lever: it only sets how many of the
     # already-ranked steps to show + the pacing. The ranking itself is unchanged.
+    # Skills already surfaced as strengths are excluded from next_steps to avoid
+    # the confusing pattern of a skill appearing in both "assets" and "gaps".
+    strength_ids = {s.skill_id for s in decision.compute_strengths(obs, lang)}
     budget_key, _weekly_hours, max_steps = pacing.resolve(time_budget)
     steps = decision.select_next_steps(
-        sess.role_id, obs, max_steps=max_steps, orientation_id=orient, lang=lang
+        sess.role_id, obs, max_steps=max_steps, orientation_id=orient, lang=lang,
+        exclude_skill_ids=strength_ids,
     )
     plan = pacing.build_plan(steps, budget_key, lang)
     weeks_by_skill = {p.skill_id: p.est_weeks for p in plan.steps}

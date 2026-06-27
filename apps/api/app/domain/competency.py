@@ -50,6 +50,12 @@ class Skill:
     category: str  # foundation | data | llm | eval
     learnability: float  # 0-1, frontend -> this skill transferability
     name_en: str = ""  # English display name (i18n; falls back to `name`)
+    layer: str = ""   # L0 | L1 | L2 | L3 — abstraction level
+    roles: tuple[str, ...] = field(default_factory=tuple)  # roles this skill applies to
+    ai_usage: tuple[str, ...] = field(default_factory=tuple)        # zh
+    ai_usage_en: tuple[str, ...] = field(default_factory=tuple)     # en
+    non_ai_boundaries: tuple[str, ...] = field(default_factory=tuple)     # zh
+    non_ai_boundaries_en: tuple[str, ...] = field(default_factory=tuple)  # en
 
 
 @dataclass(frozen=True)
@@ -127,7 +133,22 @@ LEVEL_RUBRIC_EN: dict[int, str] = {
 }
 
 # Skills
-SKILLS: list[Skill] = [Skill(**s) for s in _RAW["skills"]]
+def _load_skill(s: dict) -> Skill:
+    return Skill(
+        id=s["id"],
+        name=s["name"],
+        category=s["category"],
+        learnability=s["learnability"],
+        name_en=s.get("name_en", ""),
+        layer=s.get("layer", ""),
+        roles=tuple(s.get("roles", [])),
+        ai_usage=tuple(s.get("ai_usage", [])),
+        ai_usage_en=tuple(s.get("ai_usage_en", [])),
+        non_ai_boundaries=tuple(s.get("non_ai_boundaries", [])),
+        non_ai_boundaries_en=tuple(s.get("non_ai_boundaries_en", [])),
+    )
+
+SKILLS: list[Skill] = [_load_skill(s) for s in _RAW["skills"]]
 SKILLS_BY_ID: dict[str, Skill] = {s.id: s for s in SKILLS}
 
 # Role requirements (role_id injected from the role section)

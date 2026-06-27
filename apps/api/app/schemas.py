@@ -50,6 +50,9 @@ class SkillItemOut(BaseModel):
     skill_id: str
     name: str
     learnability: float
+    layer: str = ""
+    ai_usage: list[str] = Field(default_factory=list)
+    non_ai_boundaries: list[str] = Field(default_factory=list)
 
 
 class SkillGroupOut(BaseModel):
@@ -112,6 +115,8 @@ class StrengthOut(BaseModel):
     category: str
     level: int
     reason: str
+    ai_usage: list[str] = Field(default_factory=list)
+    non_ai_boundaries: list[str] = Field(default_factory=list)
 
 
 class GapOut(BaseModel):

@@ -87,6 +87,9 @@ def list_skills(
                 skill_id=s.id,
                 name=competency.skill_name(s.id, lang),
                 learnability=s.learnability,
+                layer=s.layer,
+                ai_usage=list(s.ai_usage_en if lang == "en" else s.ai_usage),
+                non_ai_boundaries=list(s.non_ai_boundaries_en if lang == "en" else s.non_ai_boundaries),
             )
             for s in competency.SKILLS
             if s.category == category

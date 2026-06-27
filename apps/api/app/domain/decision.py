@@ -204,12 +204,15 @@ def select_next_steps(
     max_steps: int = MAX_NEXT_STEPS,
     orientation_id: str = competency.ORIENTATION_BASE,
     lang: str = "en",
+    exclude_skill_ids: set[str] | None = None,
 ) -> list[NextStep]:
     """Two-layer deterministic ranking.
 
-    Layer 1 — Main ranking: gap_score × migration_value.
+    Layer 1 — Main ranking: gap_score × migration_value × learnability_boost.
         ALL skills with gap > 0 participate (no hard filtering).
         Priority = "what matters most for career migration".
+        When user's average level is low (beginner), learnability is added as
+        a boost factor so high-learnability skills surface before hard skills.
 
     Layer 2 — Topological ordering (Kahn's algorithm):
         Guarantees no skill appears before its prerequisite.
@@ -222,10 +225,20 @@ def select_next_steps(
     gaps = compute_gaps(role_id, obs, orientation_id)
     gap_by_skill = {g.req.skill_id: g for g in gaps}
 
-    candidates = [g for g in gaps if g.gap > 0]
+    candidates = [
+        g for g in gaps
+        if g.gap > 0 and (not exclude_skill_ids or g.req.skill_id not in exclude_skill_ids)
+    ]
     dependents = _dependents_map()
 
     from app.domain._capsule_migration import get_migration_value
+
+    # Beginner boost: when the user's average observed level is very low (≤1),
+    # learnability is added as a tie-breaker so high-learnability skills (Prompt,
+    # streaming) surface before high-gap but hard skills (vector search, rerank).
+    observed_levels = [o.level for o in obs.values() if o.level > 0]
+    avg_level = sum(observed_levels) / len(observed_levels) if observed_levels else 0
+    beginner_boost = max(0.0, 1.0 - avg_level / 2)  # 1.0 at avg=0, 0 at avg=2+
 
     scored: list[NextStep] = []
     for g in candidates:
@@ -242,7 +255,7 @@ def select_next_steps(
         ]
 
         mv = get_migration_value(sid)
-        priority = g.gap_score * mv
+        priority = g.gap_score * mv * (1 + beginner_boost * skill.learnability)
 
         components = {
             "gap_score": round(g.gap_score, 4),
