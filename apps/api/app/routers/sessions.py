@@ -1,7 +1,7 @@
 import asyncio
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -70,14 +70,17 @@ def get_result(
     session_id: str,
     time_budget: str | None = None,
     orientation: str | None = None,
+    lang_param: str | None = Query(default=None, alias="lang"),
     db: Session = Depends(get_db),
     lang: Lang = Depends(get_lang),
 ) -> ResultResponse:
     sess = session_service.get_session(db, session_id)
     if sess is None:
         raise HTTPException(status_code=404, detail="session not found")
+    # ?lang= query param overrides Accept-Language header (needed for EventSource)
+    effective_lang: Lang = "zh" if lang_param and lang_param.startswith("zh") else lang
     return session_service.build_result(
-        db, sess, time_budget=time_budget, lang=lang, orientation=orientation
+        db, sess, time_budget=time_budget, lang=effective_lang, orientation=orientation
     )
 
 
@@ -86,6 +89,7 @@ async def get_result_stream(
     session_id: str,
     time_budget: str | None = None,
     orientation: str | None = None,
+    lang_param: str | None = Query(default=None, alias="lang"),
     db: Session = Depends(get_db),
     lang: Lang = Depends(get_lang),
 ) -> StreamingResponse:
@@ -93,6 +97,9 @@ async def get_result_stream(
     sess = session_service.get_session(db, session_id)
     if sess is None:
         raise HTTPException(status_code=404, detail="session not found")
+
+    # ?lang= query param overrides Accept-Language header (needed for EventSource)
+    effective_lang: Lang = "zh" if lang_param and lang_param.startswith("zh") else lang
 
     async def event_stream():
         def emit(data: dict) -> str:
@@ -122,7 +129,7 @@ async def get_result_stream(
                 "done": "Done ✓",
             },
         }
-        pm = _pm.get(lang, _pm["en"])
+        pm = _pm.get(effective_lang, _pm["en"])
 
         yield emit({"type": "progress", "step": "profile", "message": pm["profile"]})
         await asyncio.sleep(0.4)
@@ -139,7 +146,7 @@ async def get_result_stream(
 
         # Actually compute the result (may take longer when LLM is involved)
         result = session_service.build_result(
-            db, sess, time_budget=time_budget, lang=lang, orientation=orientation
+            db, sess, time_budget=time_budget, lang=effective_lang, orientation=orientation
         )
 
         yield heartbeat()

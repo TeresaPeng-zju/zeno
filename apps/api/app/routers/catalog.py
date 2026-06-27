@@ -160,9 +160,8 @@ def get_experience_capsules(
         c["id"]: [] for c in raw_cats
     }
 
-    # Walk unified capabilities, filter by role prior, sort into categories
-    # Ranking: prior × migration_value (balances "worth asking" × "likely answerable")
-    for cap in _CAPSULES_DATA.get("capabilities", []):
+    # Walk unified capabilities, filter by role prior, preserve JSON order
+    for idx, cap in enumerate(_CAPSULES_DATA.get("capabilities", [])):
         variant = cap.get("role_variants", {}).get(current_role)
         if not variant:
             continue
@@ -172,10 +171,8 @@ def get_experience_capsules(
         cat_id = cap.get("category", "")
         if cat_id not in cat_capsules:
             continue
-        migration_value = cap.get("migration_value", 0.5)
-        rank_score = prior * migration_value
         capsule = _build_capsule_from_capability(cap, variant, lang)
-        cat_capsules[cat_id].append((rank_score, capsule))
+        cat_capsules[cat_id].append((idx, capsule))
 
     # Assemble categories (preserve defined order, skip empty ones)
     categories: list[CategoryOut] = []
@@ -184,8 +181,8 @@ def get_experience_capsules(
         items = cat_capsules.get(cid, [])
         if not items:
             continue
-        # Sort by rank_score descending (prior × migration_value)
-        items.sort(key=lambda x: x[0], reverse=True)
+        # Preserve original JSON definition order (idx ascending)
+        items.sort(key=lambda x: x[0])
         categories.append(
             CategoryOut(
                 id=cid,
@@ -201,18 +198,16 @@ def get_experience_capsules(
     ai_exploration = None
     if ai_exp:
         ai_caps = []
-        for cap in ai_exp.get("capsules", []):
+        for idx, cap in enumerate(ai_exp.get("capsules", [])):
             variant = cap.get("role_variants", {}).get(current_role)
             if not variant:
                 continue
             prior = variant.get("prior", 0)
             if prior < prior_threshold:
                 continue
-            migration_value = cap.get("migration_value", 0.5)
-            rank_score = prior * migration_value
-            ai_caps.append((rank_score, _build_capsule_from_capability(cap, variant, lang)))
+            ai_caps.append((idx, _build_capsule_from_capability(cap, variant, lang)))
         if ai_caps:
-            ai_caps.sort(key=lambda x: x[0], reverse=True)
+            ai_caps.sort(key=lambda x: x[0])
             ai_exploration = AiExplorationOut(
                 label=ai_exp.get(f"label_{lang}", "") or ai_exp.get("label_zh", ""),
                 icon=ai_exp.get("icon", ""),

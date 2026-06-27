@@ -57,6 +57,7 @@ function SkillsInner() {
   const tc = useTranslations("common");
   const [sessionId, setSessionId] = useState<string | null>(params.get("session"));
   const [catalog, setCatalog] = useState<SkillCatalogResponse | null>(null);
+  const [fullCatalog, setFullCatalog] = useState<SkillCatalogResponse | null>(null);
   const [capsuleData, setCapsuleData] = useState<ExperienceCapsulesResponse | null>(null);
   const [capsuleSelections, setCapsuleSelections] = useState<CapsuleSelections>({});
   const [visibleCount, setVisibleCount] = useState(1);
@@ -84,12 +85,14 @@ function SkillsInner() {
           sid = created.session_id;
           if (!cancelled) setSessionId(sid);
         }
-        const [cat, capData] = await Promise.all([
+        const [cat, fullCat, capData] = await Promise.all([
           api.skills(currentRole, targetRole),
+          api.skills(),   // full unfiltered — for skill name lookup
           currentRole ? api.experienceCapsules(currentRole) : Promise.resolve(null),
         ]);
         if (cancelled) return;
         setCatalog(cat);
+        setFullCatalog(fullCat);
         if (capData && capData.categories.length > 0) {
           setCapsuleData(capData);
         } else {
@@ -141,10 +144,11 @@ function SkillsInner() {
         }
       }
     }
-    // Build skill_id → skill_name lookup from catalog
+    // Build skill_id → skill_name lookup from full unfiltered catalog
     const skillNameMap: Record<string, string> = {};
-    if (catalog) {
-      for (const group of catalog.groups) {
+    const nameSource = fullCatalog ?? catalog;
+    if (nameSource) {
+      for (const group of nameSource.groups) {
         for (const skill of group.skills) {
           skillNameMap[skill.skill_id] = skill.name;
         }
@@ -501,40 +505,9 @@ function SkillsInner() {
     );
   }
 
-  // ── Fallback ──
-  return (
-    <main className="container relative max-w-4xl py-14">
-      <div className="bg-aurora pointer-events-none absolute inset-x-0 top-0 h-72" />
-      <div className="relative space-y-2 text-center">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("title")}</h1>
-        <p className="text-muted-foreground">{t("subtitle")}</p>
-      </div>
-      <div className="relative mt-10 space-y-8">
-        {catalog.groups.map((group) => (
-          <section key={group.category}>
-            <div className="mb-3 flex items-baseline gap-2">
-              <h2 className="text-base font-semibold">{group.label}</h2>
-              <span className="text-xs text-muted-foreground">{group.hint}</span>
-            </div>
-            <div className="flex flex-wrap gap-2.5">
-              {group.skills.map((skill) => (
-                <button key={skill.skill_id} onClick={() => setSkillSelections((s) => ({ ...s, [skill.skill_id]: s[skill.skill_id] ? "" : "demo" }))} className={
-                  "rounded-full border px-4 py-2 text-sm transition-all " +
-                  (skillSelections[skill.skill_id] ? "border-cyan/70 bg-cyan/10 text-cyan" : "border-border bg-surface/60 text-foreground hover:border-primary/50")
-                }><span className="font-medium">{skill.name}</span></button>
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
-      <div className="sticky bottom-5 z-30 mt-12">
-        <div className="hairline mx-auto flex max-w-2xl items-center justify-between gap-4 rounded-2xl bg-card/85 px-5 py-3 backdrop-blur-xl">
-          <p className="text-sm text-muted-foreground">{t.rich("selectedCount", { count: Object.keys(skillSelections).filter((k) => skillSelections[k]).length, c: (chunks) => <span className="font-semibold text-foreground">{chunks}</span> })}</p>
-          <Button onClick={generate} disabled={submitting}>{submitting ? t("generating") : t("generatePath")}</Button>
-        </div>
-      </div>
-    </main>
-  );
+  // ── Fallback: no capsule data means no current_role → redirect to home ──
+  router.replace("/");
+  return null;
 }
 
 export default function SkillsPage() {

@@ -291,14 +291,16 @@ function ResultInner() {
               {data.strengths.map((s, i) => (
                 <Reveal key={s.skill_id} i={i}>
                   <Card className="h-full">
-                    <CardContent className="flex items-start justify-between gap-4 pt-6">
-                      <div className="space-y-1">
-                        <p className="font-medium">{s.skill_name}</p>
-                        <p className="text-sm text-muted-foreground">{s.reason}</p>
+                    <CardContent className="pt-5 pb-4 space-y-3">
+                      {/* 主层：档位标签 + 技能名 */}
+                      <div className="flex items-center gap-2">
+                        <span className="shrink-0 rounded-full border border-cyan/40 bg-cyan/10 px-2 py-0.5 text-xs font-medium text-cyan">
+                          {s.level >= 3 ? t("inferStrong") : t("inferTransferable")}
+                        </span>
+                        <p className="font-medium text-sm">{s.skill_name}</p>
                       </div>
-                      <span className="shrink-0 rounded-md border border-cyan/40 bg-cyan/10 px-2 py-0.5 text-xs font-medium text-cyan">
-                        L{s.level}
-                      </span>
+                      {/* 一句理由 */}
+                      <p className="text-xs text-muted-foreground leading-relaxed">{s.reason}</p>
                     </CardContent>
                   </Card>
                 </Reveal>
@@ -465,8 +467,7 @@ function ResultInner() {
         <p className="text-xs text-muted-foreground">{data.note}</p>
 
         <div className="flex gap-3">
-          <Link href="/skills"><Button variant="outline">{t("reassess")}</Button></Link>
-          <Link href="/"><Button variant="ghost">{t("backHome")}</Button></Link>
+          <Link href="/"><Button variant="outline">{t("reassess")}</Button></Link>
         </div>
       </div>
     </main>
