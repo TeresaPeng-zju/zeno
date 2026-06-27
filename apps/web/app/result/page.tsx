@@ -242,12 +242,15 @@ function ResultInner() {
     <main className="relative overflow-hidden">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-aurora" />
       <div className="container relative max-w-5xl space-y-12 py-14">
-        {/* header */}
+        {/* header: 三段式主叙述 */}
         <div className="space-y-6">
-          <div className="space-y-1.5 text-center">
+          <div className="space-y-2 text-center">
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("title")}</h1>
-            <p className="text-sm text-muted-foreground">
-              {t("generatedFrom", { count: data.profile.length })}
+            <p className="text-base text-muted-foreground">
+              {t("headerSummary", {
+                strengths: data.strengths.length,
+                gaps: data.gaps.filter(g => g.type === "required" && g.gap > 0).length,
+              })}
             </p>
             {data.orientation && data.orientation !== "base" && data.orientation_label && (
               <span className="hairline mt-1 inline-flex items-center gap-1.5 rounded-full bg-cyan/10 px-3 py-1 text-xs text-cyan">
@@ -255,22 +258,28 @@ function ResultInner() {
               </span>
             )}
           </div>
-          <RoleJourney current={tr("frontend")} target={tr("aiEngineer")} progress={data.readiness / 100} />
+          {/* 三个核心指标卡片 */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Card className="flex flex-col items-center justify-center gap-1 py-5">
+              <span className="text-2xl font-bold text-cyan">{data.strengths.length}</span>
+              <span className="text-xs text-muted-foreground">{t("statStrengthsLabel")}</span>
+            </Card>
+            <Card className="flex flex-col items-center justify-center gap-1 py-5">
+              <span className="text-2xl font-bold text-foreground">
+                {data.strengths.length >= 4 ? t("basisStrong") : data.strengths.length >= 2 ? t("basisMedium") : t("basisWeak")}
+              </span>
+              <span className="text-xs text-muted-foreground">{t("statBasisLabel")}</span>
+            </Card>
+            <Card className="flex flex-col items-center justify-center gap-1 py-5">
+              <span className="text-2xl font-bold text-magenta">{data.gaps.filter(g => g.type === "required" && g.gap > 0).length}</span>
+              <span className="text-xs text-muted-foreground">{t("statGapsLabel")}</span>
+            </Card>
+          </div>
         </div>
 
-        {/* readiness + graph */}
-        <section id="gap" className="grid gap-6 lg:grid-cols-[300px_1fr]">
-          <Card className="flex flex-col items-center justify-center gap-4 py-8">
-            <CircularProgress value={data.readiness} label={t("careerReadiness")} />
-            <div className="flex gap-5 text-center text-xs text-muted-foreground">
-              <Stat n={data.strengths.length} label={t("statStrengths")} tone="text-cyan" />
-              <Stat n={data.gaps.length} label={t("statGaps")} tone="text-magenta" />
-              <Stat n={data.next_steps.length} label={t("statNextSteps")} tone="text-gold" />
-            </div>
-          </Card>
-          <div>
-            <CareerGraph nodes={graph.nodes} edges={graph.edges} height={420} />
-          </div>
+        {/* career graph */}
+        <section>
+          <CareerGraph nodes={graph.nodes} edges={graph.edges} height={420} />
         </section>
 
         {/* Section 1: strengths */}

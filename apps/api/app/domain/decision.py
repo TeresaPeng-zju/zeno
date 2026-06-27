@@ -205,58 +205,53 @@ def select_next_steps(
     orientation_id: str = competency.ORIENTATION_BASE,
     lang: str = "en",
 ) -> list[NextStep]:
-    """Rank next-steps deterministically.
+    """Two-layer deterministic ranking.
 
-    `max_steps` only controls how many of the *already-ranked* steps are
-    surfaced — the gap/score/ordering above it is untouched, so the offline
-    eval baseline (computed at the default depth) never forks.
+    Layer 1 — Main ranking: gap_score × migration_value.
+        ALL skills with gap > 0 participate (no hard filtering).
+        Priority = "what matters most for career migration".
+
+    Layer 2 — Topological ordering (Kahn's algorithm):
+        Guarantees no skill appears before its prerequisite.
+        Within the topological order, higher priority wins.
+
+    This ensures RAG, function calling etc. (deep in the dependency chain)
+    still appear in recommendations — the topo sort just makes sure their
+    prerequisites come first.
     """
     gaps = compute_gaps(role_id, obs, orientation_id)
     gap_by_skill = {g.req.skill_id: g for g in gaps}
 
-    # The decision layer scores the FULL positive-gap set. Recall must NOT be
-    # truncated here: capping candidates before ranking silently drops real gaps
-    # and shrinks coverage (the old TOP_N_CANDIDATES=8 produced 10/18-style gaps).
-    # Depth is purely a display concern, applied by max_steps at the very end, so
-    # any truncation stays a strict prefix of the full dependency-valid ordering.
-    candidates: list[GapInfo] = sorted(
-        [g for g in gaps if g.gap > 0], key=lambda g: g.gap_score, reverse=True
-    )
-
+    candidates = [g for g in gaps if g.gap > 0]
     dependents = _dependents_map()
-    max_gs = max((g.gap_score for g in candidates), default=0.0) or 1.0
+
+    from app.domain._capsule_migration import get_migration_value
 
     scored: list[NextStep] = []
     for g in candidates:
         sid = g.req.skill_id
         skill = competency.SKILLS_BY_ID[sid]
 
-        unblocks = [
-            d for d in dependents.get(sid, [])
-            if (dg := gap_by_skill.get(d)) and dg.gap > 0
-        ]
         blocked_by = [
             dep for dep in competency.dependencies_of(sid)
             if (dg := gap_by_skill.get(dep)) and dg.gap > 0
         ]
+        unblocks = [
+            d for d in dependents.get(sid, [])
+            if (dg := gap_by_skill.get(d)) and dg.gap > 0
+        ]
 
-        dep_urgency_raw = sum(gap_by_skill[d].gap_score for d in unblocks)
-        dep_urgency = min(1.0, dep_urgency_raw / max_gs)
-        gs_norm = g.gap_score / max_gs
+        mv = get_migration_value(sid)
+        priority = g.gap_score * mv
 
-        base_score = _W_GAP * gs_norm + _W_DEP * dep_urgency + _W_LEARN * skill.learnability
-        score = base_score * BLOCKED_PENALTY if blocked_by else base_score
-
-        # Exact additive contributions to next_score, for the audit trail.
         components = {
-            "gap_score_norm": round(gs_norm, 4),
-            "gap_term": round(_W_GAP * gs_norm, 4),
-            "dependency_urgency": round(dep_urgency, 4),
-            "dependency_term": round(_W_DEP * dep_urgency, 4),
+            "gap_score": round(g.gap_score, 4),
+            "requirement_weight": round(g.req.weight, 4),
+            "migration_value": round(mv, 4),
+            "priority": round(priority, 4),
             "learnability": round(skill.learnability, 4),
-            "learnability_term": round(_W_LEARN * skill.learnability, 4),
-            "base_score": round(base_score, 4),
-            "blocked_penalty": BLOCKED_PENALTY if blocked_by else 1.0,
+            "unblocks_count": len(unblocks),
+            "blocked_by_count": len(blocked_by),
         }
 
         title, why, steps, criteria = _action_blueprint(g, unblocks, blocked_by, lang)
@@ -272,18 +267,14 @@ def select_next_steps(
                 why=why,
                 action_steps=steps,
                 acceptance_criteria=criteria,
-                next_score=round(score, 4),
+                next_score=round(priority, 4),
                 unblocks=unblocks,
                 blocked_by=blocked_by,
                 score_components=components,
             )
         )
 
-    # Dependency-valid ordering (not a bare score sort): guarantees no skill is
-    # surfaced before its prerequisite, while keeping next_score as the priority
-    # within the topological order. Computed over the full candidate set so any
-    # truncation by max_steps is a strict prefix (the pacing/depth lever never
-    # changes the ranking, only how deep it shows).
+    # Topological ordering: prerequisites first, then by priority within each layer
     ordered = _priority_topological_order(scored)
     top = ordered[: max(1, max_steps)]
     for i, ns in enumerate(top, start=1):

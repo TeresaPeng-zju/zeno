@@ -64,6 +64,7 @@ function SkillsInner() {
   const [acknowledged, setAcknowledged] = useState<string | null>(null); // last acknowledged capsule id
   const [step, setStep] = useState<"capsules" | "confirm">("capsules");
   const [skillSelections, setSkillSelections] = useState<SkillSelections>({});
+  const [adjustments, setAdjustments] = useState<Record<string, "underestimated" | "accurate" | "overestimated">>({});
   const [probeAnswers, setProbeAnswers] = useState<Record<string, number>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -140,8 +141,21 @@ function SkillsInner() {
         }
       }
     }
-    return Object.entries(acc).map(([skillId, v]) => ({ skillId, ...v }));
-  }, [capsuleData, capsuleSelections, flatCapsules, aiCapsules]);
+    // Build skill_id → skill_name lookup from catalog
+    const skillNameMap: Record<string, string> = {};
+    if (catalog) {
+      for (const group of catalog.groups) {
+        for (const skill of group.skills) {
+          skillNameMap[skill.skill_id] = skill.name;
+        }
+      }
+    }
+    return Object.entries(acc).map(([skillId, v]) => ({
+      skillId,
+      skillName: skillNameMap[skillId] ?? skillId,
+      ...v,
+    }));
+  }, [capsuleData, capsuleSelections, flatCapsules, aiCapsules, catalog]);
 
   function selectDepth(capsuleId: string, tierId: string) {
     const isFirstAnswer = !capsuleSelections[capsuleId];
@@ -402,22 +416,53 @@ function SkillsInner() {
         {inferred.length > 0 && (
           <section className="mt-6 space-y-3">
             <h2 className="text-base font-semibold">{t("transferTitle")}</h2>
-            {inferred.map((inf, i) => (
-              <motion.div key={inf.skillId} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }} className="rounded-xl border border-cyan/30 bg-cyan/[0.04] px-4 py-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-sm font-medium text-foreground">{inf.capability}</span>
-                    <span className="ml-2 text-xs text-cyan">{inf.level >= 3 ? t("inferStrong") : inf.level >= 2 ? t("inferTransferable") : t("inferBasic")}</span>
+            {inferred.map((inf, i) => {
+              const adj = adjustments[inf.skillId];
+              // 叠加用户修正到 level
+              const displayLevel = adj === "underestimated" ? Math.min(4, inf.level + 1)
+                : adj === "overestimated" ? Math.max(0, inf.level - 1)
+                : inf.level;
+              const tag = displayLevel >= 3 ? t("inferStrong") : displayLevel >= 2 ? t("inferTransferable") : t("inferBasic");
+              const tagColor = displayLevel >= 3 ? "text-cyan border-cyan/40 bg-cyan/10"
+                : displayLevel >= 2 ? "text-emerald-400 border-emerald-400/40 bg-emerald-400/10"
+                : "text-amber-400 border-amber-400/40 bg-amber-400/10";
+
+              const btnBase = "rounded-lg border px-2.5 py-1 text-xs transition-colors ";
+              const btnActive = "border-cyan/60 bg-cyan/15 text-cyan font-medium";
+              const btnIdle = "border-border/50 text-muted-foreground hover:border-cyan/30 hover:text-foreground";
+
+              return (
+                <motion.div key={inf.skillId} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }} className="rounded-xl border border-border/40 bg-card/40 px-4 py-3 space-y-2">
+                  {/* 主层：标签 + 能力名（简洁） */}
+                  <div className="flex items-center gap-2">
+                    <span className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium ${tagColor}`}>{tag}</span>
+                    <span className="text-sm font-medium text-foreground">{inf.skillName}</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => adjustLevel(inf.skillId, -1)} className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent transition-colors">{t("adjustLower")}</button>
-                    <span className="text-xs text-cyan font-medium w-6 text-center">L{inf.level}</span>
-                    <button onClick={() => adjustLevel(inf.skillId, 1)} className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent transition-colors">{t("adjustHigher")}</button>
+                  {/* 你做过什么（来源） */}
+                  <p className="text-xs text-muted-foreground leading-relaxed">✦ {inf.sources.slice(0, 1).join("、")}</p>
+                  {/* 为什么可迁移（桥梁句） */}
+                  <p className="text-xs text-muted-foreground/70 leading-relaxed">{inf.capability}</p>
+                  {/* 操作：用户确认或修正系统判断 */}
+                  <div className="flex items-center gap-2 pt-0.5">
+                    <span className="text-xs text-muted-foreground shrink-0">{t("adjustHint")}</span>
+                    <button
+                      onClick={() => {
+                        setAdjustments(p => ({ ...p, [inf.skillId]: adj === "underestimated" ? undefined as any : "underestimated" }));
+                        adjustLevel(inf.skillId, adj === "underestimated" ? -1 : 1);
+                      }}
+                      className={btnBase + (adj === "underestimated" ? btnActive : btnIdle)}
+                    >{t("adjustUnderestimated")}</button>
+                    <button
+                      onClick={() => {
+                        setAdjustments(p => ({ ...p, [inf.skillId]: adj === "overestimated" ? undefined as any : "overestimated" }));
+                        adjustLevel(inf.skillId, adj === "overestimated" ? 1 : -1);
+                      }}
+                      className={btnBase + (adj === "overestimated" ? "border-amber-400/50 bg-amber-400/10 text-amber-400 font-medium" : btnIdle)}
+                    >{t("adjustOverestimated")}</button>
                   </div>
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">← {inf.sources.slice(0, 2).join("、")}</p>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </section>
         )}
 

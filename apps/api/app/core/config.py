@@ -26,11 +26,15 @@ class Settings(BaseSettings):
     skill_graph_path: str = "app/data/skill_graph.demo.json"
     path_config_path: str = "app/data/path_config.demo.json"
 
-    # Decision engine scoring weights (env-injectable, not in source)
-    decision_w_gap: float = 0.34
-    decision_w_dependency: float = 0.33
-    decision_w_learnability: float = 0.33
-    decision_blocked_penalty: float = 0.6
+    # Decision engine (v2: three-layer architecture)
+    # Layer 1: dependency = hard constraint (no weight needed)
+    # Layer 2: gap × migration_value = main ranking (no mixing weights)
+    # Layer 3: learnability = UX/explanation only
+    # Legacy weights kept for backward compat with eval baselines:
+    decision_w_gap: float = 0.34  # deprecated: kept for eval comparison
+    decision_w_dependency: float = 0.33  # deprecated: now hard constraint
+    decision_w_learnability: float = 0.33  # deprecated: now UX-only
+    decision_blocked_penalty: float = 0.6  # deprecated: now hard filter
     decision_strength_level: int = 3
     decision_transfer_level: int = 2
     decision_transfer_learnability: float = 0.65
