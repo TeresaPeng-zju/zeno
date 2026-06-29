@@ -84,3 +84,6 @@ Zippi.png
 ai-engineer-icon.png
 .gitignore.annotated
 docs/feedback/
+
+# 过程文档 / 设计简报（本地保留，不入库）
+docs/Zeno*.md

@@ -36,6 +36,9 @@ export default async function RootLayout({
           <RegionInit />
           <TopNav />
           {children}
+          {/* 全站质感层：边缘遮罩 + 电影颗粒（纯装饰，不拦截交互） */}
+          <div className="deep-space-mask" aria-hidden />
+          <div className="noise-overlay" aria-hidden />
         </NextIntlClientProvider>
       </body>
     </html>

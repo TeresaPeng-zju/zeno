@@ -1,1 +1,8 @@
-{}
+{
+  "name": "zeno",
+  "private": true,
+  "scripts": {
+    "setup": "bash scripts/setup.sh",
+    "dev": "bash scripts/dev.sh"
+  }
+}

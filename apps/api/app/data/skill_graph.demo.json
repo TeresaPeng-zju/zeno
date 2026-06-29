@@ -53,6 +53,60 @@
       "label_en": "General AI apps",
       "description": "覆盖 AI 应用开发的基础能力。",
       "description_en": "All-round fundamentals of AI app development."
+    },
+    {
+      "id": "rag",
+      "label": "智能问答 / 知识库",
+      "label_en": "Q&A & knowledge bases",
+      "description": "想做能查资料、答问题的 AI（如企业知识库问答、文档助手）。重点练让 AI 准确找到并用对资料的检索能力。",
+      "description_en": "Build AI that searches and answers from your own documents. Focuses on retrieval — finding and using the right information accurately.",
+      "weight_delta": {
+        "data.embedding": 0.2,
+        "data.vector_search": 0.2,
+        "data.retrieval_rerank": 0.2,
+        "eval.offline": 0.1
+      },
+      "min_level_delta": {
+        "data.vector_search": 1,
+        "data.retrieval_rerank": 1
+      },
+      "promote_required": ["data.retrieval_rerank"],
+      "jd_signals": ["rag", "retrieval-augmented", "retrieval augmented", "retrieval", "retriever", "vector search", "vector database", "vector db", "vector store", "embedding", "embeddings", "rerank", "reranking", "semantic search", "knowledge base", "knowledge-base", "chunking", "向量检索", "向量", "检索", "知识库", "召回", "重排", "语义检索", "文档问答"]
+    },
+    {
+      "id": "agent",
+      "label": "Agent / 工具编排",
+      "label_en": "Agents & tool orchestration",
+      "description": "想做能调用工具、自己决定下一步的 AI（如自动化助手、多步任务 agent）。重点练让模型可靠地调用函数、编排工具。",
+      "description_en": "Build AI that calls tools and decides its own next step (automation assistants, multi-step agents). Focuses on reliable function calling and tool orchestration.",
+      "weight_delta": {
+        "llm.function_calling": 0.25,
+        "llm.prompt": 0.15,
+        "eng.api_design": 0.15,
+        "eng.error_handling": 0.1
+      },
+      "min_level_delta": {
+        "llm.function_calling": 1
+      },
+      "promote_required": ["llm.function_calling"],
+      "jd_signals": ["agent", "agents", "agentic", "function calling", "function-calling", "tool use", "tool-use", "tool calling", "tool-calling", "tools", "orchestration", "orchestrate", "multi-step", "multi step", "planning", "autonomous", "工具调用", "函数调用", "智能体", "工具编排", "多步", "规划", "自主", "编排", "代理"]
+    },
+    {
+      "id": "eval",
+      "label": "评估与上线",
+      "label_en": "Evaluation & shipping",
+      "description": "想把 AI 应用做稳、敢上线。重点练离线评估、质量回归和错误处理，让效果可衡量、可交付。",
+      "description_en": "Make your AI app reliable enough to ship. Focuses on offline evaluation, quality regression and error handling so results are measurable.",
+      "weight_delta": {
+        "eval.offline": 0.25,
+        "eng.error_handling": 0.2,
+        "llm.prompt": 0.1
+      },
+      "min_level_delta": {
+        "eval.offline": 1
+      },
+      "promote_required": ["eval.offline"],
+      "jd_signals": ["evaluation", "offline eval", "benchmark", "benchmarks", "metrics", "observability", "monitoring", "regression", "guardrail", "guardrails", "hallucination", "评估", "离线评估", "模型评估", "效果评估", "指标", "监控", "质量回归", "基准", "可观测", "幻觉"]
     }
   ]
 }

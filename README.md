@@ -90,9 +90,21 @@ zeno/
 
 - Node.js 20+
 - Python 3.11+
+- pnpm
 - Docker (for Postgres + pgvector)
 
-### Setup
+### Quick start (one command)
+
+```bash
+npm run dev      # or: bash scripts/dev.sh
+```
+
+The first run installs everything (backend venv + deps, frontend deps), starts
+Postgres via Docker, runs migrations, seeds the resource library, then launches
+the API on **:8000** and the web app on **:3000**. Press Ctrl-C to stop both.
+No API key needed — the engine runs fully on the deterministic mock providers.
+
+### Manual setup (if you prefer step by step)
 
 ```bash
 # Database

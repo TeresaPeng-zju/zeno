@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import re
 import struct
 from abc import ABC, abstractmethod
 from functools import lru_cache
@@ -54,17 +55,26 @@ class MockEmbedder(EmbeddingProvider):
     def dim(self) -> int:
         return self._dim
 
+    def _tokens(self, text: str) -> list[str]:
+        # 英文/数字按词；中文按单字 + 相邻 bigram。
+        # 中文整句无空格，原来的 split() 会让整段变成一个 token，导致不同文本几乎不重叠、
+        # 召回失效。单字 + bigram 让「向量检索」这类共享子词的文本向量真正靠近。
+        text = text.lower()
+        words = re.findall(r"[a-z0-9]+", text)
+        han = re.findall(r"[一-鿿]", text)
+        bigrams = [han[i] + han[i + 1] for i in range(len(han) - 1)]
+        toks = words + han + bigrams
+        return toks or [text]
+
     def _vec(self, text: str) -> list[float]:
-        tokens = text.lower().split() or [text.lower()]
+        # Feature hashing（签名哈希技巧）：每个 token 落到一个维度并带 ±1 符号。
+        # O(tokens) 而非原来的 O(tokens×dim)，且共享 token 越多向量越接近。
         acc = [0.0] * self._dim
-        for tok in tokens:
+        for tok in self._tokens(text):
             digest = hashlib.sha256(tok.encode("utf-8")).digest()
-            # Stretch the 32-byte digest deterministically across all dimensions.
-            for i in range(self._dim):
-                seed = digest + struct.pack(">I", i)
-                h = hashlib.sha256(seed).digest()[:4]
-                # map 4 bytes -> float in [-1, 1)
-                acc[i] += (struct.unpack(">I", h)[0] / 0xFFFFFFFF) * 2.0 - 1.0
+            idx = struct.unpack(">I", digest[:4])[0] % self._dim
+            sign = 1.0 if digest[4] & 1 else -1.0
+            acc[idx] += sign
         return _normalize(acc)
 
     def embed(self, texts: list[str]) -> list[list[float]]:

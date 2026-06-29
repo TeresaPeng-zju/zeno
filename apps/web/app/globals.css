@@ -67,6 +67,47 @@
 }
 
 @layer utilities {
+  /* ── 全站电影颗粒噪声（融入深空质感） ─────────────────────────── */
+  .noise-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    pointer-events: none;
+    opacity: 0.022;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+  }
+  /* ── 边缘遮罩：内容向深空边缘渐隐 ─────────────────────────────── */
+  .deep-space-mask {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    pointer-events: none;
+    background:
+      radial-gradient(135% 90% at 50% -10%, transparent 45%, hsl(220 33% 5% / 0.5) 100%),
+      linear-gradient(to bottom, transparent 80%, hsl(220 33% 5% / 0.45) 100%);
+  }
+
+  /* ── 打印/存为 PDF：强制保留深色背景，避免浏览器默认剥离背景导致白屏 ── */
+  @media print {
+    html, body {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      background: #0A0D14 !important;
+    }
+    .noise-overlay, .deep-space-mask, .stars-layer { display: none !important; }
+  }
+
+  /* ── 抖动提示（CTA 未选身份时） ───────────────────────────────── */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+
   /* ── CSS Aurora layers ───────────────────────────────────────── */
   .aurora-layer {
     position: absolute;

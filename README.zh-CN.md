@@ -90,9 +90,20 @@ zeno/
 
 - Node.js 20+
 - Python 3.11+
+- pnpm
 - Docker（用于 Postgres + pgvector）
 
-### 启动
+### 一键启动（一条命令）
+
+```bash
+npm run dev      # 或：bash scripts/dev.sh
+```
+
+首次运行会自动完成全部安装（后端 venv + 依赖、前端依赖）、用 Docker 起 Postgres、
+建表、灌入种子资源，然后同时拉起后端 **:8000** 和前端 **:3000**。Ctrl-C 一起关闭。
+**无需任何 API key**——引擎默认跑确定性 mock，离线即可体验。
+
+### 手动启动（想一步步来）
 
 ```bash
 # 数据库
