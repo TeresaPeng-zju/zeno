@@ -66,6 +66,11 @@ class RoleRequirement:
     weight: float  # 0-1
     type: str  # required | bonus
     branch_impact: int  # 0/1 — does knowing this change the recommended path?
+    # How a GAP in this skill should be CLOSED (curated judgement, the moat):
+    #   foundation_have | ai_accelerated | core_learn | product_loop | pm_side
+    # Routes the *action type* of a recommendation, not its ranking. Default ""
+    # keeps older data files valid (treated as core_learn downstream).
+    fulfillment_class: str = ""
 
 
 @dataclass(frozen=True)

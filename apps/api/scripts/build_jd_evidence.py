@@ -163,10 +163,10 @@ SKILL_KEYWORDS: dict[str, list[str]] = {
     "llm.cost_latency": ["成本", "延迟", "性能优化", "latency", "推理优化", "吞吐"],
     "llm.streaming": ["流式", "streaming", "sse", "流式输出"],
     "llm.core": ["llm", "大模型", "多模态", "aigc", "大语言模型", "生成式"],  # umbrella term, not a graph skill
-    "eval.offline": ["离线评估", "评测集", "evaluation", "评估集", "benchmark"],
-    "eval.online": ["在线反馈", "线上评估", "在线评估", "反馈采集"],
+    "eval.offline": ["离线评估", "评测集", "evaluation", "评估集", "benchmark", "评测", "评估体系", "ragas", "langsmith", "deepeval"],
+    "eval.online": ["在线反馈", "线上评估", "在线评估", "反馈采集", "线上监控", "效果监控"],
     "eval.ab": ["a/b", "ab 实验", "abtest", "a/b 实验", "对照实验"],
-    "eval.metrics": ["指标", "准确率", "幻觉", "召回率", "badcase", "质量指标", "评估指标"],
+    "eval.metrics": ["指标", "准确率", "幻觉", "幻觉率", "召回率", "badcase", "质量指标", "评估指标", "事实性"],
 }
 
 # `llm.core` is an umbrella keyword bucket (LLM/大模型/多模态) that is NOT a node in
@@ -180,6 +180,52 @@ Contribution = dict[str, float]  # {doc_count, doc_total, frequency}
 
 def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", str(text)).lower()
+
+
+# --- Keyword disambiguation (context gating) ---------------------------------
+# Some keywords are ambiguous: "性能优化" usually means *web* perf (not LLM cost),
+# "agent" often means user-agent, "结构化" often means structured *data*. These
+# only count toward the AI skill when the JD also carries an AI-context token —
+# otherwise a frontend JD inflates LLM-skill frequencies (the artifact we saw:
+# cost_latency over-counted in frontend, tool_use over-counted via "agent").
+# AI-context markers. Deliberately excludes "agent" (itself ambiguous — that's
+# the keyword we gate). Whole-document gating proved useless: 2026 JDs mention AI
+# *somewhere* almost everywhere, so a frontend "性能优化" still passed. We require
+# the AI marker to sit NEAR the ambiguous keyword (same clause), not just in the
+# same JD — that's what separates "Web 性能优化" from "大模型推理性能优化".
+_AI_CONTEXT: tuple[str, ...] = (
+    "大模型", "大语言模型", "llm", "gpt", "prompt", "提示词", "rag", "检索增强",
+    "aigc", "生成式", "多模态", "langchain", "智能体", "ai应用", "ai 应用",
+    "ai原生", "ai native", "embedding", "向量", "知识库", "推理", "模型",
+)
+_AI_NEAR_WINDOW = 40  # chars on each side of the ambiguous keyword
+# skill_id -> keywords that only count with an AI marker nearby.
+_GATED: dict[str, set[str]] = {
+    "llm.cost_latency": {"性能优化", "成本", "延迟", "latency", "吞吐"},
+    "llm.tool_use": {"agent"},
+    "llm.structured_output": {"结构化"},
+}
+
+
+def _ai_near(doc: str, idx: int, span: int) -> bool:
+    seg = doc[max(0, idx - _AI_NEAR_WINDOW): idx + span + _AI_NEAR_WINDOW]
+    return any(tok in seg for tok in _AI_CONTEXT)
+
+
+def _skill_hit(doc: str, skill_id: str, kws: list[str]) -> bool:
+    """True if any keyword for `skill_id` matches `doc`. Ambiguous keywords for a
+    gated skill only count when an AI marker sits within `_AI_NEAR_WINDOW`."""
+    gated = _GATED.get(skill_id)
+    for kw in kws:
+        if gated and kw in gated:
+            start = 0
+            while (i := doc.find(kw, start)) != -1:
+                if _ai_near(doc, i, len(kw)):
+                    return True
+                start = i + 1
+        elif kw in doc:
+            return True
+    return False
 
 
 def run_jd_keyword_source() -> tuple[Source, dict[str, Contribution]]:
@@ -205,7 +251,7 @@ def run_jd_keyword_source() -> tuple[Source, dict[str, Contribution]]:
     n = len(docs)
     contribs: dict[str, Contribution] = {}
     for skill_id, kws in SKILL_KEYWORDS.items():
-        hits = sum(1 for doc in docs if any(kw in doc for kw in kws))
+        hits = sum(1 for doc in docs if _skill_hit(doc, skill_id, kws))
         contribs[skill_id] = {
             "doc_count": hits,
             "doc_total": n,
@@ -326,7 +372,7 @@ def run_jd_jsonl_source(
     n = len(docs)
     contribs: dict[str, Contribution] = {}
     for skill_id, kws in SKILL_KEYWORDS.items():
-        hits = sum(1 for doc in docs if any(kw in doc for kw in kws))
+        hits = sum(1 for doc in docs if _skill_hit(doc, skill_id, kws))
         contribs[skill_id] = {
             "doc_count": hits,
             "doc_total": n,

@@ -84,6 +84,8 @@ function ResultInner() {
   // the survey. null → use the session's default (general) orientation.
   const [orientations, setOrientations] = useState<OrientationOut[]>([]);
   const [targetRole, setTargetRole] = useState<string | null>(null);
+  const [voice, setVoice] = useState<string | null>(null);
+  const [voiceHead, setVoiceHead] = useState<string | null>(null);
 
   // The roles a user can target are the same orientations the engine supports.
   useEffect(() => {
@@ -98,6 +100,27 @@ function ResultInner() {
       active = false;
     };
   }, []);
+
+  // 大模型「像真人」测评：懒加载拉 /voice（无 DeepSeek key 时后端回退确定性模板）
+  useEffect(() => {
+    if (!sessionId) return;
+    const base = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
+    const qs = new URLSearchParams({ lang: "zh" });
+    if (budget) qs.set("time_budget", budget);
+    if (targetRole) qs.set("orientation", targetRole);
+    let active = true;
+    setVoice(null);
+    setVoiceHead(null);
+    fetch(`${base}/api/sessions/${sessionId}/voice?${qs.toString()}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!active) return;
+        setVoice(typeof d?.voice === "string" ? d.voice : null);
+        setVoiceHead(typeof d?.headline === "string" ? d.headline : null);
+      })
+      .catch(() => { /* 非致命：没有就不显示 */ });
+    return () => { active = false; };
+  }, [sessionId, budget, targetRole]);
 
   // 纯前端「标记完成」：按 session 持久化到 localStorage，不进后端、不影响 readiness
   const doneKey = sessionId ? `zeno:done:${sessionId}` : null;
@@ -257,7 +280,34 @@ function ResultInner() {
                 {t("orientationTag", { label: data.orientation_label })}
               </span>
             )}
+            <p className="mx-auto max-w-xl pt-2 text-xs leading-relaxed text-muted-foreground/80">
+              {t("honestNote")}
+            </p>
           </div>
+
+          {/* 一句可截图金句 + zippi 的诊断（懒加载，有阅读节奏） */}
+          {(voiceHead || voice) && (
+            <div className="mx-auto max-w-2xl space-y-4">
+              {voiceHead && (
+                <p className="text-center text-xl font-semibold leading-snug text-foreground sm:text-2xl">
+                  「{voiceHead}」
+                </p>
+              )}
+              {voice && (
+                <div className="rounded-2xl border border-cyan/25 bg-cyan/[0.04] px-5 py-4">
+                  <div className="mb-3 flex items-center gap-2">
+                    <img src="/icons/zippi.png" alt="" className="h-6 w-6" style={{ imageRendering: "pixelated" }} />
+                    <span className="text-xs font-medium text-cyan">zippi 的诊断</span>
+                  </div>
+                  <div className="space-y-3 text-[15px] leading-relaxed text-foreground/90">
+                    {voice.split(/\n\s*\n/).map((para, i) => (
+                      <p key={i}>{para.trim()}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           {/* 三个核心指标卡片 */}
           <div className="grid gap-4 sm:grid-cols-3">
             <Card className="flex flex-col items-center justify-center gap-1 py-5">

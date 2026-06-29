@@ -16,6 +16,37 @@ from app.domain.question_bank import (
 from app.i18n import t
 from app.llm.factory import get_llm_provider
 from app.models import SurveySession, UserSkill
+from app.core.config import settings
+
+import json
+from functools import lru_cache
+from pathlib import Path
+
+
+@lru_cache(maxsize=1)
+def _path_config() -> dict:
+    p = Path(settings.path_config_path)
+    if not p.is_absolute():
+        p = Path(__file__).resolve().parent.parent / settings.path_config_path.removeprefix("app/")
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _transfer_defaults(current_role: str | None, role_id: str) -> dict[str, int]:
+    """当前角色的可迁移地基技能 → 默认水平（来自 path_config 的 transfer 列表）。
+    用于把『前端显然会的 TS/API/流式』等地基技能自动算作已具备，避免问卷没覆盖就被当成 0 级缺口。"""
+    if not current_role:
+        return {}
+    paths = _path_config().get("paths", {})
+    short = role_id.replace("_applied", "").replace("_general", "")
+    for key in (f"{current_role} → {role_id}", f"{current_role} → {short}"):
+        p = paths.get(key)
+        if p:
+            return {it["skill_id"]: int(it.get("default_level", 2))
+                    for it in p.get("transfer", []) if it.get("skill_id")}
+    return {}
 from app.schemas import (
     GapOut,
     NextQuestionResponse,
@@ -200,6 +231,11 @@ def build_result(
         for us in sess.user_skills
         if us.skill_id in competency.SKILLS_BY_ID
     }
+    # 地基修正：把当前角色的可迁移地基技能按默认水平种进画像（前端 → TS/API/流式 自动算已具备）。
+    # 用户显式答过、且答得更高的不覆盖。
+    for sid, lvl in _transfer_defaults(sess.current_role, sess.role_id).items():
+        if sid in competency.SKILLS_BY_ID and (sid not in obs or obs[sid].level < lvl):
+            obs[sid] = SkillObservation(level=lvl, confidence=0.6)
 
     strengths = [
         StrengthOut(

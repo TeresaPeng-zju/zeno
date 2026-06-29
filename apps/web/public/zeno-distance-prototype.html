@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Zeno · 你和 AI 工程师的距离</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#0A0D14; color:#E6EAF2;
+    font-family:'Plus Jakarta Sans','Noto Sans SC',-apple-system,'PingFang SC',sans-serif;
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .app { width:100%; max-width:640px; }
+  .float { transition:opacity .4s; }
+  .bar { transition:width .6s cubic-bezier(.16,1,.3,1); }
+  button { font-family:inherit; }
+  .chip { transition:all .15s; }
+</style>
+</head>
+<body>
+<div class="app" id="zeno-app">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+    <img src="./icons/zippi.png" width="40" height="40" alt="zippi" style="image-rendering:pixelated;"/>
+    <span style="font-weight:500;font-size:19px;letter-spacing:.5px;">Zeno</span>
+    <span style="margin-left:auto;font-size:12px;color:#0A0D14;background:#FFB800;padding:5px 12px;border-radius:999px;font-weight:500;">目标：AI 应用工程师</span>
+  </div>
+
+  <div style="font-size:13px;color:#8A93A6;margin-bottom:6px;">你和 AI 应用工程师的距离</div>
+  <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:10px;">
+    <span id="z-pct" style="font-size:46px;font-weight:500;line-height:1;color:#1BE5EE;">8%</span>
+    <span style="font-size:13px;color:#8A93A6;padding-bottom:7px;">就绪度</span>
+    <span id="z-float" class="float" style="margin-left:auto;font-size:14px;color:#00C896;opacity:0;padding-bottom:7px;">+0%</span>
+  </div>
+  <div style="position:relative;height:11px;background:#161D2D;border-radius:999px;margin-bottom:5px;overflow:hidden;">
+    <div id="z-bar" class="bar" style="position:absolute;left:0;top:0;bottom:0;width:8%;background:#1BE5EE;border-radius:999px;"></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;font-size:11px;color:#5b6478;margin-bottom:20px;"><span>现在的你</span><span>AI 工程师门槛</span></div>
+
+  <div id="z-zippi" style="display:flex;gap:11px;align-items:flex-start;background:#121826;border:1px solid #1d2740;border-radius:12px;padding:12px 14px;margin-bottom:18px;">
+    <img src="./icons/zippi.png" width="30" height="30" alt="" style="flex-shrink:0;image-rendering:pixelated;"/>
+    <div id="z-say" style="font-size:14px;line-height:1.55;color:#cdd4e0;">嗨，我是 zippi。先快速勾选你<b style="color:#fff;">已经会</b>的——别谦虚，每点一个，我们就离目标近一步。</div>
+  </div>
+
+  <div id="z-body"></div>
+</div>
+
+<script>
+(function(){
+  var groups=[
+    {cat:"工程地基",color:"#1BE5EE",skills:[
+      {id:"ts",n:"TypeScript 工程化",mode:"have"},{id:"api",n:"API 设计与契约",mode:"have"},
+      {id:"err",n:"错误处理与重试",mode:"have"},{id:"deploy",n:"部署 / CI·CD",mode:"have"},
+      {id:"perf",n:"性能 / 成本延迟",mode:"have"},{id:"stream",n:"流式输出 SSE",mode:"have"}]},
+    {cat:"数据与检索",color:"#7F77DD",skills:[
+      {id:"vec",n:"向量检索",mode:"lev"},{id:"chunk",n:"文档切分",mode:"lev"},
+      {id:"embed",n:"向量化 embedding",mode:"lev"},{id:"rerank",n:"召回与重排",mode:"lev"}]},
+    {cat:"LLM 能力",color:"#34d8e0",skills:[
+      {id:"prompt",n:"Prompt 设计",mode:"lev"},{id:"struct",n:"结构化输出",mode:"lev"},
+      {id:"fc",n:"Function Calling",mode:"lev"},{id:"toolu",n:"多工具编排",mode:"lev"}]},
+    {cat:"评估与闭环",color:"#FFB800",skills:[
+      {id:"evalset",n:"离线评估集",mode:"deep"},{id:"metrics",n:"质量指标 / 幻觉率",mode:"deep"},
+      {id:"online",n:"在线反馈闭环",mode:"deep"},{id:"agentstate",n:"Agent 状态与记忆",mode:"deep"}]}
+  ];
+  var sel={}, pct=8;
+  var bar=document.getElementById("z-bar"),pctEl=document.getElementById("z-pct"),
+      floatEl=document.getElementById("z-float"),sayEl=document.getElementById("z-say"),
+      body=document.getElementById("z-body");
+  function setPct(v,delta){pct=Math.max(0,Math.min(100,Math.round(v)));
+    bar.style.width=pct+"%";pctEl.textContent=pct+"%";
+    if(delta){floatEl.textContent=(delta>0?"+":"")+Math.round(delta)+"%";floatEl.style.opacity="1";
+      setTimeout(function(){floatEl.style.opacity="0";},900);}}
+  function recompute(){var s=8;groups.forEach(function(g){g.skills.forEach(function(sk){
+    if(sel[sk.id]){s+=sk.mode==="have"?6:sk.mode==="lev"?2:9;}});});return s;}
+  function say(t){sayEl.innerHTML=t;}
+  function btn(label,cb,primary){var b=document.createElement("button");b.textContent=label;
+    b.style.cssText="margin-top:16px;width:100%;padding:13px;border-radius:11px;border:none;cursor:pointer;font-size:14px;font-weight:500;"+
+      (primary?"background:#1BE5EE;color:#0A0D14;":"background:#161D2D;color:#E6EAF2;border:1px solid #2a3550;");
+    b.onclick=cb;return b;}
+
+  function renderChips(){body.innerHTML="";
+    groups.forEach(function(g){
+      var wrap=document.createElement("div");wrap.style.marginBottom="14px";
+      var h=document.createElement("div");h.style.cssText="font-size:12px;color:#8A93A6;margin-bottom:8px;font-weight:500;";
+      h.innerHTML='<span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:'+g.color+';vertical-align:1px;margin-right:6px;"></span>'+g.cat;
+      wrap.appendChild(h);
+      var row=document.createElement("div");row.style.cssText="display:flex;flex-wrap:wrap;gap:8px;";
+      g.skills.forEach(function(sk){
+        var c=document.createElement("button");c.textContent=sk.n;c.type="button";c.className="chip";
+        function paint(){c.style.cssText="padding:8px 13px;border-radius:999px;font-size:13px;cursor:pointer;"+
+          (sel[sk.id]?"background:rgba(27,229,238,.14);color:#1BE5EE;border:1px solid #1BE5EE;":"background:#121826;color:#9aa3b5;border:1px solid #232d44;");}
+        paint();
+        c.onclick=function(){sel[sk.id]=!sel[sk.id];paint();var nv=recompute();setPct(nv,nv-pct);
+          if(sel[sk.id]&&sk.mode==="have")say("漂亮，这块工程地基直接迁移。");
+          else if(sel[sk.id]&&sk.mode==="deep")say("哦？这块你都有？那你超过一大半候选人了。");};
+        row.appendChild(c);});
+      wrap.appendChild(row);body.appendChild(wrap);});
+    body.appendChild(btn("勾完了，看看我还差多远 →",renderCalib,true));}
+
+  function renderCalib(){
+    if(!sel.fc&&!sel.struct&&!sel.prompt){return renderReveal();}
+    say("等一下——你刚点了几个 LLM 能力，我得<b style=\"color:#fff;\">较真</b>一下，免得高估你。");
+    body.innerHTML="";
+    var q=document.createElement("div");
+    q.style.cssText="background:#121826;border:1px solid #1d2740;border-radius:12px;padding:15px;";
+    var picked=sel.fc?"Function Calling":sel.struct?"结构化输出":"Prompt 设计";
+    q.innerHTML='<div style="font-size:14px;margin-bottom:12px;">你点了 <b style="color:#1BE5EE;">'+picked+'</b>。你是在哪用过它？</div>';
+    var opts=[["真实项目 / Zeno 里用过","上线级别的项目经验，含金量最高。",4],
+              ["跟着教程做过 demo","入门了，但还没扛过真实复杂度。",0],
+              ["还没真正写过，只是听过","诚实最好——我把它标成待补，不替你吹。",-5]];
+    opts.forEach(function(o){var b=document.createElement("button");b.type="button";
+      b.style.cssText="display:block;width:100%;text-align:left;margin-top:9px;padding:11px 13px;border-radius:10px;cursor:pointer;background:#0A0D14;border:1px solid #232d44;color:#cdd4e0;";
+      b.innerHTML='<div style="font-size:13.5px;color:#fff;">'+o[0]+'</div><div style="font-size:11.5px;color:#8A93A6;margin-top:3px;">'+o[1]+'</div>';
+      b.onclick=function(){var nv=recompute()+o[2];setPct(nv,o[2]);
+        say(o[2]<0?"记下了。<b style=\"color:#FF4D8D;\">不替你奉承</b>，这才是 Zeno 跟聊天框的区别。":"好，确认是真本事，给你加分。");
+        setTimeout(renderReveal,650);};q.appendChild(b);});
+    body.appendChild(q);}
+
+  function renderReveal(){
+    var have=[],lev=[],deep=[];
+    groups.forEach(function(g){g.skills.forEach(function(sk){
+      if(sk.mode==="deep"&&!sel[sk.id])deep.push(sk.n);
+      else if(sk.mode==="have"&&sel[sk.id])have.push(sk.n);
+      else if(sk.mode==="lev")lev.push(sk.n);});});
+    setPct(74,74-pct);
+    say("看好了——这才是<b style=\"color:#1BE5EE;\">真相</b>。你比想象中近得多。");
+    body.innerHTML="";
+    var flip=document.createElement("div");flip.style.cssText="text-align:center;margin:8px 0 18px;";
+    flip.innerHTML='<span style="font-size:14px;color:#8A93A6;">表层算法说你只迁移了 </span>'+
+      '<span style="font-size:14px;color:#FF4D8D;text-decoration:line-through;">13%</span>'+
+      '<div style="font-size:13px;color:#8A93A6;margin-top:8px;">但算上 AI 能替你补的，真实就绪度是</div>'+
+      '<div style="font-size:38px;font-weight:500;color:#00C896;margin-top:2px;">74%</div>';
+    body.appendChild(flip);
+    function bucket(color,title,sub,items){var d=document.createElement("div");
+      d.style.cssText="background:#121826;border:1px solid #1d2740;border-left:3px solid "+color+";border-radius:0 12px 12px 0;padding:13px 15px;margin-bottom:11px;";
+      d.innerHTML='<div style="font-size:14px;font-weight:500;color:'+color+';margin-bottom:3px;">'+title+'</div>'+
+        '<div style="font-size:11.5px;color:#8A93A6;margin-bottom:9px;">'+sub+'</div>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:7px;">'+items.map(function(x){return '<span style="font-size:12px;padding:5px 10px;border-radius:999px;background:#0A0D14;border:1px solid #232d44;color:#cdd4e0;">'+x+'</span>';}).join("")+'</div>';
+      body.appendChild(d);}
+    bucket("#1BE5EE","✓ 已具备 · 自动剔除",(have.length||"你的工程地基")+" 项——这些不该出现在学习路线里。",have.length?have:["工程地基"]);
+    bucket("#7F77DD","⚡ 接个 AI 就有了 · "+lev.length+" 项","在你现有项目里加个特性即可，别花时间死磕。",lev);
+    bucket("#FFB800","◎ 真正要学的 · 只剩 "+deep.length+" 件","这几件 AI 替不了你——是你真正的护城河。",deep.length?deep:["你已全部覆盖！"]);
+    var foot=document.createElement("div");foot.style.cssText="text-align:center;font-size:11.5px;color:#5b6478;margin-top:14px;";
+    foot.textContent="基于 2000+ 条真实 AI 岗位 JD 测算，不是大模型凭感觉编的";
+    body.appendChild(foot);
+    body.appendChild(btn("↺ 再测一次",function(){sel={};setPct(8,0);say("再来——这次别藏着你的本事。");renderChips();}));}
+
+  renderChips();
+})();
+</script>
+</body>
+</html>

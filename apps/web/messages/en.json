@@ -111,9 +111,10 @@
     "next": "Next"
   },
   "result": {
-    "generatingPath": "Generating your growth path…",
-    "title": "Your path to AI Engineer",
-    "generatedFrom": "Generated from your {count}-skill profile",
+    "generatingPath": "Generating your assessment…",
+    "title": "Your AI Engineer readiness",
+    "honestNote": "Zeno won't promise you a job. We do one thing: use real hiring data to honestly tell you where the gaps are — and which ones are real.",
+    "generatedFrom": "From your {count}-skill profile, calibrated against real job postings",
     "headerSummary": "You have {strengths} transferable strengths and {gaps} core skills to unlock",
     "orientationTag": "Target orientation · {label}",
     "statStrengthsLabel": "Strengths you have",

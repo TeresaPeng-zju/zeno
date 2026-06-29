@@ -15,8 +15,15 @@ from app.schemas import (
     SessionCreateResponse,
 )
 from app.services import session_service
+from app.domain.assessment_voice import voice_for_result
+from app.domain import interview
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
+
+
+class ExtractRequest(BaseModel):
+    text: str
 
 
 @router.post("", response_model=SessionCreateResponse)
@@ -82,6 +89,46 @@ def get_result(
     return session_service.build_result(
         db, sess, time_budget=time_budget, lang=effective_lang, orientation=orientation
     )
+
+
+@router.get("/{session_id}/voice")
+def get_voice(
+    session_id: str,
+    time_budget: str | None = None,
+    orientation: str | None = None,
+    lang_param: str | None = Query(default=None, alias="lang"),
+    db: Session = Depends(get_db),
+    lang: Lang = Depends(get_lang),
+) -> dict:
+    """懒加载的『像真人』测评叙述。result 页先秒出，这段话随后单独拉，
+    省掉每次构建结果时的 LLM 延迟与花费。无 DeepSeek key 时回退确定性模板。"""
+    sess = session_service.get_session(db, session_id)
+    if sess is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    effective_lang: Lang = "zh" if lang_param and lang_param.startswith("zh") else lang
+    result = session_service.build_result(
+        db, sess, time_budget=time_budget, lang=effective_lang, orientation=orientation
+    )
+    out = voice_for_result(
+        result, role_id=sess.role_id, orientation=result.orientation, lang=effective_lang
+    )
+    return {"headline": out.get("headline", ""), "voice": out.get("body", "")}
+
+
+@router.post("/{session_id}/extract")
+def extract_skills(
+    session_id: str,
+    payload: ExtractRequest,
+    db: Session = Depends(get_db),
+    lang: Lang = Depends(get_lang),
+) -> dict:
+    """AI Interview：一段项目经历 → DeepSeek 抽取技能(+水平+confidence+原话依据+相邻猜测)。
+    输入文本哈希缓存，同样输入同样输出。无 key/失败时返回空，前端回退手动。"""
+    sess = session_service.get_session(db, session_id)
+    if sess is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    data = interview.extract(payload.text, role_id=sess.role_id, lang=lang)
+    return data or {"skills": [], "guesses": [], "_cached": False}
 
 
 @router.get("/{session_id}/result-stream")

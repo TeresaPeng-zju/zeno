@@ -54,6 +54,11 @@ export default function HomePage() {
   const [currentRoles, setCurrentRoles] = useState<PathRole[]>([]);
   const [targetRoles, setTargetRoles] = useState<PathRole[]>([]);
   const [currentRole, setCurrentRole] = useState("");
+  const [lastSession, setLastSession] = useState<string | null>(null);
+
+  useEffect(() => {
+    try { setLastSession(localStorage.getItem("zeno:lastSession")); } catch { /* ignore */ }
+  }, []);
 
   useEffect(() => {
     api.paths().then((data) => {
@@ -201,6 +206,16 @@ export default function HomePage() {
           >
             {loading ? t("mapping") : t("cta")}
           </button>
+
+          {lastSession && (
+            <button
+              type="button"
+              onClick={() => router.push(`/result?session=${lastSession}`)}
+              className="mt-3 block text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-cyan hover:underline"
+            >
+              继续上次 · 查看我的诊断 →
+            </button>
+          )}
 
           {error && <p className="mt-3 text-center text-sm text-magenta">{error}</p>}
         </motion.div>

@@ -113,9 +113,10 @@
     "next": "下一步"
   },
   "result": {
-    "generatingPath": "正在為你生成成長路線…",
-    "title": "你的成長路線",
-    "generatedFrom": "基於 {count} 項能力畫像生成",
+    "generatingPath": "正在生成你的能力診斷…",
+    "title": "你的 AI Engineer 能力診斷",
+    "honestNote": "Zeno 不承諾幫你拿到 offer。我們只做一件事：用真實招聘數據，誠實告訴你差距在哪、哪些是真差距。",
+    "generatedFrom": "基於 {count} 項能力畫像，對照真實招聘 JD 校準",
     "headerSummary": "你已經具備 {strengths} 項可遷移優勢，還有 {gaps} 項核心能力待解鎖",
     "orientationTag": "目標方向 · {label}",
     "statStrengthsLabel": "已有優勢",

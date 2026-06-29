@@ -1,0 +1,946 @@
+{
+ "frontend": {
+  "n_source_jds": 759,
+  "summary": {
+   "真缺口": 15,
+   "部分迁移": 5,
+   "快速迁移": 2,
+   "已具备": 1
+  },
+  "transfer_coverage_surface": 0.13,
+  "transfer_coverage_effective": 0.74,
+  "leverage_path": {
+   "已具备_剔除": [
+    "成本与延迟优化",
+    "API 设计与契约",
+    "TypeScript 工程化"
+   ],
+   "AI杠杆_现有项目加特性": [
+    "向量检索（pgvector/HNSW）",
+    "Prompt 结构设计",
+    "结构化输出 / JSON schema 约束",
+    "函数 / 工具调用",
+    "召回与重排（rerank）",
+    "文档切分（chunking）",
+    "向量化与 embedding 选型",
+    "数据质量与去重",
+    "文本清洗与预处理"
+   ],
+   "深学_护城河": [
+    "离线评估集构建",
+    "质量指标（准确/覆盖/幻觉率）",
+    "Agent 状态与记忆",
+    "在线反馈采集",
+    "A/B 实验"
+   ],
+   "补地基_按需": [
+    "鉴权与安全基线"
+   ]
+  },
+  "rows": [
+   {
+    "skill_id": "data.vector_search",
+    "name": "向量检索（pgvector/HNSW）",
+    "layer": "L2",
+    "target_weight": 0.9,
+    "req_type": "required",
+    "source_prevalence": 0.0119,
+    "classification": "真缺口",
+    "learnability": 0.45,
+    "gap_priority": 0.8786,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "llm.prompt",
+    "name": "Prompt 结构设计",
+    "layer": "L2",
+    "target_weight": 0.9,
+    "req_type": "required",
+    "source_prevalence": 0.0184,
+    "classification": "真缺口",
+    "learnability": 0.7,
+    "gap_priority": 0.8669,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "llm.structured_output",
+    "name": "结构化输出 / JSON schema 约束",
+    "layer": "L2",
+    "target_weight": 0.8,
+    "req_type": "required",
+    "source_prevalence": 0.0066,
+    "classification": "真缺口",
+    "learnability": 0.65,
+    "gap_priority": 0.7894,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "llm.function_calling",
+    "name": "函数 / 工具调用",
+    "layer": "L2",
+    "target_weight": 0.8,
+    "req_type": "required",
+    "source_prevalence": 0.0079,
+    "classification": "真缺口",
+    "learnability": 0.55,
+    "gap_priority": 0.7874,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "data.retrieval_rerank",
+    "name": "召回与重排（rerank）",
+    "layer": "L2",
+    "target_weight": 0.8,
+    "req_type": "required",
+    "source_prevalence": 0.029,
+    "classification": "真缺口",
+    "learnability": 0.4,
+    "gap_priority": 0.7536,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "eval.offline",
+    "name": "离线评估集构建",
+    "layer": "L3",
+    "target_weight": 0.7,
+    "req_type": "required",
+    "source_prevalence": 0.0013,
+    "classification": "真缺口",
+    "learnability": 0.4,
+    "gap_priority": 0.6982,
+    "fulfillment_mode": "深学-护城河"
+   },
+   {
+    "skill_id": "data.chunking",
+    "name": "文档切分（chunking）",
+    "layer": "L2",
+    "target_weight": 0.7,
+    "req_type": "required",
+    "source_prevalence": 0.0026,
+    "classification": "真缺口",
+    "learnability": 0.55,
+    "gap_priority": 0.6964,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "eval.metrics",
+    "name": "质量指标（准确/覆盖/幻觉率）",
+    "layer": "L3",
+    "target_weight": 0.7,
+    "req_type": "required",
+    "source_prevalence": 0.0171,
+    "classification": "真缺口",
+    "learnability": 0.4,
+    "gap_priority": 0.6761,
+    "fulfillment_mode": "深学-护城河"
+   },
+   {
+    "skill_id": "data.embedding",
+    "name": "向量化与 embedding 选型",
+    "layer": "L2",
+    "target_weight": 0.7,
+    "req_type": "required",
+    "source_prevalence": 0.0237,
+    "classification": "真缺口",
+    "learnability": 0.5,
+    "gap_priority": 0.6668,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "llm.tool_use",
+    "name": "多工具编排",
+    "layer": "L3",
+    "target_weight": 0.7,
+    "req_type": "required",
+    "source_prevalence": 0.058,
+    "classification": "部分迁移",
+    "learnability": 0.5,
+    "gap_priority": 0.6188,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "llm.agent_state",
+    "name": "Agent 状态与记忆",
+    "layer": "L3",
+    "target_weight": 0.6,
+    "req_type": "bonus",
+    "source_prevalence": 0.0053,
+    "classification": "真缺口",
+    "learnability": 0.4,
+    "gap_priority": 0.5936,
+    "fulfillment_mode": "深学-护城河"
+   },
+   {
+    "skill_id": "eval.online",
+    "name": "在线反馈采集",
+    "layer": "L3",
+    "target_weight": 0.5,
+    "req_type": "bonus",
+    "source_prevalence": 0.0,
+    "classification": "真缺口",
+    "learnability": 0.45,
+    "gap_priority": 0.5,
+    "fulfillment_mode": "深学-护城河"
+   },
+   {
+    "skill_id": "data.quality",
+    "name": "数据质量与去重",
+    "layer": "L2",
+    "target_weight": 0.5,
+    "req_type": "bonus",
+    "source_prevalence": 0.0066,
+    "classification": "真缺口",
+    "learnability": 0.5,
+    "gap_priority": 0.4934,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "data.text_processing",
+    "name": "文本清洗与预处理",
+    "layer": "L2",
+    "target_weight": 0.5,
+    "req_type": "required",
+    "source_prevalence": 0.0092,
+    "classification": "真缺口",
+    "learnability": 0.5,
+    "gap_priority": 0.4908,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "llm.streaming",
+    "name": "流式输出与前端集成",
+    "layer": "L1",
+    "target_weight": 0.5,
+    "req_type": "bonus",
+    "source_prevalence": 0.0382,
+    "classification": "部分迁移",
+    "learnability": 0.9,
+    "gap_priority": 0.4618,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "eng.observability",
+    "name": "可观测性（日志/指标/trace）",
+    "layer": "L1",
+    "target_weight": 0.5,
+    "req_type": "bonus",
+    "source_prevalence": 0.054,
+    "classification": "部分迁移",
+    "learnability": 0.5,
+    "gap_priority": 0.446,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "eng.deploy",
+    "name": "部署与 CI/CD",
+    "layer": "L1",
+    "target_weight": 0.6,
+    "req_type": "required",
+    "source_prevalence": 0.137,
+    "classification": "部分迁移",
+    "learnability": 0.6,
+    "gap_priority": 0.4356,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "eng.error_handling",
+    "name": "错误处理与重试",
+    "layer": "L1",
+    "target_weight": 0.5,
+    "req_type": "required",
+    "source_prevalence": 0.0711,
+    "classification": "部分迁移",
+    "learnability": 0.75,
+    "gap_priority": 0.4289,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "eval.ab",
+    "name": "A/B 实验",
+    "layer": "L3",
+    "target_weight": 0.4,
+    "req_type": "bonus",
+    "source_prevalence": 0.004,
+    "classification": "真缺口",
+    "learnability": 0.45,
+    "gap_priority": 0.3968,
+    "fulfillment_mode": "深学-护城河"
+   },
+   {
+    "skill_id": "eng.auth",
+    "name": "鉴权与安全基线",
+    "layer": "L1",
+    "target_weight": 0.4,
+    "req_type": "bonus",
+    "source_prevalence": 0.0119,
+    "classification": "真缺口",
+    "learnability": 0.6,
+    "gap_priority": 0.3905,
+    "fulfillment_mode": "补地基"
+   },
+   {
+    "skill_id": "llm.cost_latency",
+    "name": "成本与延迟优化",
+    "layer": "L2",
+    "target_weight": 0.6,
+    "req_type": "required",
+    "source_prevalence": 0.1871,
+    "classification": "快速迁移",
+    "learnability": 0.5,
+    "gap_priority": 0.3755,
+    "fulfillment_mode": "已覆盖-剔除"
+   },
+   {
+    "skill_id": "eng.api_design",
+    "name": "API 设计与契约",
+    "layer": "L1",
+    "target_weight": 0.8,
+    "req_type": "required",
+    "source_prevalence": 0.4295,
+    "classification": "快速迁移",
+    "learnability": 0.8,
+    "gap_priority": 0.1128,
+    "fulfillment_mode": "已覆盖-剔除"
+   },
+   {
+    "skill_id": "eng.typescript",
+    "name": "TypeScript 工程化",
+    "layer": "L0",
+    "target_weight": 0.5,
+    "req_type": "required",
+    "source_prevalence": 0.6061,
+    "classification": "已具备",
+    "learnability": 0.95,
+    "gap_priority": 0.0,
+    "fulfillment_mode": "已覆盖-剔除"
+   }
+  ]
+ },
+ "backend": {
+  "n_source_jds": 595,
+  "summary": {
+   "真缺口": 12,
+   "部分迁移": 7,
+   "快速迁移": 4
+  },
+  "transfer_coverage_surface": 0.17,
+  "transfer_coverage_effective": 0.74,
+  "leverage_path": {
+   "已具备_剔除": [
+    "错误处理与重试",
+    "部署与 CI/CD",
+    "TypeScript 工程化",
+    "API 设计与契约"
+   ],
+   "AI杠杆_现有项目加特性": [
+    "向量检索（pgvector/HNSW）",
+    "结构化输出 / JSON schema 约束",
+    "函数 / 工具调用",
+    "文档切分（chunking）",
+    "文本清洗与预处理",
+    "数据质量与去重"
+   ],
+   "深学_护城河": [
+    "离线评估集构建",
+    "质量指标（准确/覆盖/幻觉率）",
+    "Agent 状态与记忆",
+    "在线反馈采集",
+    "A/B 实验"
+   ],
+   "补地基_按需": [
+    "流式输出与前端集成"
+   ]
+  },
+  "rows": [
+   {
+    "skill_id": "data.vector_search",
+    "name": "向量检索（pgvector/HNSW）",
+    "layer": "L2",
+    "target_weight": 0.9,
+    "req_type": "required",
+    "source_prevalence": 0.0218,
+    "classification": "真缺口",
+    "learnability": 0.45,
+    "gap_priority": 0.8608,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "llm.prompt",
+    "name": "Prompt 结构设计",
+    "layer": "L2",
+    "target_weight": 0.9,
+    "req_type": "required",
+    "source_prevalence": 0.0303,
+    "classification": "部分迁移",
+    "learnability": 0.7,
+    "gap_priority": 0.8455,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "llm.structured_output",
+    "name": "结构化输出 / JSON schema 约束",
+    "layer": "L2",
+    "target_weight": 0.8,
+    "req_type": "required",
+    "source_prevalence": 0.0034,
+    "classification": "真缺口",
+    "learnability": 0.65,
+    "gap_priority": 0.7946,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "llm.function_calling",
+    "name": "函数 / 工具调用",
+    "layer": "L2",
+    "target_weight": 0.8,
+    "req_type": "required",
+    "source_prevalence": 0.0235,
+    "classification": "真缺口",
+    "learnability": 0.55,
+    "gap_priority": 0.7624,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "data.retrieval_rerank",
+    "name": "召回与重排（rerank）",
+    "layer": "L2",
+    "target_weight": 0.8,
+    "req_type": "required",
+    "source_prevalence": 0.0471,
+    "classification": "部分迁移",
+    "learnability": 0.4,
+    "gap_priority": 0.7246,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "eval.offline",
+    "name": "离线评估集构建",
+    "layer": "L3",
+    "target_weight": 0.7,
+    "req_type": "required",
+    "source_prevalence": 0.0,
+    "classification": "真缺口",
+    "learnability": 0.4,
+    "gap_priority": 0.7,
+    "fulfillment_mode": "深学-护城河"
+   },
+   {
+    "skill_id": "data.chunking",
+    "name": "文档切分（chunking）",
+    "layer": "L2",
+    "target_weight": 0.7,
+    "req_type": "required",
+    "source_prevalence": 0.005,
+    "classification": "真缺口",
+    "learnability": 0.55,
+    "gap_priority": 0.693,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "eval.metrics",
+    "name": "质量指标（准确/覆盖/幻觉率）",
+    "layer": "L3",
+    "target_weight": 0.7,
+    "req_type": "required",
+    "source_prevalence": 0.0185,
+    "classification": "真缺口",
+    "learnability": 0.4,
+    "gap_priority": 0.6741,
+    "fulfillment_mode": "深学-护城河"
+   },
+   {
+    "skill_id": "data.embedding",
+    "name": "向量化与 embedding 选型",
+    "layer": "L2",
+    "target_weight": 0.7,
+    "req_type": "required",
+    "source_prevalence": 0.0403,
+    "classification": "部分迁移",
+    "learnability": 0.5,
+    "gap_priority": 0.6436,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "llm.agent_state",
+    "name": "Agent 状态与记忆",
+    "layer": "L3",
+    "target_weight": 0.6,
+    "req_type": "bonus",
+    "source_prevalence": 0.0118,
+    "classification": "真缺口",
+    "learnability": 0.4,
+    "gap_priority": 0.5858,
+    "fulfillment_mode": "深学-护城河"
+   },
+   {
+    "skill_id": "llm.tool_use",
+    "name": "多工具编排",
+    "layer": "L3",
+    "target_weight": 0.7,
+    "req_type": "required",
+    "source_prevalence": 0.0941,
+    "classification": "部分迁移",
+    "learnability": 0.5,
+    "gap_priority": 0.5683,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "eval.online",
+    "name": "在线反馈采集",
+    "layer": "L3",
+    "target_weight": 0.5,
+    "req_type": "bonus",
+    "source_prevalence": 0.0,
+    "classification": "真缺口",
+    "learnability": 0.45,
+    "gap_priority": 0.5,
+    "fulfillment_mode": "深学-护城河"
+   },
+   {
+    "skill_id": "data.text_processing",
+    "name": "文本清洗与预处理",
+    "layer": "L2",
+    "target_weight": 0.5,
+    "req_type": "required",
+    "source_prevalence": 0.0101,
+    "classification": "真缺口",
+    "learnability": 0.5,
+    "gap_priority": 0.4899,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "data.quality",
+    "name": "数据质量与去重",
+    "layer": "L2",
+    "target_weight": 0.5,
+    "req_type": "bonus",
+    "source_prevalence": 0.0118,
+    "classification": "真缺口",
+    "learnability": 0.5,
+    "gap_priority": 0.4882,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "llm.streaming",
+    "name": "流式输出与前端集成",
+    "layer": "L1",
+    "target_weight": 0.5,
+    "req_type": "bonus",
+    "source_prevalence": 0.0151,
+    "classification": "真缺口",
+    "learnability": 0.9,
+    "gap_priority": 0.4849,
+    "fulfillment_mode": "补地基"
+   },
+   {
+    "skill_id": "llm.cost_latency",
+    "name": "成本与延迟优化",
+    "layer": "L2",
+    "target_weight": 0.6,
+    "req_type": "required",
+    "source_prevalence": 0.1445,
+    "classification": "部分迁移",
+    "learnability": 0.5,
+    "gap_priority": 0.4266,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "eval.ab",
+    "name": "A/B 实验",
+    "layer": "L3",
+    "target_weight": 0.4,
+    "req_type": "bonus",
+    "source_prevalence": 0.0017,
+    "classification": "真缺口",
+    "learnability": 0.45,
+    "gap_priority": 0.3986,
+    "fulfillment_mode": "深学-护城河"
+   },
+   {
+    "skill_id": "eng.observability",
+    "name": "可观测性（日志/指标/trace）",
+    "layer": "L1",
+    "target_weight": 0.5,
+    "req_type": "bonus",
+    "source_prevalence": 0.121,
+    "classification": "部分迁移",
+    "learnability": 0.5,
+    "gap_priority": 0.379,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "eng.auth",
+    "name": "鉴权与安全基线",
+    "layer": "L1",
+    "target_weight": 0.4,
+    "req_type": "bonus",
+    "source_prevalence": 0.0303,
+    "classification": "部分迁移",
+    "learnability": 0.6,
+    "gap_priority": 0.3758,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "eng.error_handling",
+    "name": "错误处理与重试",
+    "layer": "L1",
+    "target_weight": 0.5,
+    "req_type": "required",
+    "source_prevalence": 0.1748,
+    "classification": "快速迁移",
+    "learnability": 0.75,
+    "gap_priority": 0.3252,
+    "fulfillment_mode": "已覆盖-剔除"
+   },
+   {
+    "skill_id": "eng.deploy",
+    "name": "部署与 CI/CD",
+    "layer": "L1",
+    "target_weight": 0.6,
+    "req_type": "required",
+    "source_prevalence": 0.2958,
+    "classification": "快速迁移",
+    "learnability": 0.6,
+    "gap_priority": 0.245,
+    "fulfillment_mode": "已覆盖-剔除"
+   },
+   {
+    "skill_id": "eng.typescript",
+    "name": "TypeScript 工程化",
+    "layer": "L0",
+    "target_weight": 0.5,
+    "req_type": "required",
+    "source_prevalence": 0.2975,
+    "classification": "快速迁移",
+    "learnability": 0.95,
+    "gap_priority": 0.2025,
+    "fulfillment_mode": "已覆盖-剔除"
+   },
+   {
+    "skill_id": "eng.api_design",
+    "name": "API 设计与契约",
+    "layer": "L1",
+    "target_weight": 0.8,
+    "req_type": "required",
+    "source_prevalence": 0.479,
+    "classification": "快速迁移",
+    "learnability": 0.8,
+    "gap_priority": 0.0336,
+    "fulfillment_mode": "已覆盖-剔除"
+   }
+  ]
+ },
+ "fullstack": {
+  "n_source_jds": 403,
+  "summary": {
+   "部分迁移": 9,
+   "真缺口": 8,
+   "快速迁移": 4,
+   "已具备": 2
+  },
+  "transfer_coverage_surface": 0.26,
+  "transfer_coverage_effective": 0.83,
+  "leverage_path": {
+   "已具备_剔除": [
+    "多工具编排",
+    "成本与延迟优化",
+    "错误处理与重试",
+    "部署与 CI/CD",
+    "API 设计与契约",
+    "TypeScript 工程化"
+   ],
+   "AI杠杆_现有项目加特性": [
+    "结构化输出 / JSON schema 约束",
+    "文档切分（chunking）",
+    "数据质量与去重",
+    "文本清洗与预处理"
+   ],
+   "深学_护城河": [
+    "离线评估集构建",
+    "在线反馈采集",
+    "A/B 实验"
+   ],
+   "补地基_按需": [
+    "流式输出与前端集成"
+   ]
+  },
+  "rows": [
+   {
+    "skill_id": "data.vector_search",
+    "name": "向量检索（pgvector/HNSW）",
+    "layer": "L2",
+    "target_weight": 0.9,
+    "req_type": "required",
+    "source_prevalence": 0.0447,
+    "classification": "部分迁移",
+    "learnability": 0.45,
+    "gap_priority": 0.8195,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "llm.structured_output",
+    "name": "结构化输出 / JSON schema 约束",
+    "layer": "L2",
+    "target_weight": 0.8,
+    "req_type": "required",
+    "source_prevalence": 0.0174,
+    "classification": "真缺口",
+    "learnability": 0.65,
+    "gap_priority": 0.7722,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "llm.function_calling",
+    "name": "函数 / 工具调用",
+    "layer": "L2",
+    "target_weight": 0.8,
+    "req_type": "required",
+    "source_prevalence": 0.0372,
+    "classification": "部分迁移",
+    "learnability": 0.55,
+    "gap_priority": 0.7405,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "llm.prompt",
+    "name": "Prompt 结构设计",
+    "layer": "L2",
+    "target_weight": 0.9,
+    "req_type": "required",
+    "source_prevalence": 0.0993,
+    "classification": "部分迁移",
+    "learnability": 0.7,
+    "gap_priority": 0.7213,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "data.chunking",
+    "name": "文档切分（chunking）",
+    "layer": "L2",
+    "target_weight": 0.7,
+    "req_type": "required",
+    "source_prevalence": 0.0025,
+    "classification": "真缺口",
+    "learnability": 0.55,
+    "gap_priority": 0.6965,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "eval.offline",
+    "name": "离线评估集构建",
+    "layer": "L3",
+    "target_weight": 0.7,
+    "req_type": "required",
+    "source_prevalence": 0.005,
+    "classification": "真缺口",
+    "learnability": 0.4,
+    "gap_priority": 0.693,
+    "fulfillment_mode": "深学-护城河"
+   },
+   {
+    "skill_id": "eval.metrics",
+    "name": "质量指标（准确/覆盖/幻觉率）",
+    "layer": "L3",
+    "target_weight": 0.7,
+    "req_type": "required",
+    "source_prevalence": 0.0397,
+    "classification": "部分迁移",
+    "learnability": 0.4,
+    "gap_priority": 0.6444,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "data.retrieval_rerank",
+    "name": "召回与重排（rerank）",
+    "layer": "L2",
+    "target_weight": 0.8,
+    "req_type": "required",
+    "source_prevalence": 0.1117,
+    "classification": "部分迁移",
+    "learnability": 0.4,
+    "gap_priority": 0.6213,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "data.embedding",
+    "name": "向量化与 embedding 选型",
+    "layer": "L2",
+    "target_weight": 0.7,
+    "req_type": "required",
+    "source_prevalence": 0.1017,
+    "classification": "部分迁移",
+    "learnability": 0.5,
+    "gap_priority": 0.5576,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "llm.agent_state",
+    "name": "Agent 状态与记忆",
+    "layer": "L3",
+    "target_weight": 0.6,
+    "req_type": "bonus",
+    "source_prevalence": 0.0397,
+    "classification": "部分迁移",
+    "learnability": 0.4,
+    "gap_priority": 0.5524,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "eval.online",
+    "name": "在线反馈采集",
+    "layer": "L3",
+    "target_weight": 0.5,
+    "req_type": "bonus",
+    "source_prevalence": 0.0,
+    "classification": "真缺口",
+    "learnability": 0.45,
+    "gap_priority": 0.5,
+    "fulfillment_mode": "深学-护城河"
+   },
+   {
+    "skill_id": "data.quality",
+    "name": "数据质量与去重",
+    "layer": "L2",
+    "target_weight": 0.5,
+    "req_type": "bonus",
+    "source_prevalence": 0.0124,
+    "classification": "真缺口",
+    "learnability": 0.5,
+    "gap_priority": 0.4876,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "llm.streaming",
+    "name": "流式输出与前端集成",
+    "layer": "L1",
+    "target_weight": 0.5,
+    "req_type": "bonus",
+    "source_prevalence": 0.0223,
+    "classification": "真缺口",
+    "learnability": 0.9,
+    "gap_priority": 0.4777,
+    "fulfillment_mode": "补地基"
+   },
+   {
+    "skill_id": "data.text_processing",
+    "name": "文本清洗与预处理",
+    "layer": "L2",
+    "target_weight": 0.5,
+    "req_type": "required",
+    "source_prevalence": 0.0273,
+    "classification": "真缺口",
+    "learnability": 0.5,
+    "gap_priority": 0.4727,
+    "fulfillment_mode": "AI杠杆-现有项目加特性"
+   },
+   {
+    "skill_id": "llm.tool_use",
+    "name": "多工具编排",
+    "layer": "L3",
+    "target_weight": 0.7,
+    "req_type": "required",
+    "source_prevalence": 0.1886,
+    "classification": "快速迁移",
+    "learnability": 0.5,
+    "gap_priority": 0.436,
+    "fulfillment_mode": "已覆盖-剔除"
+   },
+   {
+    "skill_id": "eval.ab",
+    "name": "A/B 实验",
+    "layer": "L3",
+    "target_weight": 0.4,
+    "req_type": "bonus",
+    "source_prevalence": 0.005,
+    "classification": "真缺口",
+    "learnability": 0.45,
+    "gap_priority": 0.396,
+    "fulfillment_mode": "深学-护城河"
+   },
+   {
+    "skill_id": "llm.cost_latency",
+    "name": "成本与延迟优化",
+    "layer": "L2",
+    "target_weight": 0.6,
+    "req_type": "required",
+    "source_prevalence": 0.1787,
+    "classification": "快速迁移",
+    "learnability": 0.5,
+    "gap_priority": 0.3856,
+    "fulfillment_mode": "已覆盖-剔除"
+   },
+   {
+    "skill_id": "eng.observability",
+    "name": "可观测性（日志/指标/trace）",
+    "layer": "L1",
+    "target_weight": 0.5,
+    "req_type": "bonus",
+    "source_prevalence": 0.1191,
+    "classification": "部分迁移",
+    "learnability": 0.5,
+    "gap_priority": 0.3809,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "eng.auth",
+    "name": "鉴权与安全基线",
+    "layer": "L1",
+    "target_weight": 0.4,
+    "req_type": "bonus",
+    "source_prevalence": 0.0596,
+    "classification": "部分迁移",
+    "learnability": 0.6,
+    "gap_priority": 0.3523,
+    "fulfillment_mode": "轻量补全"
+   },
+   {
+    "skill_id": "eng.error_handling",
+    "name": "错误处理与重试",
+    "layer": "L1",
+    "target_weight": 0.5,
+    "req_type": "required",
+    "source_prevalence": 0.1911,
+    "classification": "快速迁移",
+    "learnability": 0.75,
+    "gap_priority": 0.3089,
+    "fulfillment_mode": "已覆盖-剔除"
+   },
+   {
+    "skill_id": "eng.deploy",
+    "name": "部署与 CI/CD",
+    "layer": "L1",
+    "target_weight": 0.6,
+    "req_type": "required",
+    "source_prevalence": 0.4541,
+    "classification": "快速迁移",
+    "learnability": 0.6,
+    "gap_priority": 0.0551,
+    "fulfillment_mode": "已覆盖-剔除"
+   },
+   {
+    "skill_id": "eng.api_design",
+    "name": "API 设计与契约",
+    "layer": "L1",
+    "target_weight": 0.8,
+    "req_type": "required",
+    "source_prevalence": 0.6973,
+    "classification": "已具备",
+    "learnability": 0.8,
+    "gap_priority": 0.0,
+    "fulfillment_mode": "已覆盖-剔除"
+   },
+   {
+    "skill_id": "eng.typescript",
+    "name": "TypeScript 工程化",
+    "layer": "L0",
+    "target_weight": 0.5,
+    "req_type": "required",
+    "source_prevalence": 0.7643,
+    "classification": "已具备",
+    "learnability": 0.95,
+    "gap_priority": 0.0,
+    "fulfillment_mode": "已覆盖-剔除"
+   }
+  ]
+ }
+}
