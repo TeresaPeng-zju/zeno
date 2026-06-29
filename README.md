@@ -2,9 +2,9 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-> AI-powered career navigation for developers and product builders.
+> AI career navigator for developers & PMs — analyze skills, discover paths, and build personalized growth roadmaps.
 
-**Understand your skills. Discover your gaps. Build what's next.**
+**You're not starting from zero. Your engineering skills already transfer to AI.**
 
 ---
 
@@ -14,40 +14,45 @@ Named after **Zeno of Citium**, founder of Stoicism.
 
 Stoicism teaches that while we cannot control everything around us, we can understand ourselves and choose how we grow.
 
-In an era shaped by AI and constant change, Zeno helps builders make deliberate decisions about what to learn next.
+In an era reshaped by AI, Zeno helps builders make deliberate decisions about what to learn next — grounded in what real hiring actually asks for.
 
 ---
 
 ## The Problem
 
-Career transitions are rarely blocked by lack of resources. The real challenge is knowing:
+Career transitions are rarely blocked by a lack of resources. The real challenge is knowing:
 
-- What skills do I already have that transfer?
+- What skills do I already have that **transfer**?
 - What am I actually missing for my target role?
 - Of everything I could learn, **what should I learn first**?
 
-Zeno turns these questions into an actionable report: **Strengths → Gaps → Next Steps**, with curated learning resources.
+Most tools either flatter you or overwhelm you. Zeno does one thing honestly: it uses real hiring data to show you where you stand, what carries over, and the most effective next step.
+
+> **Zeno diagnoses — it doesn't promise.** It won't tell you you'll land the job. It tells you, from real job-posting data, where the gaps are and which ones are real.
 
 ---
 
 ## How It Works
 
-1. **Choose your path** — select your current role and target role
-2. **Confirm your skills** — answer a path-tailored capability check
-3. **See your constellation** — a skill graph showing strengths, gaps, and dependencies
-4. **Get your roadmap** — prioritized next steps with learning resources
+1. **Pick your direction** — choose your current role (frontend, backend, full-stack, student) and your AI target.
+2. **Discover what transfers** — an interactive star-map surfaces the engineering foundations that already carry over to AI work. Confirm them, and watch your map grow from `TypeScript → API → Streaming → Prompt → Tool Use → Agent`. Edges mean *capability transfer* ("you have this, so you're close to that") — not course prerequisites.
+3. **Get your migration map** — a scroll-driven narrative from *"where you are"* to *"your first step"*, plus your transferable strengths, the real gaps (core vs. bonus), and a prioritized roadmap with curated learning resources.
+4. **Tailor it to a real job** — paste a job description and Zeno detects which specialization it emphasizes (RAG / Agents / Evaluation) and re-scores your gaps and roadmap accordingly.
+
+Available in **English, 简体中文, and 繁體中文**.
 
 ---
 
 ## How Zeno Thinks
 
-Zeno models career growth as a **skill graph**:
+Zeno splits **decision** from **expression**:
 
-```
-Current Skills → Missing Capabilities → Learning Path
-```
+- A **deterministic engine** computes your strengths, gaps, skill dependencies and ranking. It runs on a skill graph calibrated against real job postings, so results are reproducible and grounded — not vibes.
+- An **LLM** (DeepSeek, or any OpenAI-compatible provider) *only* rephrases the diagnosis into natural, human language. It never decides your gaps.
 
-Each skill is connected through prerequisite relationships, helping identify what to learn first — not just what to learn.
+This is why Zeno can be both warm and honest: the numbers come from data and code; the LLM just helps them speak.
+
+Zeno models growth as a **skill graph** — `Current Skills → Missing Capabilities → Learning Path` — where each skill connects through prerequisite relationships, so Zeno can tell you what to learn *first*, not just what to learn.
 
 ```
 Engineering Foundation          Data & Retrieval          LLM Applications
@@ -61,7 +66,7 @@ Evaluation
  └── Quality Metrics
 ```
 
-The full graph (23 skills, 4 dimensions, skill dependencies) is defined in [`apps/api/app/data/skill_graph.json`](apps/api/app/data/skill_graph.json).
+The full graph (23 skills, 4 dimensions, dependencies, and target-role orientations) lives in [`apps/api/app/data/skill_graph.json`](apps/api/app/data/skill_graph.json). Learning resources are recommended by a small **RAG engine**: embedding retrieval over pgvector + multi-signal rerank (relevance, freshness, level-fit), with an optional LLM curation agent.
 
 ---
 
@@ -69,17 +74,19 @@ The full graph (23 skills, 4 dimensions, skill dependencies) is defined in [`app
 
 | Layer | Choice |
 | --- | --- |
-| Frontend | Next.js 15, React Flow, Framer Motion |
-| Backend | FastAPI (Python) |
+| Frontend | Next.js 15 (App Router), React Flow, Framer Motion, next-intl (en / zh / zh-TW) |
+| Backend | FastAPI (Python), SQLAlchemy, Alembic |
 | Database | Postgres 16 + pgvector |
-| LLM | OpenAI-compatible providers |
+| LLM | DeepSeek / any OpenAI-compatible provider — *expression only* |
+| Engine | Deterministic decision engine + RAG resource retrieval |
 
 ```
 zeno/
 ├── docker-compose.yml
+├── scripts/            # one-command setup & dev
 └── apps/
-    ├── api/                # Backend API
-    └── web/                # Frontend Web
+    ├── api/            # FastAPI backend (engine, RAG, JD matching)
+    └── web/            # Next.js frontend (star-map, migration map)
 ```
 
 ---
@@ -91,7 +98,7 @@ zeno/
 - Node.js 20+
 - Python 3.11+
 - pnpm
-- Docker (for Postgres + pgvector)
+- Postgres 16 + pgvector — via Docker, or a local/Homebrew install
 
 ### Quick start (one command)
 
@@ -99,15 +106,12 @@ zeno/
 npm run dev      # or: bash scripts/dev.sh
 ```
 
-The first run installs everything (backend venv + deps, frontend deps), starts
-Postgres via Docker, runs migrations, seeds the resource library, then launches
-the API on **:8000** and the web app on **:3000**. Press Ctrl-C to stop both.
-No API key needed — the engine runs fully on the deterministic mock providers.
+The first run installs everything (backend venv + deps, frontend deps), starts Postgres (Docker if present, otherwise your local Homebrew install), runs migrations, seeds the resource library, then launches the API on **:8000** and the web app on **:3000**. Press Ctrl-C to stop both. **No API key needed** — the engine runs fully on deterministic providers; add a DeepSeek key only to enable the natural-language voice and live resource curation.
 
-### Manual setup (if you prefer step by step)
+### Manual setup (step by step)
 
 ```bash
-# Database
+# Database (skip if you run Postgres locally)
 docker compose up -d
 
 # Backend
@@ -133,10 +137,10 @@ For advanced setup (native Postgres without Docker, contributor guidelines), see
 ## Roadmap
 
 - [ ] Company-specific JD calibration
-- [ ] More target roles
-- [ ] Career Constellation visualization
-- [ ] Agent-assisted questionnaire optimization
-- [ ] Resource freshness verifier
+- [ ] More current & target roles (incl. PM → AI PM)
+- [ ] Deeper agent-assisted resource curation
+- [ ] Shareable "AI DNA" cards
+- [ ] Richer evaluation/eval specialization paths
 
 ---
 
