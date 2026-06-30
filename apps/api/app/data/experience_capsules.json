@@ -1,0 +1,1000 @@
+{
+  "_comment": "Experience capsules v4.2: UX polish — depth tiers use experience language, capability_zh explains WHY we ask + migration value, some capsule texts lowered in intimidation.",
+  "_version": "4.2",
+  "depth_tiers": [
+    {
+      "id": "none",
+      "label_zh": "没经历过",
+      "label_en": "Haven't done this",
+      "level_offset": -1
+    },
+    {
+      "id": "heard",
+      "label_zh": "了解过",
+      "label_en": "Learned about it",
+      "level_offset": 0
+    },
+    {
+      "id": "touched",
+      "label_zh": "顺手做过",
+      "label_en": "Done it lightly",
+      "level_offset": 1
+    },
+    {
+      "id": "owned",
+      "label_zh": "主要负责过",
+      "label_en": "Owned it",
+      "level_offset": 2
+    },
+    {
+      "id": "led",
+      "label_zh": "带过团队做",
+      "label_en": "Led a team on it",
+      "level_offset": 3
+    }
+  ],
+  "categories": [
+    {
+      "id": "cat.delivery",
+      "label_zh": "我开发和交付过什么",
+      "label_en": "What I've built and shipped",
+      "icon": "🛠️",
+      "hint_zh": "影响：你能否把 AI 功能上线并稳定运行",
+      "hint_en": "Impacts: whether you can ship AI features and keep them running"
+    },
+    {
+      "id": "cat.data_interaction",
+      "label_zh": "我处理过哪些数据和交互",
+      "label_en": "What data and interactions I've handled",
+      "icon": "🔄",
+      "hint_zh": "影响：你适合做 RAG 还是 Agent / 工具集成",
+      "hint_en": "Impacts: whether you'd lean toward RAG or Agent / tool integration"
+    },
+    {
+      "id": "cat.quality",
+      "label_zh": "我怎么保证质量的",
+      "label_en": "How I ensured quality",
+      "icon": "✅",
+      "hint_zh": "影响：你是否能做评估和回归，避免上线翻车",
+      "hint_en": "Impacts: whether you can evaluate and prevent quality regressions"
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "cap.feature_ownership",
+      "capability_zh": "AI 应用也需要从零做到上线。你的交付经验可以直接复用。",
+      "capability_en": "AI apps also need to go from zero to production. Your shipping experience transfers directly.",
+      "category": "cat.delivery",
+      "migration_value": 0.8,
+      "maps_to": [
+        {
+          "skill_id": "eng.api_design",
+          "base_level": 1,
+          "confidence": 0.7
+        },
+        {
+          "skill_id": "eng.deploy",
+          "base_level": 0,
+          "confidence": 0.5
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "独立负责过一个用户可见功能，从开发到上线",
+          "text_en": "Owned a user-facing feature from development to launch",
+          "prior": 0.9
+        },
+        "backend_engineer": {
+          "text_zh": "独立负责过一个服务或接口，从设计到上线",
+          "text_en": "Owned a service or API from design to launch",
+          "prior": 0.9
+        },
+        "fullstack_engineer": {
+          "text_zh": "独立负责过一个端到端功能，从前端到后端到上线",
+          "text_en": "Owned an end-to-end feature from frontend through backend to launch",
+          "prior": 0.95
+        },
+        "student": {
+          "text_zh": "完整做过一个课程项目或个人项目，从零到能运行",
+          "text_en": "Built a complete course or personal project from scratch to working state",
+          "prior": 0.7
+        }
+      }
+    },
+    {
+      "id": "cap.reusable_abstraction",
+      "capability_zh": "AI 工程大量复用模块（prompt 模板、工具链）。你封装复用的习惯可以迁移。",
+      "capability_en": "AI engineering heavily reuses modules (prompt templates, tool chains). Your abstraction habit transfers.",
+      "category": "cat.delivery",
+      "migration_value": 0.7,
+      "maps_to": [
+        {
+          "skill_id": "llm.structured_output",
+          "base_level": 1,
+          "confidence": 0.4
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "封装过可复用的逻辑（如请求封装、Hook、工具函数）",
+          "text_en": "Built reusable logic (request wrappers, hooks, utility functions)",
+          "prior": 0.85
+        },
+        "backend_engineer": {
+          "text_zh": "封装过可复用的服务模块或中间件",
+          "text_en": "Built reusable service modules or middleware",
+          "prior": 0.85
+        },
+        "fullstack_engineer": {
+          "text_zh": "封装过跨层复用的通用逻辑（如鉴权、数据校验）",
+          "text_en": "Built cross-layer reusable logic (e.g. auth, data validation)",
+          "prior": 0.85
+        },
+        "student": {
+          "text_zh": "写过可以被别的地方直接调用的工具函数或模块",
+          "text_en": "Written utility functions or modules reusable in other parts of the project",
+          "prior": 0.5
+        }
+      }
+    },
+    {
+      "id": "cap.fault_tolerance",
+      "capability_zh": "AI 服务经常超时、返回异常格式。你处理过异常，就能更快应对。",
+      "capability_en": "AI services often time out or return unexpected formats. Your error-handling experience helps you adapt faster.",
+      "category": "cat.delivery",
+      "migration_value": 0.85,
+      "maps_to": [
+        {
+          "skill_id": "eng.error_handling",
+          "base_level": 1,
+          "confidence": 0.7
+        },
+        {
+          "skill_id": "llm.cost_latency",
+          "base_level": 0,
+          "confidence": 0.3
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "处理过接口异常、加载失败或数据格式不对的情况",
+          "text_en": "Handled API errors, loading failures, or unexpected data formats",
+          "prior": 0.8
+        },
+        "backend_engineer": {
+          "text_zh": "设计过重试、降级或熔断策略，并在线上跑过",
+          "text_en": "Designed retry, fallback, or circuit-breaker strategies that ran in production",
+          "prior": 0.85
+        },
+        "fullstack_engineer": {
+          "text_zh": "处理过前后端各自的异常情况，并落地过方案",
+          "text_en": "Handled error scenarios on both frontend and backend, and shipped solutions",
+          "prior": 0.85
+        },
+        "student": {
+          "text_zh": "在项目里处理过报错或异常情况，而不是直接崩掉",
+          "text_en": "Handled errors or edge cases in a project instead of letting it crash",
+          "prior": 0.5
+        }
+      }
+    },
+    {
+      "id": "cap.debugging",
+      "capability_zh": "AI 系统的 bug 更隐蔽（幻觉、漂移）。你的排障直觉是核心迁移优势。",
+      "capability_en": "AI system bugs are subtler (hallucinations, drift). Your debugging instinct is a core transferable advantage.",
+      "category": "cat.delivery",
+      "migration_value": 0.9,
+      "maps_to": [
+        {
+          "skill_id": "eng.observability",
+          "base_level": 1,
+          "confidence": 0.7
+        },
+        {
+          "skill_id": "eval.metrics",
+          "base_level": 0,
+          "confidence": 0.2
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "排查过线上问题并定位到根因（如白屏、接口超时、渲染异常）",
+          "text_en": "Investigated production issues and found root causes (blank screens, API timeouts, render bugs)",
+          "prior": 0.85
+        },
+        "backend_engineer": {
+          "text_zh": "排查过线上故障并通过日志或监控定位到根因",
+          "text_en": "Investigated production incidents and traced root causes via logs or monitoring",
+          "prior": 0.9
+        },
+        "fullstack_engineer": {
+          "text_zh": "排查过跨前后端的线上问题，定位过是前端还是后端的锅",
+          "text_en": "Debugged cross-layer production issues, pinpointing frontend vs. backend root causes",
+          "prior": 0.9
+        },
+        "student": {
+          "text_zh": "debug 过比较棘手的问题，不是靠猜而是靠系统排查",
+          "text_en": "Debugged tricky issues systematically rather than guessing",
+          "prior": 0.6
+        }
+      },
+      "blocked_skills": [
+        {
+          "skill_id": "eval.metrics",
+          "reason": "传统排障工具链（DevTools/日志/堆栈）对AI幻觉几乎全部失效——幻觉是正确格式的错误答案，没有报错，不能用排障直觉直接推断质量指标能力"
+        }
+      ]
+    },
+    {
+      "id": "cap.cicd",
+      "capability_zh": "AI 模型需要持续部署和回滚。你的自动化发布经验可以复用。",
+      "capability_en": "AI models need continuous deployment and rollback. Your automated release experience is reusable.",
+      "category": "cat.delivery",
+      "migration_value": 0.6,
+      "maps_to": [
+        {
+          "skill_id": "eng.deploy",
+          "base_level": 1,
+          "confidence": 0.7
+        },
+        {
+          "skill_id": "eng.auth",
+          "base_level": 0,
+          "confidence": 0.3
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "配置过项目的自动构建或发布（如 GitHub Actions、Vercel）",
+          "text_en": "Set up automated builds or deployments (e.g. GitHub Actions, Vercel)",
+          "prior": 0.7
+        },
+        "backend_engineer": {
+          "text_zh": "配置过服务的自动化构建、部署或容器化流程",
+          "text_en": "Set up automated build, deployment, or containerization for services",
+          "prior": 0.85
+        },
+        "fullstack_engineer": {
+          "text_zh": "搭建过从代码到上线的完整自动化流程",
+          "text_en": "Set up end-to-end automated pipelines from code to production",
+          "prior": 0.85
+        },
+        "student": {
+          "text_zh": "把项目部署到过线上环境（如 Vercel、云服务器）",
+          "text_en": "Deployed a project to a live environment (e.g. Vercel, cloud server)",
+          "prior": 0.45
+        }
+      }
+    },
+    {
+      "id": "cap.concurrency",
+      "capability_zh": "LLM 调用慢且贵，性能优化经验能帮你控制成本和延迟。",
+      "capability_en": "LLM calls are slow and expensive. Performance optimization experience helps you control cost and latency.",
+      "category": "cat.delivery",
+      "migration_value": 0.7,
+      "maps_to": [
+        {
+          "skill_id": "llm.cost_latency",
+          "base_level": 1,
+          "confidence": 0.6
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "做过前端性能优化（首屏加载、渲染性能、资源加载）",
+          "text_en": "Done frontend performance optimization (FCP, rendering, resource loading)",
+          "prior": 0.75
+        },
+        "backend_engineer": {
+          "text_zh": "处理过并发、锁、缓存或高吞吐场景",
+          "text_en": "Handled concurrency, locks, caching, or high-throughput scenarios",
+          "prior": 0.8
+        },
+        "fullstack_engineer": {
+          "text_zh": "做过端到端的性能优化（前端加载 + 后端响应）",
+          "text_en": "Done end-to-end performance optimization (frontend load + backend response)",
+          "prior": 0.8
+        },
+        "student": {
+          "text_zh": "优化过项目的运行速度或加载性能",
+          "text_en": "Optimized a project's runtime speed or loading performance",
+          "prior": 0.3
+        }
+      }
+    },
+    {
+      "id": "cap.learning_velocity",
+      "capability_zh": "AI 技术变化极快。快速学习能力是迁移成功最强的预测指标。",
+      "capability_en": "AI tech changes extremely fast. Learning velocity is the strongest predictor of transition success.",
+      "category": "cat.delivery",
+      "migration_value": 0.95,
+      "maps_to": [
+        {
+          "skill_id": "llm.prompt",
+          "base_level": 0,
+          "confidence": 0.4
+        },
+        {
+          "skill_id": "llm.tool_use",
+          "base_level": 0,
+          "confidence": 0.3
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "为项目主动学习并引入过新的技术方案",
+          "text_en": "Proactively learned and introduced new tech into a project",
+          "prior": 0.75
+        },
+        "backend_engineer": {
+          "text_zh": "调研并落地过新的基础设施或技术方案",
+          "text_en": "Researched and deployed new infrastructure or tech solutions",
+          "prior": 0.75
+        },
+        "fullstack_engineer": {
+          "text_zh": "为项目主动调研并引入过新的技术栈或工具",
+          "text_en": "Proactively researched and adopted new tech stacks or tools for a project",
+          "prior": 0.8
+        },
+        "student": {
+          "text_zh": "自己学过一个新技术并用它做出了可运行的项目",
+          "text_en": "Self-learned a new technology and built a working project with it",
+          "prior": 0.7
+        }
+      }
+    },
+    {
+      "id": "cap.realtime_interaction",
+      "capability_zh": "AI 对话产品大量使用流式输出。你做过实时推送，有感知优势，但 AI 流式还有边渲染边缓冲的额外挑战。",
+      "capability_en": "AI chat products heavily use streaming output. Your real-time push experience gives you a head start, though AI streaming adds rendering and buffering challenges.",
+      "category": "cat.data_interaction",
+      "migration_value": 0.9,
+      "maps_to": [
+        {
+          "skill_id": "llm.streaming",
+          "base_level": 0,
+          "confidence": 0.7
+        },
+        {
+          "skill_id": "eng.api_design",
+          "base_level": 1,
+          "confidence": 0.4
+        },
+        {
+          "skill_id": "eng.typescript",
+          "base_level": 1,
+          "confidence": 0.3
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "做过实时数据展示（聊天、推送、协同编辑等）",
+          "text_en": "Built real-time data display (chat, push notifications, collaborative editing)",
+          "prior": 0.75
+        },
+        "backend_engineer": {
+          "text_zh": "做过实时消息推送或长连接服务（WebSocket、SSE、消息队列）",
+          "text_en": "Built real-time messaging, long-polling, or push services (WebSocket, SSE, MQ)",
+          "prior": 0.7
+        },
+        "fullstack_engineer": {
+          "text_zh": "做过从后端推送到前端展示的实时数据链路",
+          "text_en": "Built end-to-end real-time data pipelines from backend push to frontend display",
+          "prior": 0.8
+        },
+        "student": {
+          "text_zh": "做过聊天、直播或实时更新类的项目功能",
+          "text_en": "Built chat, live-stream, or real-time update features in a project",
+          "prior": 0.35
+        }
+      },
+      "blocked_skills": [
+        {
+          "skill_id": "llm.tool_use",
+          "reason": "实时数据推送（WebSocket/SSE）是单一连接推送，与多工具Agent编排（LLM动态决策调用多个工具、处理并发依赖）完全不同的能力维度"
+        }
+      ]
+    },
+    {
+      "id": "cap.structured_thinking",
+      "capability_zh": "让 AI 按 JSON 格式输出，和你做数据校验的思路相通——都是「定义数据形状」。注意：你过去做的是接收端校验，AI 场景是生成端约束，方向相反但底层逻辑一样。",
+      "capability_en": "Getting AI to output structured JSON uses the same thinking as your data validation work — both are about defining data shape. Note: your experience is on the receiving end (validation), while AI structured output is on the generation end (constraints). Same logic, opposite direction.",
+      "category": "cat.data_interaction",
+      "migration_value": 0.8,
+      "maps_to": [
+        {
+          "skill_id": "llm.structured_output",
+          "base_level": 1,
+          "confidence": 0.6
+        },
+        {
+          "skill_id": "llm.prompt",
+          "base_level": 0,
+          "confidence": 0.4
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "设计过有约束的表单校验或复杂的前端数据规则",
+          "text_en": "Designed constrained form validation or complex frontend data rules",
+          "prior": 0.85
+        },
+        "backend_engineer": {
+          "text_zh": "设计过接口的输入输出校验规则或数据约束",
+          "text_en": "Designed API input/output validation rules or data constraints",
+          "prior": 0.85
+        },
+        "fullstack_engineer": {
+          "text_zh": "设计过前后端一致的数据校验或约束规则",
+          "text_en": "Designed consistent data validation rules across frontend and backend",
+          "prior": 0.85
+        },
+        "student": {
+          "text_zh": "写过对用户输入做检查和限制的逻辑",
+          "text_en": "Written logic to validate and constrain user input",
+          "prior": 0.5
+        }
+      },
+      "blocked_skills": [
+        {
+          "skill_id": "llm.function_calling",
+          "reason": "接收端数据校验（Joi/Zod约束输入）≠Function Calling的工具schema设计（让LLM决定调用哪个工具并生成参数）——方向和控制权完全相反"
+        }
+      ]
+    },
+    {
+      "id": "cap.data_processing",
+      "capability_zh": "RAG 的核心是把文档变成 AI 能理解的格式，本质就是数据清洗和转换。",
+      "capability_en": "The core of RAG is converting documents into AI-readable formats — essentially data cleaning and transformation.",
+      "category": "cat.data_interaction",
+      "migration_value": 0.85,
+      "maps_to": [
+        {
+          "skill_id": "data.text_processing",
+          "base_level": 1,
+          "confidence": 0.7
+        },
+        {
+          "skill_id": "data.chunking",
+          "base_level": 0,
+          "confidence": 0.4
+        },
+        {
+          "skill_id": "data.quality",
+          "base_level": 0,
+          "confidence": 0.3
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "处理过文件解析、数据清洗或格式转换",
+          "text_en": "Done file parsing, data cleaning, or format conversion",
+          "prior": 0.6
+        },
+        "backend_engineer": {
+          "text_zh": "做过批量数据处理、ETL 或数据清洗",
+          "text_en": "Done batch data processing, ETL, or data cleaning",
+          "prior": 0.8
+        },
+        "fullstack_engineer": {
+          "text_zh": "处理过从上传到解析到入库的数据流",
+          "text_en": "Handled data flows from upload to parsing to storage",
+          "prior": 0.75
+        },
+        "student": {
+          "text_zh": "处理过文件读写、数据格式转换或简单数据分析",
+          "text_en": "Done file I/O, format conversion, or simple data analysis",
+          "prior": 0.45
+        }
+      }
+    },
+    {
+      "id": "cap.workflow_orchestration",
+      "capability_zh": "AI Agent 本质是多步骤状态机。你设计过的业务流程就是同一种能力。",
+      "capability_en": "AI Agents are essentially multi-step state machines. The business flows you've designed are the same capability.",
+      "category": "cat.data_interaction",
+      "migration_value": 0.85,
+      "maps_to": [
+        {
+          "skill_id": "llm.tool_use",
+          "base_level": 0,
+          "confidence": 0.5
+        },
+        {
+          "skill_id": "llm.agent_state",
+          "base_level": 0,
+          "confidence": 0.4
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "设计过有多个步骤或状态的页面流程（如多步表单、审批流）",
+          "text_en": "Designed multi-step or multi-state page flows (wizards, approval flows)",
+          "prior": 0.8
+        },
+        "backend_engineer": {
+          "text_zh": "设计过有多个阶段的业务流程或状态机",
+          "text_en": "Designed multi-stage business processes or state machines",
+          "prior": 0.8
+        },
+        "fullstack_engineer": {
+          "text_zh": "设计过跨前后端的多步业务流程",
+          "text_en": "Designed multi-step business flows spanning frontend and backend",
+          "prior": 0.85
+        },
+        "student": {
+          "text_zh": "做过有多个步骤的交互流程（如注册、下单、问卷）",
+          "text_en": "Built multi-step interaction flows (registration, checkout, survey)",
+          "prior": 0.4
+        }
+      }
+    },
+    {
+      "id": "cap.api_integration",
+      "capability_zh": "AI 应用的核心是调用 LLM API 并处理返回。你对接外部 API 的经验直接适用。",
+      "capability_en": "AI apps revolve around calling LLM APIs and handling responses. Your API integration experience applies directly.",
+      "category": "cat.data_interaction",
+      "migration_value": 0.9,
+      "maps_to": [
+        {
+          "skill_id": "eng.api_design",
+          "base_level": 1,
+          "confidence": 0.5
+        },
+        {
+          "skill_id": "eng.auth",
+          "base_level": 0,
+          "confidence": 0.3
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "集成过第三方 API 或 SDK，并处理过数据适配和异常",
+          "text_en": "Integrated third-party APIs or SDKs, handling data adaptation and errors",
+          "prior": 0.8
+        },
+        "backend_engineer": {
+          "text_zh": "对接过外部系统的 API，处理过认证、限流和异常",
+          "text_en": "Integrated external system APIs, handling auth, rate limiting, and errors",
+          "prior": 0.9
+        },
+        "fullstack_engineer": {
+          "text_zh": "集成过外部 API，处理过从请求到展示的完整数据链路",
+          "text_en": "Integrated external APIs, handling the full data chain from request to display",
+          "prior": 0.9
+        },
+        "student": {
+          "text_zh": "调用过第三方 API（如地图、天气、AI 接口）",
+          "text_en": "Called third-party APIs (e.g. maps, weather, AI services)",
+          "prior": 0.5
+        }
+      },
+      "blocked_skills": [
+        {
+          "skill_id": "llm.function_calling",
+          "reason": "调用外部API（你决定何时调用、传什么参数）≠Function Calling（LLM自主决定调用哪个工具、生成参数）——控制权从开发者转移到模型，是根本不同的交互模式"
+        }
+      ]
+    },
+    {
+      "id": "cap.data_modeling",
+      "capability_zh": "AI 需要结构化的知识和数据。你组织数据结构的经验可以迁移到知识库建设。",
+      "capability_en": "AI needs structured knowledge and data. Your data structuring experience transfers to knowledge base construction.",
+      "category": "cat.data_interaction",
+      "migration_value": 0.75,
+      "maps_to": [
+        {
+          "skill_id": "data.embedding",
+          "base_level": 0,
+          "confidence": 0.4
+        },
+        {
+          "skill_id": "data.chunking",
+          "base_level": 0,
+          "confidence": 0.5
+        },
+        {
+          "skill_id": "data.retrieval_rerank",
+          "base_level": 0,
+          "confidence": 0.1
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "设计过复杂的前端数据结构或状态模型（如 store 设计、缓存策略）",
+          "text_en": "Designed complex frontend data structures or state models (store design, caching)",
+          "prior": 0.65
+        },
+        "backend_engineer": {
+          "text_zh": "做过数据库表设计、查询优化或数据模型演进",
+          "text_en": "Done database schema design, query optimization, or data model evolution",
+          "prior": 0.9
+        },
+        "fullstack_engineer": {
+          "text_zh": "设计过接口数据模型或数据库结构",
+          "text_en": "Designed API data models or database schemas",
+          "prior": 0.85
+        },
+        "student": {
+          "text_zh": "处理过课程项目里的数据结构组织或存储方案",
+          "text_en": "Organized data structures or storage approaches in course projects",
+          "prior": 0.4
+        }
+      },
+      "blocked_skills": [
+        {
+          "skill_id": "data.retrieval_rerank",
+          "reason": "关系型数据库查询优化（索引/执行计划）≠向量召回重排（BM25+向量两段式检索、reranker模型打分）——底层机制和工具链完全不同"
+        }
+      ]
+    },
+    {
+      "id": "cap.state_management",
+      "capability_zh": "AI Agent 需要跨轮对话管理状态。你管理复杂状态的经验是直接优势。",
+      "capability_en": "AI Agents need to manage state across conversation turns. Your complex state management experience is a direct advantage.",
+      "category": "cat.data_interaction",
+      "migration_value": 0.8,
+      "maps_to": [
+        {
+          "skill_id": "llm.agent_state",
+          "base_level": 1,
+          "confidence": 0.6
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "管理过复杂的页面状态或跨组件数据同步",
+          "text_en": "Managed complex page state or cross-component data synchronization",
+          "prior": 0.85
+        },
+        "backend_engineer": {
+          "text_zh": "设计过服务之间的数据流转或分布式状态管理",
+          "text_en": "Designed inter-service data flow or distributed state management",
+          "prior": 0.75
+        },
+        "fullstack_engineer": {
+          "text_zh": "设计过前后端之间的数据状态同步方案",
+          "text_en": "Designed data state synchronization between frontend and backend",
+          "prior": 0.8
+        },
+        "student": {
+          "text_zh": "管理过项目里多个页面或模块之间共享的数据",
+          "text_en": "Managed data shared across multiple pages or modules in a project",
+          "prior": 0.35
+        }
+      },
+      "blocked_skills": [
+        {
+          "skill_id": "data.vector_search",
+          "reason": "跨组件状态同步（应用数据的确定性存取）≠向量检索（高维向量的近似最近邻搜索）——两者毫无关系，是历史上损害用户信任度最高的硬凑映射"
+        }
+      ]
+    },
+    {
+      "id": "cap.testing",
+      "capability_zh": "AI 输出不确定，评估比传统测试更重要。你的测试习惯是好的起点。",
+      "capability_en": "AI outputs are non-deterministic, making evaluation even more important than traditional testing. Your testing habit is a strong starting point.",
+      "category": "cat.quality",
+      "migration_value": 0.75,
+      "maps_to": [
+        {
+          "skill_id": "eval.offline",
+          "base_level": 1,
+          "confidence": 0.6
+        },
+        {
+          "skill_id": "eval.online",
+          "base_level": 0,
+          "confidence": 0.3
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "写过测试来验证代码行为（不限形式，手动脚本也算）",
+          "text_en": "Written tests to verify code behavior (any form, even manual scripts)",
+          "prior": 0.65
+        },
+        "backend_engineer": {
+          "text_zh": "写过自动化测试（单测或集成测试）",
+          "text_en": "Written automated tests (unit or integration tests)",
+          "prior": 0.7
+        },
+        "fullstack_engineer": {
+          "text_zh": "写过覆盖前后端的自动化测试",
+          "text_en": "Written automated tests covering both frontend and backend",
+          "prior": 0.65
+        },
+        "student": {
+          "text_zh": "给自己的代码写过测试用例",
+          "text_en": "Written test cases for your own code",
+          "prior": 0.35
+        }
+      }
+    },
+    {
+      "id": "cap.regression",
+      "capability_zh": "AI 模型升级后效果可能变差。你防止回退的经验可以迁移到模型评估。",
+      "capability_en": "AI model upgrades can degrade quality. Your regression prevention experience transfers to model evaluation.",
+      "category": "cat.quality",
+      "migration_value": 0.7,
+      "maps_to": [
+        {
+          "skill_id": "eval.metrics",
+          "base_level": 1,
+          "confidence": 0.6
+        },
+        {
+          "skill_id": "eval.ab",
+          "base_level": 0,
+          "confidence": 0.3
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "做过防止代码改坏已有功能的检查（如 CI、code review）",
+          "text_en": "Done checks to prevent code changes from breaking existing features (CI, code review)",
+          "prior": 0.55
+        },
+        "backend_engineer": {
+          "text_zh": "在 CI 中跑过自动化回归检查或集成验证",
+          "text_en": "Run automated regression checks or integration validation in CI",
+          "prior": 0.65
+        },
+        "fullstack_engineer": {
+          "text_zh": "在 CI 中跑过前后端的自动化回归检查",
+          "text_en": "Run automated regression checks across frontend and backend in CI",
+          "prior": 0.6
+        },
+        "student": {
+          "text_zh": "用过 GitHub Actions 或类似工具自动跑检查",
+          "text_en": "Used GitHub Actions or similar tools to run automated checks",
+          "prior": 0.3
+        }
+      }
+    },
+    {
+      "id": "cap.data_driven",
+      "capability_zh": "AI 产品需要用数据判断效果好不好。你看数据做决策的经验可以复用。",
+      "capability_en": "AI products need data to judge quality. Your data-driven decision-making experience is reusable.",
+      "category": "cat.quality",
+      "migration_value": 0.8,
+      "maps_to": [
+        {
+          "skill_id": "eng.observability",
+          "base_level": 1,
+          "confidence": 0.6
+        },
+        {
+          "skill_id": "eval.online",
+          "base_level": 0,
+          "confidence": 0.4
+        },
+        {
+          "skill_id": "eval.metrics",
+          "base_level": 0,
+          "confidence": 0.3
+        }
+      ],
+      "role_variants": {
+        "frontend_engineer": {
+          "text_zh": "用过埋点或监控数据做过分析决策",
+          "text_en": "Used analytics or monitoring data to inform decisions",
+          "prior": 0.6
+        },
+        "backend_engineer": {
+          "text_zh": "用过监控指标或日志数据做过性能或稳定性决策",
+          "text_en": "Used monitoring metrics or log data for performance or stability decisions",
+          "prior": 0.75
+        },
+        "fullstack_engineer": {
+          "text_zh": "用过监控或埋点数据做过分析决策",
+          "text_en": "Used monitoring or analytics data to inform decisions",
+          "prior": 0.7
+        },
+        "student": {
+          "text_zh": "根据数据或日志分析过项目里的问题",
+          "text_en": "Analyzed issues in a project based on data or logs",
+          "prior": 0.3
+        }
+      }
+    }
+  ],
+  "ai_exploration": {
+    "label_zh": "AI 接触程度",
+    "label_en": "AI exploration",
+    "icon": "🤖",
+    "hint_zh": "如果你已经开始探索 AI，这些帮我们判断得更准",
+    "hint_en": "If you've started exploring AI, these help us calibrate better",
+    "capsules": [
+      {
+        "id": "cap.ai_tools",
+        "capability_zh": "你已经在用 AI 辅助工作，说明你对 AI 的交互模式不陌生。",
+        "capability_en": "You already use AI at work, which means AI interaction patterns aren't new to you.",
+        "migration_value": 0.6,
+        "maps_to": [
+          {
+            "skill_id": "llm.prompt",
+            "base_level": 1,
+            "confidence": 0.6
+          },
+          {
+            "skill_id": "llm.tool_use",
+            "base_level": 0,
+            "confidence": 0.4
+          }
+        ],
+        "role_variants": {
+          "frontend_engineer": {
+            "text_zh": "用 AI 工具完成过实际工作任务（写代码、改文案、生成测试等）",
+            "text_en": "Used AI tools to complete real work tasks (writing code, editing copy, generating tests)",
+            "prior": 0.8
+          },
+          "backend_engineer": {
+            "text_zh": "用 AI 工具完成过实际工作任务（写代码、排查问题、生成配置等）",
+            "text_en": "Used AI tools to complete real work tasks (writing code, debugging, generating configs)",
+            "prior": 0.8
+          },
+          "fullstack_engineer": {
+            "text_zh": "用 AI 工具完成过实际工作任务（写代码、设计方案、生成文档等）",
+            "text_en": "Used AI tools to complete real work tasks (writing code, designing solutions, generating docs)",
+            "prior": 0.8
+          },
+          "student": {
+            "text_zh": "用 AI 工具完成过课程作业或项目任务",
+            "text_en": "Used AI tools to complete coursework or project tasks",
+            "prior": 0.7
+          }
+        }
+      },
+      {
+        "id": "cap.llm_integration",
+        "capability_zh": "你已经在项目中调用过 AI 能力，这是最直接的迁移信号。",
+        "capability_en": "You've already called AI capabilities in a project — this is the most direct transition signal.",
+        "migration_value": 0.95,
+        "maps_to": [
+          {
+            "skill_id": "llm.function_calling",
+            "base_level": 1,
+            "confidence": 0.6
+          },
+          {
+            "skill_id": "llm.streaming",
+            "base_level": 1,
+            "confidence": 0.5
+          },
+          {
+            "skill_id": "data.retrieval_rerank",
+            "base_level": 0,
+            "confidence": 0.3
+          }
+        ],
+        "role_variants": {
+          "frontend_engineer": {
+            "text_zh": "在项目里接过 LLM 能力（如对话、摘要、翻译）",
+            "text_en": "Integrated LLM capabilities in a project (e.g. chat, summarization, translation)",
+            "prior": 0.4
+          },
+          "backend_engineer": {
+            "text_zh": "在后端接过 LLM API 或搭过 AI 服务",
+            "text_en": "Integrated LLM APIs or built AI services on the backend",
+            "prior": 0.45
+          },
+          "fullstack_engineer": {
+            "text_zh": "在项目里接过 LLM 能力并做到前端可用",
+            "text_en": "Integrated LLM capabilities and exposed them through the frontend",
+            "prior": 0.45
+          },
+          "student": {
+            "text_zh": "在项目里调用过 AI/LLM 的 API",
+            "text_en": "Called AI/LLM APIs in a project",
+            "prior": 0.35
+          }
+        }
+      },
+      {
+        "id": "cap.prompt_iteration",
+        "capability_zh": "Prompt 工程的核心就是反复调整指令。你已经有这个习惯了。",
+        "capability_en": "The core of prompt engineering is iterating on instructions. You already have this habit.",
+        "migration_value": 0.85,
+        "maps_to": [
+          {
+            "skill_id": "llm.prompt",
+            "base_level": 1,
+            "confidence": 0.7
+          },
+          {
+            "skill_id": "llm.structured_output",
+            "base_level": 0,
+            "confidence": 0.4
+          }
+        ],
+        "role_variants": {
+          "frontend_engineer": {
+            "text_zh": "调过 prompt 让 AI 输出符合预期（如格式、风格、准确度）",
+            "text_en": "Iterated on prompts to get AI output that met expectations (format, style, accuracy)",
+            "prior": 0.5
+          },
+          "backend_engineer": {
+            "text_zh": "调过 prompt 让 AI 输出符合预期（如 JSON 格式、准确抽取）",
+            "text_en": "Iterated on prompts to get AI output that met expectations (JSON format, accurate extraction)",
+            "prior": 0.5
+          },
+          "fullstack_engineer": {
+            "text_zh": "调过 prompt 让 AI 输出符合预期（如结构化数据、可用内容）",
+            "text_en": "Iterated on prompts to get AI output that met expectations (structured data, usable content)",
+            "prior": 0.5
+          },
+          "student": {
+            "text_zh": "调整过提问方式让 AI 给出更好的回答",
+            "text_en": "Adjusted prompts to get better answers from AI",
+            "prior": 0.6
+          }
+        }
+      }
+    ]
+  },
+  "confirm_skills": [
+    {
+      "skill_id": "data.vector_search",
+      "explain_zh": "把文档变成向量，做语义相似搜索",
+      "explain_en": "Convert documents to vectors for semantic similarity search",
+      "options_zh": [
+        "没做过",
+        "跑通过 demo",
+        "在项目用过"
+      ],
+      "options_en": [
+        "Haven't done this",
+        "Got a demo working",
+        "Used in a project"
+      ],
+      "option_levels": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "skill_id": "llm.prompt",
+      "explain_zh": "设计指令结构让模型按要求输出",
+      "explain_en": "Design instruction structure for AI to output as required",
+      "options_zh": [
+        "没做过",
+        "试过",
+        "在项目迭代过"
+      ],
+      "options_en": [
+        "Haven't done this",
+        "Tried it",
+        "Iterated in a project"
+      ],
+      "option_levels": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "skill_id": "llm.function_calling",
+      "explain_zh": "让模型在对话中调用外部工具或 API",
+      "explain_en": "Let the model call external tools or APIs during conversation",
+      "options_zh": [
+        "没做过",
+        "跑通过 demo",
+        "在项目用过"
+      ],
+      "options_en": [
+        "Haven't done this",
+        "Got a demo working",
+        "Used in a project"
+      ],
+      "option_levels": [
+        0,
+        1,
+        2
+      ]
+    }
+  ],
+  "prior_threshold": 0.3,
+  "_ranking_note": "Capsules are ranked by prior × migration_value (descending) within each category. migration_value measures how much this capability predicts AI transition success. prior measures how likely this role has this experience. The product balances 'what's worth asking' with 'what's likely answerable'."
+}

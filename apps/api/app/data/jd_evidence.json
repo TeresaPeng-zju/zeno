@@ -1,0 +1,669 @@
+{
+  "schema_version": 2,
+  "n_jds": 1810,
+  "method": "multi-source weak-label ledger; each skill accrues weighted, source-stamped evidence (see scripts/build_jd_evidence.py)",
+  "sources": [
+    {
+      "source_id": "jd/multi_source",
+      "source_type": "jd",
+      "signal": "keyword",
+      "trust": 0.6,
+      "collected_at": "2026-01-22",
+      "published_at": null,
+      "provider": "",
+      "weak_gold_anchor": false
+    },
+    {
+      "source_id": "jd/jd_51job_2026h1",
+      "source_type": "jd",
+      "signal": "keyword",
+      "trust": 0.7,
+      "collected_at": "2026-06-26",
+      "published_at": null,
+      "provider": "",
+      "weak_gold_anchor": false
+    },
+    {
+      "source_id": "jd/jd_multi_2026h1",
+      "source_type": "jd",
+      "signal": "keyword",
+      "trust": 0.65,
+      "collected_at": "2026-01-01",
+      "published_at": null,
+      "provider": "",
+      "weak_gold_anchor": false
+    }
+  ],
+  "skills": {
+    "data.chunking": {
+      "jd_count": 6,
+      "frequency": 0.0035,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.0024,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 6,
+          "doc_total": 1727,
+          "frequency": 0.0035
+        }
+      ]
+    },
+    "data.embedding": {
+      "jd_count": 87,
+      "frequency": 0.0482,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.065,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 83,
+          "doc_total": 1727,
+          "frequency": 0.0481
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 4,
+          "doc_total": 83,
+          "frequency": 0.0482
+        }
+      ]
+    },
+    "data.quality": {
+      "jd_count": 20,
+      "frequency": 0.0361,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.0303,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 17,
+          "doc_total": 1727,
+          "frequency": 0.0098
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 3,
+          "doc_total": 83,
+          "frequency": 0.0361
+        }
+      ]
+    },
+    "data.retrieval_rerank": {
+      "jd_count": 137,
+      "frequency": 0.5181,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.3748,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 94,
+          "doc_total": 1727,
+          "frequency": 0.0544
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 43,
+          "doc_total": 83,
+          "frequency": 0.5181
+        }
+      ]
+    },
+    "data.text_processing": {
+      "jd_count": 30,
+      "frequency": 0.0723,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.0567,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 24,
+          "doc_total": 1727,
+          "frequency": 0.0139
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 6,
+          "doc_total": 83,
+          "frequency": 0.0723
+        }
+      ]
+    },
+    "data.vector_search": {
+      "jd_count": 43,
+      "frequency": 0.0361,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.0397,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 40,
+          "doc_total": 1727,
+          "frequency": 0.0232
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 3,
+          "doc_total": 83,
+          "frequency": 0.0361
+        }
+      ]
+    },
+    "eng.api_design": {
+      "jd_count": 943,
+      "frequency": 0.6386,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.7758,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 890,
+          "doc_total": 1727,
+          "frequency": 0.5153
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 53,
+          "doc_total": 83,
+          "frequency": 0.6386
+        }
+      ]
+    },
+    "eng.auth": {
+      "jd_count": 53,
+      "frequency": 0.0295,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.0363,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 51,
+          "doc_total": 1727,
+          "frequency": 0.0295
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 2,
+          "doc_total": 83,
+          "frequency": 0.0241
+        }
+      ]
+    },
+    "eng.deploy": {
+      "jd_count": 486,
+      "frequency": 0.3133,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.3901,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 460,
+          "doc_total": 1727,
+          "frequency": 0.2664
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 26,
+          "doc_total": 83,
+          "frequency": 0.3133
+        }
+      ]
+    },
+    "eng.error_handling": {
+      "jd_count": 262,
+      "frequency": 0.3373,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.3141,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 234,
+          "doc_total": 1727,
+          "frequency": 0.1355
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 28,
+          "doc_total": 83,
+          "frequency": 0.3373
+        }
+      ]
+    },
+    "eng.observability": {
+      "jd_count": 176,
+      "frequency": 0.1928,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.1901,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 160,
+          "doc_total": 1727,
+          "frequency": 0.0926
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 16,
+          "doc_total": 83,
+          "frequency": 0.1928
+        }
+      ]
+    },
+    "eng.typescript": {
+      "jd_count": 977,
+      "frequency": 0.5449,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.6633,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 941,
+          "doc_total": 1727,
+          "frequency": 0.5449
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 36,
+          "doc_total": 83,
+          "frequency": 0.4337
+        }
+      ]
+    },
+    "eval.ab": {
+      "jd_count": 6,
+      "frequency": 0.0035,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.0024,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 6,
+          "doc_total": 1727,
+          "frequency": 0.0035
+        }
+      ]
+    },
+    "eval.metrics": {
+      "jd_count": 52,
+      "frequency": 0.1807,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.1324,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 37,
+          "doc_total": 1727,
+          "frequency": 0.0214
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 15,
+          "doc_total": 83,
+          "frequency": 0.1807
+        }
+      ]
+    },
+    "eval.offline": {
+      "jd_count": 40,
+      "frequency": 0.3253,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.2167,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 13,
+          "doc_total": 1727,
+          "frequency": 0.0075
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 27,
+          "doc_total": 83,
+          "frequency": 0.3253
+        }
+      ]
+    },
+    "eval.online": {
+      "jd_count": 2,
+      "frequency": 0.012,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.0082,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 1,
+          "doc_total": 1727,
+          "frequency": 0.0006
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 1,
+          "doc_total": 83,
+          "frequency": 0.012
+        }
+      ]
+    },
+    "llm.agent_state": {
+      "jd_count": 40,
+      "frequency": 0.1566,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.1127,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 27,
+          "doc_total": 1727,
+          "frequency": 0.0156
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 13,
+          "doc_total": 83,
+          "frequency": 0.1566
+        }
+      ]
+    },
+    "llm.core": {
+      "jd_count": 274,
+      "frequency": 0.8554,
+      "grounded": true,
+      "in_graph": false,
+      "evidence_score": 0.6383,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 203,
+          "doc_total": 1727,
+          "frequency": 0.1175
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 71,
+          "doc_total": 83,
+          "frequency": 0.8554
+        }
+      ]
+    },
+    "llm.cost_latency": {
+      "jd_count": 59,
+      "frequency": 0.2892,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.2022,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 35,
+          "doc_total": 1727,
+          "frequency": 0.0203
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 24,
+          "doc_total": 83,
+          "frequency": 0.2892
+        }
+      ]
+    },
+    "llm.function_calling": {
+      "jd_count": 47,
+      "frequency": 0.1446,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.1082,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 35,
+          "doc_total": 1727,
+          "frequency": 0.0203
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 12,
+          "doc_total": 83,
+          "frequency": 0.1446
+        }
+      ]
+    },
+    "llm.prompt": {
+      "jd_count": 100,
+      "frequency": 0.3373,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.2484,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 72,
+          "doc_total": 1727,
+          "frequency": 0.0417
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 28,
+          "doc_total": 83,
+          "frequency": 0.3373
+        }
+      ]
+    },
+    "llm.streaming": {
+      "jd_count": 50,
+      "frequency": 0.0482,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.05,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 46,
+          "doc_total": 1727,
+          "frequency": 0.0266
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 4,
+          "doc_total": 83,
+          "frequency": 0.0482
+        }
+      ]
+    },
+    "llm.structured_output": {
+      "jd_count": 10,
+      "frequency": 0.0361,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.0263,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 7,
+          "doc_total": 1727,
+          "frequency": 0.0041
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 3,
+          "doc_total": 83,
+          "frequency": 0.0361
+        }
+      ]
+    },
+    "llm.tool_use": {
+      "jd_count": 202,
+      "frequency": 0.7349,
+      "grounded": true,
+      "in_graph": true,
+      "evidence_score": 0.5348,
+      "evidence": [
+        {
+          "source_id": "jd/jd_51job_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.7,
+          "doc_count": 141,
+          "doc_total": 1727,
+          "frequency": 0.0816
+        },
+        {
+          "source_id": "jd/jd_multi_2026h1",
+          "source_type": "jd",
+          "signal": "keyword",
+          "trust": 0.65,
+          "doc_count": 61,
+          "doc_total": 83,
+          "frequency": 0.7349
+        }
+      ]
+    }
+  }
+}

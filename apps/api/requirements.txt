@@ -1,0 +1,11 @@
+# Vercel Python 运行时按此安装依赖（与 pyproject.toml 保持一致；uvicorn 在 Vercel 上不需要）
+fastapi>=0.115
+sqlalchemy>=2.0
+alembic>=1.13
+psycopg[binary]>=3.2
+pgvector>=0.3
+pydantic>=2.9
+pydantic-settings>=2.5
+python-dotenv>=1.0
+httpx>=0.27
+openai>=1.40

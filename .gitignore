@@ -73,10 +73,11 @@ apps/api/app/data/gold/README.md
 apps/api/app/data/raw/*/jds.jsonl
 apps/api/app/data/raw/*/manifest.json
 apps/api/app/data/raw/*.xlsx
-apps/api/app/data/jd_evidence.json
-apps/api/app/data/skill_graph.json
-apps/api/app/data/path_config.json
-apps/api/app/data/experience_capsules.json
+# 真实运行数据：为「全 Vercel 部署」需要随仓库一起打包，故不再忽略（项目不商业化）
+# apps/api/app/data/jd_evidence.json
+# apps/api/app/data/skill_graph.json
+# apps/api/app/data/path_config.json
+# apps/api/app/data/experience_capsules.json
 jds.jsonl
 jds1.jsonl
 Icons.png

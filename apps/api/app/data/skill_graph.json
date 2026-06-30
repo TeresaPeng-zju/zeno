@@ -1,0 +1,1173 @@
+{
+  "_version": "2.0",
+  "_comment": "v2.0: 每个 skill 新增 layer（L0-L3）、roles（允许触发的角色）、ai_usage（在AI工程里怎么用）、non_ai_boundaries（不能覆盖什么）。推断约束在第二阶段收口，本版先补齐表达能力。",
+  "layer_rubric": {
+    "L0": "具体工具或语言实现（如 TypeScript、pgvector）",
+    "L1": "通用工程能力（如 API 设计、错误处理）",
+    "L2": "AI 应用能力（如 Prompt 设计、结构化输出）",
+    "L3": "AI 系统控制能力（如 Agent 编排、评估体系）"
+  },
+  "role": {
+    "id": "ai_engineer_applied",
+    "label": "前端工程师 → AI Engineer（应用向）",
+    "label_en": "Frontend Engineer → AI Engineer (applied)"
+  },
+  "level_rubric": {
+    "0": "不了解",
+    "1": "跟教程可跑通",
+    "2": "能独立做小功能",
+    "3": "能在真实项目交付并排障",
+    "4": "能设计系统、优化与治理"
+  },
+  "level_rubric_en": {
+    "0": "Not familiar",
+    "1": "Can follow a tutorial",
+    "2": "Can build small features independently",
+    "3": "Can ship & debug in real projects",
+    "4": "Can design, optimize & govern systems"
+  },
+  "skills": [
+    {
+      "id": "eng.api_design",
+      "name": "API 设计与契约",
+      "name_en": "API design & contracts",
+      "category": "foundation",
+      "learnability": 0.8,
+      "layer": "L1",
+      "roles": [
+        "frontend_engineer",
+        "backend_engineer",
+        "fullstack_engineer",
+        "student"
+      ],
+      "ai_usage": [
+        "定义 LLM 服务的输入输出结构与错误码",
+        "设计 AI 功能与上下游系统的集成契约",
+        "约束流式响应的接口规范"
+      ],
+      "ai_usage_en": [
+        "Define input/output structures and error codes for LLM services",
+        "Design integration contracts between AI features and upstream/downstream systems",
+        "Specify interface standards for streaming responses"
+      ],
+      "non_ai_boundaries": [
+        "不等于 Prompt 设计或指令工程",
+        "不包含 Function Calling 的工具选择控制权",
+        "不涉及模型选型或 token 计费"
+      ],
+      "non_ai_boundaries_en": [
+        "Does not cover prompt design or instruction engineering",
+        "Does not include tool-selection control in Function Calling",
+        "Does not involve model selection or token billing"
+      ]
+    },
+    {
+      "id": "eng.auth",
+      "name": "鉴权与安全基线",
+      "name_en": "Auth & security baseline",
+      "category": "foundation",
+      "learnability": 0.6,
+      "layer": "L1",
+      "roles": [
+        "backend_engineer",
+        "fullstack_engineer"
+      ],
+      "ai_usage": [
+        "调用 LLM API 时管理 API Key 与速率限制",
+        "保护 AI 服务端点，防止未授权访问与滥用"
+      ],
+      "ai_usage_en": [
+        "Manage API keys and rate limits when calling LLM APIs",
+        "Secure AI service endpoints against unauthorized access and abuse"
+      ],
+      "non_ai_boundaries": [
+        "不等于部署到某平台（如 Vercel）就具备鉴权能力",
+        "不涵盖模型层面的内容安全过滤"
+      ],
+      "non_ai_boundaries_en": [
+        "Deploying to a platform (e.g. Vercel) does not imply having this skill",
+        "Does not cover model-level content safety filtering"
+      ]
+    },
+    {
+      "id": "eng.error_handling",
+      "name": "错误处理与重试",
+      "name_en": "Error handling & retries",
+      "category": "foundation",
+      "learnability": 0.75,
+      "layer": "L1",
+      "roles": [
+        "frontend_engineer",
+        "backend_engineer",
+        "fullstack_engineer",
+        "student"
+      ],
+      "ai_usage": [
+        "处理 LLM API 超时、限流、返回格式异常",
+        "设计 AI 调用的指数退避重试与降级策略"
+      ],
+      "ai_usage_en": [
+        "Handle LLM API timeouts, rate limiting, and malformed responses",
+        "Design exponential-backoff retries and fallback strategies for AI calls"
+      ],
+      "non_ai_boundaries": [
+        "不等于 AI 输出质量保障（幻觉、漂移属于评估域）",
+        "不包含模型级别的 fallback（如切换模型）"
+      ],
+      "non_ai_boundaries_en": [
+        "Does not cover AI output quality assurance (hallucination/drift belongs to eval domain)",
+        "Does not include model-level fallback (e.g. switching models)"
+      ]
+    },
+    {
+      "id": "eng.observability",
+      "name": "可观测性（日志/指标/trace）",
+      "name_en": "Observability (logs/metrics/traces)",
+      "category": "foundation",
+      "learnability": 0.5,
+      "layer": "L1",
+      "roles": [
+        "backend_engineer",
+        "fullstack_engineer",
+        "frontend_engineer"
+      ],
+      "ai_usage": [
+        "追踪 LLM 调用链路（latency、token 消耗、错误率）",
+        "排查 AI 功能的线上问题（幻觉、上下文截断、工具调用失败）",
+        "构建 AI 服务的监控看板"
+      ],
+      "ai_usage_en": [
+        "Trace LLM call chains (latency, token usage, error rates)",
+        "Debug production AI issues (hallucinations, context truncation, tool call failures)",
+        "Build monitoring dashboards for AI services"
+      ],
+      "non_ai_boundaries": [
+        "排障直觉可迁移，但 AI 的 bug 没有报错堆栈——幻觉是'正确格式的错误答案'",
+        "不等于 AI 质量评估（质量指标是单独能力域）"
+      ],
+      "non_ai_boundaries_en": [
+        "Debugging instinct transfers, but AI bugs have no error stack — hallucinations are 'correctly formatted wrong answers'",
+        "Does not equal AI quality evaluation (quality metrics is a separate skill domain)"
+      ]
+    },
+    {
+      "id": "eng.deploy",
+      "name": "部署与 CI/CD",
+      "name_en": "Deployment & CI/CD",
+      "category": "foundation",
+      "learnability": 0.6,
+      "layer": "L1",
+      "roles": [
+        "frontend_engineer",
+        "backend_engineer",
+        "fullstack_engineer",
+        "student"
+      ],
+      "ai_usage": [
+        "把 AI 应用容器化并部署到云环境",
+        "管理模型版本与服务滚动更新",
+        "在 CI 中集成 AI 功能的冒烟测试"
+      ],
+      "ai_usage_en": [
+        "Containerize and deploy AI applications to cloud environments",
+        "Manage model versions and rolling service updates",
+        "Integrate AI feature smoke tests into CI pipelines"
+      ],
+      "non_ai_boundaries": [
+        "不等于模型训练或微调的基础设施",
+        "不涵盖 GPU 集群调度与分布式训练"
+      ],
+      "non_ai_boundaries_en": [
+        "Does not cover infrastructure for model training or fine-tuning",
+        "Does not include GPU cluster scheduling or distributed training"
+      ]
+    },
+    {
+      "id": "eng.typescript",
+      "name": "TypeScript 工程化",
+      "name_en": "TypeScript engineering",
+      "category": "foundation",
+      "learnability": 0.95,
+      "layer": "L0",
+      "roles": [
+        "frontend_engineer",
+        "fullstack_engineer"
+      ],
+      "ai_usage": [
+        "为 AI 工具调用定义类型安全的参数和返回结构",
+        "在前端集成 AI 功能时保证类型推断和代码健壮性"
+      ],
+      "ai_usage_en": [
+        "Define type-safe parameters and return structures for AI tool calls",
+        "Ensure type inference and code robustness when integrating AI features in frontend"
+      ],
+      "non_ai_boundaries": [
+        "仅适用于前端/全栈工程师；Java/Go/Python 后端工程师不涉及此项",
+        "TypeScript 工程化能力来自日常开发实践，不能从'独立交付功能'直接推断"
+      ],
+      "non_ai_boundaries_en": [
+        "Only applicable to frontend/fullstack engineers; Java/Go/Python backend engineers do not have this",
+        "TypeScript proficiency comes from daily practice, not inferred from shipping a feature alone"
+      ]
+    },
+    {
+      "id": "data.text_processing",
+      "name": "文本清洗与预处理",
+      "name_en": "Text cleaning & preprocessing",
+      "category": "data",
+      "learnability": 0.5,
+      "layer": "L2",
+      "roles": [
+        "frontend_engineer",
+        "backend_engineer",
+        "fullstack_engineer",
+        "student"
+      ],
+      "ai_usage": [
+        "把原始文档（PDF/HTML/Word）转换成 AI 可消费的纯文本",
+        "去除噪声（页眉页脚/乱码/特殊字符），标准化编码",
+        "为 RAG 管道准备高质量输入"
+      ],
+      "ai_usage_en": [
+        "Convert raw documents (PDF/HTML/Word) into clean text for AI consumption",
+        "Remove noise (headers/footers/encoding artifacts/special characters)",
+        "Prepare high-quality inputs for RAG pipelines"
+      ],
+      "non_ai_boundaries": [
+        "CSV/Excel 格式转换有迁移价值，但 RAG 的文本清洗面对的是非结构化自然语言，难度更高",
+        "不等于文档语义切分（chunking 是独立技能）"
+      ],
+      "non_ai_boundaries_en": [
+        "CSV/Excel parsing transfers partially, but RAG text cleaning deals with unstructured natural language — harder",
+        "Does not equal document semantic chunking (chunking is a separate skill)"
+      ]
+    },
+    {
+      "id": "data.chunking",
+      "name": "文档切分（chunking）",
+      "name_en": "Document chunking",
+      "category": "data",
+      "learnability": 0.55,
+      "layer": "L2",
+      "roles": [
+        "backend_engineer",
+        "fullstack_engineer",
+        "student"
+      ],
+      "ai_usage": [
+        "把长文档按语义边界切成合适的块，保证检索颗粒度",
+        "调整 chunk_size 与 overlap，平衡召回率与上下文完整性"
+      ],
+      "ai_usage_en": [
+        "Split long documents into semantically coherent chunks at the right granularity",
+        "Tune chunk_size and overlap to balance recall and context completeness"
+      ],
+      "non_ai_boundaries": [
+        "数据库表结构设计≠文本语义切分——前者是关系型存储，后者是语义完整性判断",
+        "不等于文本清洗（清洗是切分的前置步骤）"
+      ],
+      "non_ai_boundaries_en": [
+        "Database schema design ≠ text semantic chunking — one is relational storage, the other is semantic boundary judgment",
+        "Does not equal text cleaning (cleaning is a prerequisite step)"
+      ]
+    },
+    {
+      "id": "data.embedding",
+      "name": "向量化与 embedding 选型",
+      "name_en": "Embedding & model selection",
+      "category": "data",
+      "learnability": 0.5,
+      "layer": "L2",
+      "roles": [
+        "backend_engineer",
+        "fullstack_engineer",
+        "student"
+      ],
+      "ai_usage": [
+        "选择合适的 embedding 模型（OpenAI/BGE/Cohere 等）",
+        "把文本块转换成向量表示，存入向量数据库",
+        "评估不同 embedding 模型对召回质量的影响"
+      ],
+      "ai_usage_en": [
+        "Select appropriate embedding models (OpenAI/BGE/Cohere etc.)",
+        "Convert text chunks into vector representations for storage",
+        "Evaluate how different embedding models affect retrieval quality"
+      ],
+      "non_ai_boundaries": [
+        "前端 store 结构设计或数据库建模不能直接推断此能力——embedding 选型是 ML 领域决策",
+        "不等于训练或微调 embedding 模型"
+      ],
+      "non_ai_boundaries_en": [
+        "Frontend store design or database modeling does not transfer to this — embedding selection is an ML domain decision",
+        "Does not cover training or fine-tuning embedding models"
+      ]
+    },
+    {
+      "id": "data.vector_search",
+      "name": "向量检索（pgvector/HNSW）",
+      "name_en": "Vector search (pgvector/HNSW)",
+      "category": "data",
+      "learnability": 0.45,
+      "layer": "L2",
+      "roles": [
+        "backend_engineer",
+        "fullstack_engineer",
+        "student"
+      ],
+      "ai_usage": [
+        "用 pgvector/HNSW 实现高效的近似最近邻检索",
+        "调优索引参数（ef/m）平衡召回率与查询延迟",
+        "在 RAG 管道中作为检索底座"
+      ],
+      "ai_usage_en": [
+        "Implement efficient approximate nearest-neighbor search with pgvector/HNSW",
+        "Tune index parameters (ef/m) to balance recall and query latency",
+        "Serve as the retrieval backbone in RAG pipelines"
+      ],
+      "non_ai_boundaries": [
+        "跨组件状态同步≠向量检索——两者毫无关系",
+        "跑通 demo（如 faiss 示例）≠ 生产级索引调优"
+      ],
+      "non_ai_boundaries_en": [
+        "Cross-component state sync ≠ vector search — these are unrelated",
+        "Running a demo (e.g. faiss example) ≠ production-grade index tuning"
+      ]
+    },
+    {
+      "id": "data.retrieval_rerank",
+      "name": "召回与重排（rerank）",
+      "name_en": "Retrieval & reranking",
+      "category": "data",
+      "learnability": 0.4,
+      "layer": "L2",
+      "roles": [
+        "backend_engineer",
+        "fullstack_engineer"
+      ],
+      "ai_usage": [
+        "实现两段式检索：粗召回（向量）+ 精排（reranker 模型）",
+        "用 BM25/混合检索提升召回率",
+        "根据召回率/MRR 指标迭代检索管道"
+      ],
+      "ai_usage_en": [
+        "Implement two-stage retrieval: coarse recall (vector) + fine reranking (reranker model)",
+        "Use BM25/hybrid search to improve recall",
+        "Iterate on the retrieval pipeline based on recall/MRR metrics"
+      ],
+      "non_ai_boundaries": [
+        "数据库查询优化（索引/执行计划）不等于向量召回重排——底层机制完全不同",
+        "不等于精调 reranker 模型"
+      ],
+      "non_ai_boundaries_en": [
+        "Database query optimization (indexes/execution plans) ≠ vector reranking — fundamentally different mechanisms",
+        "Does not cover fine-tuning reranker models"
+      ]
+    },
+    {
+      "id": "data.quality",
+      "name": "数据质量与去重",
+      "name_en": "Data quality & dedup",
+      "category": "data",
+      "learnability": 0.5,
+      "layer": "L2",
+      "roles": [
+        "backend_engineer",
+        "fullstack_engineer",
+        "student"
+      ],
+      "ai_usage": [
+        "检测并去除重复文档，避免检索偏置",
+        "评估知识库数据质量，建立数据准入标准"
+      ],
+      "ai_usage_en": [
+        "Detect and remove duplicate documents to prevent retrieval bias",
+        "Assess knowledge base data quality and establish ingestion standards"
+      ],
+      "non_ai_boundaries": [
+        "不等于 AI 输出质量评估（那是 eval 域的技能）",
+        "不涵盖数据标注与人工评审流程"
+      ],
+      "non_ai_boundaries_en": [
+        "Does not equal AI output quality evaluation (that belongs to the eval domain)",
+        "Does not cover data annotation and human review workflows"
+      ]
+    },
+    {
+      "id": "llm.prompt",
+      "name": "Prompt 结构设计",
+      "name_en": "Prompt structure design",
+      "category": "llm",
+      "learnability": 0.7,
+      "layer": "L2",
+      "roles": [
+        "frontend_engineer",
+        "backend_engineer",
+        "fullstack_engineer",
+        "student"
+      ],
+      "ai_usage": [
+        "设计 system/user/assistant 多角色指令结构",
+        "用 few-shot 示例引导模型输出预期格式",
+        "通过迭代测试稳定 prompt 在不同输入下的表现"
+      ],
+      "ai_usage_en": [
+        "Design system/user/assistant multi-role instruction structures",
+        "Use few-shot examples to guide model toward expected output formats",
+        "Stabilize prompt behavior across varied inputs through iterative testing"
+      ],
+      "non_ai_boundaries": [
+        "日常用 ChatGPT 写代码≠工程化 Prompt——前者是使用，后者是设计可复用、可测试的指令系统",
+        "不等于 Function Calling 的工具描述设计"
+      ],
+      "non_ai_boundaries_en": [
+        "Using ChatGPT to write code ≠ engineering prompts — one is usage, the other is designing reusable, testable instruction systems",
+        "Does not equal tool description design for Function Calling"
+      ]
+    },
+    {
+      "id": "llm.structured_output",
+      "name": "结构化输出 / JSON schema 约束",
+      "name_en": "Structured output / JSON schema",
+      "category": "llm",
+      "learnability": 0.65,
+      "layer": "L2",
+      "roles": [
+        "frontend_engineer",
+        "backend_engineer",
+        "fullstack_engineer",
+        "student"
+      ],
+      "ai_usage": [
+        "用 JSON mode / response_format 强制模型输出结构化数据",
+        "定义 JSON schema 约束模型输出字段类型与范围",
+        "对模型返回做 schema 校验与容错解析"
+      ],
+      "ai_usage_en": [
+        "Use JSON mode / response_format to enforce structured model output",
+        "Define JSON schema to constrain output field types and ranges",
+        "Validate and fault-tolerantly parse model responses against schema"
+      ],
+      "non_ai_boundaries": [
+        "注意：你过去做的是接收端校验（请求参数/表单），AI 场景是生成端约束（控制模型输出）——方向相反，但底层'定义数据形状'的逻辑相通",
+        "不等于 Prompt 结构设计（二者是不同但互补的能力）"
+      ],
+      "non_ai_boundaries_en": [
+        "Note: your existing experience is receiving-end validation (request params/forms); AI structured output is generation-end constraint (controlling model output) — opposite direction, but the underlying 'define data shape' logic transfers",
+        "Does not equal prompt structure design (they are different but complementary skills)"
+      ]
+    },
+    {
+      "id": "llm.function_calling",
+      "name": "函数 / 工具调用",
+      "name_en": "Function / tool calling",
+      "category": "llm",
+      "learnability": 0.55,
+      "layer": "L2",
+      "roles": [
+        "backend_engineer",
+        "fullstack_engineer",
+        "frontend_engineer"
+      ],
+      "ai_usage": [
+        "定义工具描述（function schema），让模型决定何时调用哪个工具",
+        "解析模型返回的 tool_call 参数并执行对应函数",
+        "处理工具调用失败后的重试与回退"
+      ],
+      "ai_usage_en": [
+        "Define tool descriptions (function schema) so the model decides when and which tool to call",
+        "Parse tool_call parameters returned by the model and execute the corresponding function",
+        "Handle retries and fallbacks when tool calls fail"
+      ],
+      "non_ai_boundaries": [
+        "调用外部 API（你控制何时调用）≠ Function Calling（模型决定调用）——控制权完全不同",
+        "不等于多工具编排（那是更复杂的 Agent 层能力）"
+      ],
+      "non_ai_boundaries_en": [
+        "Calling external APIs (you decide when to call) ≠ Function Calling (the model decides) — fundamentally different control flow",
+        "Does not equal multi-tool orchestration (that is a more complex Agent-layer skill)"
+      ]
+    },
+    {
+      "id": "llm.tool_use",
+      "name": "多工具编排",
+      "name_en": "Multi-tool orchestration",
+      "category": "llm",
+      "learnability": 0.5,
+      "layer": "L3",
+      "roles": [
+        "backend_engineer",
+        "fullstack_engineer"
+      ],
+      "ai_usage": [
+        "在 Agent 循环中串联多个工具（搜索、计算、代码执行等）",
+        "处理工具调用的并行与顺序依赖",
+        "管理工具失败时的整体任务恢复"
+      ],
+      "ai_usage_en": [
+        "Chain multiple tools (search, compute, code execution) within an Agent loop",
+        "Handle parallel and sequential dependencies between tool calls",
+        "Manage overall task recovery when individual tools fail"
+      ],
+      "non_ai_boundaries": [
+        "多步表单（确定性状态机）≠ 多工具 Agent（非确定性，模型动态决策）",
+        "不等于 Function Calling——后者是单工具调用，多工具编排是在此之上的协调层"
+      ],
+      "non_ai_boundaries_en": [
+        "Multi-step forms (deterministic state machine) ≠ multi-tool Agent (non-deterministic, model decides dynamically)",
+        "Does not equal Function Calling — that is single-tool invocation; this is the coordination layer above it"
+      ]
+    },
+    {
+      "id": "llm.agent_state",
+      "name": "Agent 状态与记忆",
+      "name_en": "Agent state & memory",
+      "category": "llm",
+      "learnability": 0.4,
+      "layer": "L3",
+      "roles": [
+        "backend_engineer",
+        "fullstack_engineer"
+      ],
+      "ai_usage": [
+        "管理多轮对话的上下文历史与记忆压缩",
+        "设计 Agent 的短期（in-context）与长期（外部存储）记忆架构",
+        "处理上下文窗口溢出与历史截断策略"
+      ],
+      "ai_usage_en": [
+        "Manage multi-turn conversation history and memory compression",
+        "Design Agent short-term (in-context) and long-term (external storage) memory architecture",
+        "Handle context window overflow and history truncation strategies"
+      ],
+      "non_ai_boundaries": [
+        "确定性状态机（步骤 1/2/3）≠ Agent 非确定性对话状态——复杂度不是同一量级",
+        "不等于向量检索——虽然长期记忆可能用向量存储实现，但两者是不同层的能力"
+      ],
+      "non_ai_boundaries_en": [
+        "Deterministic state machines (step 1/2/3) ≠ Agent non-deterministic conversation state — different orders of complexity",
+        "Does not equal vector search — though long-term memory may use vector storage, they are different-layer skills"
+      ]
+    },
+    {
+      "id": "llm.cost_latency",
+      "name": "成本与延迟优化",
+      "name_en": "Cost & latency optimization",
+      "category": "llm",
+      "learnability": 0.5,
+      "layer": "L2",
+      "roles": [
+        "backend_engineer",
+        "fullstack_engineer",
+        "frontend_engineer"
+      ],
+      "ai_usage": [
+        "控制 token 消耗（prompt 压缩、输出长度限制）",
+        "选择性价比最优的模型（GPT-4o vs GPT-4o-mini vs 开源模型）",
+        "用语义缓存减少重复 LLM 调用，降低成本"
+      ],
+      "ai_usage_en": [
+        "Control token consumption (prompt compression, output length limits)",
+        "Select the most cost-effective model (GPT-4o vs GPT-4o-mini vs open-source)",
+        "Use semantic caching to reduce redundant LLM calls and lower costs"
+      ],
+      "non_ai_boundaries": [
+        "前端首屏优化/后端接口 RT 优化的思路可迁移，但 LLM 的计费模型（按 token）与传统性能优化手段差异大",
+        "不等于模型压缩或量化（那是 MLOps 领域）"
+      ],
+      "non_ai_boundaries_en": [
+        "Frontend FCP optimization / backend RT optimization mindset transfers partially, but LLM billing (per token) differs significantly from traditional performance tuning",
+        "Does not cover model compression or quantization (that is MLOps territory)"
+      ]
+    },
+    {
+      "id": "llm.streaming",
+      "name": "流式输出与前端集成",
+      "name_en": "Streaming & frontend integration",
+      "category": "llm",
+      "learnability": 0.9,
+      "layer": "L1",
+      "roles": [
+        "frontend_engineer",
+        "fullstack_engineer",
+        "backend_engineer"
+      ],
+      "ai_usage": [
+        "用 SSE/fetch streaming 实现 LLM 流式响应的前端渲染",
+        "处理 delta token 的边收边渲染与 buffer 管理",
+        "实现断流重连与错误恢复"
+      ],
+      "ai_usage_en": [
+        "Use SSE/fetch streaming to render LLM streaming responses in the frontend",
+        "Handle delta token accumulation, incremental rendering, and buffer management",
+        "Implement reconnection on stream failure and error recovery"
+      ],
+      "non_ai_boundaries": [
+        "简单 WebSocket 消息推送（一次推完）≠ AI 流式输出（一个 token 一个 token 地处理）",
+        "经验可迁移，但 AI 流式还有 buffer 管理、think 标签解析、渲染性能等额外挑战"
+      ],
+      "non_ai_boundaries_en": [
+        "Simple WebSocket push (send all at once) ≠ AI streaming (token by token processing)",
+        "Experience transfers partially, but AI streaming adds buffer management, think-tag parsing, and rendering performance challenges"
+      ]
+    },
+    {
+      "id": "eval.offline",
+      "name": "离线评估集构建",
+      "name_en": "Offline eval set construction",
+      "category": "eval",
+      "learnability": 0.4,
+      "layer": "L3",
+      "roles": [
+        "backend_engineer",
+        "fullstack_engineer",
+        "frontend_engineer",
+        "student"
+      ],
+      "ai_usage": [
+        "构建问答对（query-answer）黄金评测集",
+        "设计评估维度（准确率/相关性/完整性）",
+        "用评测集驱动 RAG 管道的迭代优化"
+      ],
+      "ai_usage_en": [
+        "Build golden eval sets of query-answer pairs",
+        "Design evaluation dimensions (accuracy/relevance/completeness)",
+        "Use eval sets to drive iterative optimization of RAG pipelines"
+      ],
+      "non_ai_boundaries": [
+        "传统单元测试（断言确定输出）→ AI 评估（判断不确定输出的质量）：思维模式相通，但方法论完全不同",
+        "不等于在线反馈采集（那是生产环境的用户信号）"
+      ],
+      "non_ai_boundaries_en": [
+        "Traditional unit tests (assert deterministic output) → AI evaluation (judge quality of non-deterministic output): same mindset, completely different methodology",
+        "Does not equal online feedback collection (that is user signals in production)"
+      ]
+    },
+    {
+      "id": "eval.online",
+      "name": "在线反馈采集",
+      "name_en": "Online feedback collection",
+      "category": "eval",
+      "learnability": 0.45,
+      "layer": "L3",
+      "roles": [
+        "backend_engineer",
+        "fullstack_engineer",
+        "frontend_engineer"
+      ],
+      "ai_usage": [
+        "设计用户反馈收集机制（点赞/踩、引用率、会话重启率）",
+        "把用户行为信号转化为 AI 质量指标",
+        "用在线信号驱动 prompt 或检索管道的持续优化"
+      ],
+      "ai_usage_en": [
+        "Design user feedback collection (thumbs up/down, citation rate, session restart rate)",
+        "Convert user behavior signals into AI quality metrics",
+        "Use online signals to drive continuous improvement of prompts or retrieval pipelines"
+      ],
+      "non_ai_boundaries": [
+        "埋点/统计分析的思路可迁移，但 AI 在线反馈需要与模型迭代闭环——不是单纯看数据",
+        "不等于 A/B 实验（在线反馈是观测，A/B 是干预）"
+      ],
+      "non_ai_boundaries_en": [
+        "Analytics/tracking mindset transfers, but AI online feedback needs to close the loop with model iteration — not just dashboards",
+        "Does not equal A/B testing (online feedback is observation; A/B is intervention)"
+      ]
+    },
+    {
+      "id": "eval.ab",
+      "name": "A/B 实验",
+      "name_en": "A/B testing",
+      "category": "eval",
+      "learnability": 0.45,
+      "layer": "L3",
+      "roles": [
+        "backend_engineer",
+        "fullstack_engineer"
+      ],
+      "ai_usage": [
+        "对比不同 prompt 版本或检索策略的效果",
+        "设计实验分组与统计显著性检验",
+        "用实验结果决策模型或策略升级"
+      ],
+      "ai_usage_en": [
+        "Compare the effectiveness of different prompt versions or retrieval strategies",
+        "Design experiment groups and statistical significance tests",
+        "Use experiment results to decide model or strategy upgrades"
+      ],
+      "non_ai_boundaries": [
+        "AI 的 A/B 实验复杂度远高于前端按钮颜色测试——输出非确定性，对照组难以严格控制",
+        "不等于在线反馈采集（A/B 是主动干预，在线反馈是被动观测）"
+      ],
+      "non_ai_boundaries_en": [
+        "AI A/B testing is far more complex than frontend button color tests — non-deterministic outputs make control groups hard to isolate",
+        "Does not equal online feedback collection (A/B is active intervention; online feedback is passive observation)"
+      ]
+    },
+    {
+      "id": "eval.metrics",
+      "name": "质量指标（准确/覆盖/幻觉率）",
+      "name_en": "Quality metrics (accuracy/coverage/hallucination)",
+      "category": "eval",
+      "learnability": 0.4,
+      "layer": "L3",
+      "roles": [
+        "backend_engineer",
+        "fullstack_engineer",
+        "frontend_engineer"
+      ],
+      "ai_usage": [
+        "定义并计算 RAG 系统的核心指标（Precision@K/Recall/MRR）",
+        "检测幻觉率与事实漂移",
+        "建立质量基线，追踪模型或数据变更后的指标变化"
+      ],
+      "ai_usage_en": [
+        "Define and compute core RAG metrics (Precision@K / Recall / MRR)",
+        "Detect hallucination rates and factual drift",
+        "Establish quality baselines and track metric changes after model or data updates"
+      ],
+      "non_ai_boundaries": [
+        "传统排障工具链（DevTools/日志/堆栈）对 AI 幻觉几乎全部失效——没有报错，只有'正确格式的错误答案'",
+        "不等于可观测性（可观测性是系统行为，质量指标是输出内容）"
+      ],
+      "non_ai_boundaries_en": [
+        "Traditional debugging tools (DevTools/logs/stack traces) are nearly useless for AI hallucinations — no errors, just 'correctly formatted wrong answers'",
+        "Does not equal observability (observability is about system behavior; quality metrics are about output content)"
+      ]
+    }
+  ],
+  "role_requirements": [
+    {
+      "skill_id": "eng.api_design",
+      "min_level": 3,
+      "weight": 0.83,
+      "type": "required",
+      "branch_impact": 1,
+      "fulfillment_class": "foundation_have"
+    },
+    {
+      "skill_id": "eng.auth",
+      "min_level": 2,
+      "weight": 0.4,
+      "type": "bonus",
+      "branch_impact": 0,
+      "fulfillment_class": "foundation_have"
+    },
+    {
+      "skill_id": "eng.error_handling",
+      "min_level": 2,
+      "weight": 0.5,
+      "type": "required",
+      "branch_impact": 0,
+      "fulfillment_class": "foundation_have"
+    },
+    {
+      "skill_id": "eng.observability",
+      "min_level": 2,
+      "weight": 0.5,
+      "type": "bonus",
+      "branch_impact": 1,
+      "fulfillment_class": "foundation_have"
+    },
+    {
+      "skill_id": "eng.deploy",
+      "min_level": 2,
+      "weight": 0.6,
+      "type": "required",
+      "branch_impact": 1,
+      "fulfillment_class": "foundation_have"
+    },
+    {
+      "skill_id": "eng.typescript",
+      "min_level": 3,
+      "weight": 0.6,
+      "type": "required",
+      "branch_impact": 0,
+      "fulfillment_class": "foundation_have"
+    },
+    {
+      "skill_id": "data.text_processing",
+      "min_level": 2,
+      "weight": 0.5,
+      "type": "required",
+      "branch_impact": 0,
+      "fulfillment_class": "ai_accelerated"
+    },
+    {
+      "skill_id": "data.chunking",
+      "min_level": 2,
+      "weight": 0.7,
+      "type": "required",
+      "branch_impact": 1,
+      "fulfillment_class": "ai_accelerated"
+    },
+    {
+      "skill_id": "data.embedding",
+      "min_level": 2,
+      "weight": 0.7,
+      "type": "required",
+      "branch_impact": 1,
+      "fulfillment_class": "ai_accelerated"
+    },
+    {
+      "skill_id": "data.vector_search",
+      "min_level": 3,
+      "weight": 0.9,
+      "type": "required",
+      "branch_impact": 1,
+      "fulfillment_class": "ai_accelerated"
+    },
+    {
+      "skill_id": "data.retrieval_rerank",
+      "min_level": 2,
+      "weight": 0.8,
+      "type": "required",
+      "branch_impact": 1,
+      "fulfillment_class": "core_learn"
+    },
+    {
+      "skill_id": "data.quality",
+      "min_level": 2,
+      "weight": 0.5,
+      "type": "bonus",
+      "branch_impact": 0,
+      "fulfillment_class": "ai_accelerated"
+    },
+    {
+      "skill_id": "llm.prompt",
+      "min_level": 3,
+      "weight": 0.9,
+      "type": "required",
+      "branch_impact": 1,
+      "fulfillment_class": "ai_accelerated"
+    },
+    {
+      "skill_id": "llm.structured_output",
+      "min_level": 3,
+      "weight": 0.8,
+      "type": "required",
+      "branch_impact": 1,
+      "fulfillment_class": "ai_accelerated"
+    },
+    {
+      "skill_id": "llm.function_calling",
+      "min_level": 2,
+      "weight": 0.8,
+      "type": "required",
+      "branch_impact": 1,
+      "fulfillment_class": "core_learn"
+    },
+    {
+      "skill_id": "llm.tool_use",
+      "min_level": 2,
+      "weight": 0.82,
+      "type": "required",
+      "branch_impact": 1,
+      "fulfillment_class": "core_learn"
+    },
+    {
+      "skill_id": "llm.agent_state",
+      "min_level": 2,
+      "weight": 0.6,
+      "type": "bonus",
+      "branch_impact": 1,
+      "fulfillment_class": "core_learn"
+    },
+    {
+      "skill_id": "llm.cost_latency",
+      "min_level": 2,
+      "weight": 0.6,
+      "type": "required",
+      "branch_impact": 0,
+      "fulfillment_class": "core_learn"
+    },
+    {
+      "skill_id": "llm.streaming",
+      "min_level": 2,
+      "weight": 0.5,
+      "type": "bonus",
+      "branch_impact": 0,
+      "fulfillment_class": "foundation_have"
+    },
+    {
+      "skill_id": "eval.offline",
+      "min_level": 2,
+      "weight": 0.7,
+      "type": "required",
+      "branch_impact": 1,
+      "fulfillment_class": "core_learn"
+    },
+    {
+      "skill_id": "eval.online",
+      "min_level": 1,
+      "weight": 0.5,
+      "type": "bonus",
+      "branch_impact": 0,
+      "fulfillment_class": "product_loop"
+    },
+    {
+      "skill_id": "eval.ab",
+      "min_level": 1,
+      "weight": 0.4,
+      "type": "bonus",
+      "branch_impact": 0,
+      "fulfillment_class": "pm_side"
+    },
+    {
+      "skill_id": "eval.metrics",
+      "min_level": 2,
+      "weight": 0.7,
+      "type": "required",
+      "branch_impact": 1,
+      "fulfillment_class": "core_learn"
+    }
+  ],
+  "dependencies": [
+    {
+      "skill_id": "data.chunking",
+      "depends_on": "data.text_processing"
+    },
+    {
+      "skill_id": "data.embedding",
+      "depends_on": "data.text_processing"
+    },
+    {
+      "skill_id": "data.quality",
+      "depends_on": "data.text_processing"
+    },
+    {
+      "skill_id": "data.vector_search",
+      "depends_on": "data.embedding"
+    },
+    {
+      "skill_id": "data.retrieval_rerank",
+      "depends_on": "data.vector_search"
+    },
+    {
+      "skill_id": "llm.structured_output",
+      "depends_on": "llm.prompt"
+    },
+    {
+      "skill_id": "llm.function_calling",
+      "depends_on": "llm.prompt"
+    },
+    {
+      "skill_id": "llm.function_calling",
+      "depends_on": "eng.error_handling"
+    },
+    {
+      "skill_id": "llm.tool_use",
+      "depends_on": "llm.function_calling"
+    },
+    {
+      "skill_id": "llm.tool_use",
+      "depends_on": "eng.api_design"
+    },
+    {
+      "skill_id": "llm.cost_latency",
+      "depends_on": "llm.tool_use"
+    },
+    {
+      "skill_id": "llm.agent_state",
+      "depends_on": "llm.tool_use"
+    },
+    {
+      "skill_id": "llm.agent_state",
+      "depends_on": "data.vector_search"
+    },
+    {
+      "skill_id": "eval.offline",
+      "depends_on": "data.embedding"
+    },
+    {
+      "skill_id": "eval.metrics",
+      "depends_on": "eval.offline"
+    },
+    {
+      "skill_id": "eval.metrics",
+      "depends_on": "data.retrieval_rerank"
+    },
+    {
+      "skill_id": "eval.ab",
+      "depends_on": "eval.online"
+    }
+  ],
+  "orientations": [
+    {
+      "id": "base",
+      "label": "通用 AI 应用",
+      "label_en": "General AI apps",
+      "description": "不确定方向？选这个。覆盖 AI 应用开发的全部基础能力，数据、模型、评估都均衡涉及。",
+      "description_en": "Not sure where to focus? Start here. Covers the all-round fundamentals of AI app development — data, models, and evaluation in balance."
+    },
+    {
+      "id": "rag",
+      "label": "智能问答 / 知识库",
+      "label_en": "Q&A & knowledge bases",
+      "description": "想做能查资料、答问题的 AI（如企业知识库问答、文档助手）。重点练「让 AI 准确找到并用对资料」的检索能力。",
+      "description_en": "Build AI that searches and answers from your own documents (knowledge-base Q&A, doc assistants). Focuses on retrieval — helping the AI find and use the right information accurately.",
+      "weight_delta": {
+        "data.chunking": 0.2,
+        "data.embedding": 0.2,
+        "data.vector_search": 0.1,
+        "data.retrieval_rerank": 0.2,
+        "data.quality": 0.25,
+        "eval.metrics": 0.1
+      },
+      "min_level_delta": {
+        "data.vector_search": 1,
+        "data.retrieval_rerank": 1,
+        "data.chunking": 1
+      },
+      "promote_required": [
+        "data.quality"
+      ],
+      "jd_signals": [
+        "rag",
+        "retrieval-augmented",
+        "retrieval augmented",
+        "retrieval",
+        "retriever",
+        "vector search",
+        "vector database",
+        "vector db",
+        "vector store",
+        "embedding",
+        "embeddings",
+        "rerank",
+        "reranking",
+        "re-rank",
+        "semantic search",
+        "knowledge base",
+        "knowledge-base",
+        "chunking",
+        "chunk",
+        "faiss",
+        "pinecone",
+        "milvus",
+        "weaviate",
+        "qdrant",
+        "elasticsearch",
+        "bm25",
+        "hybrid search",
+        "question answering",
+        "document qa",
+        "检索增强",
+        "检索",
+        "召回",
+        "重排",
+        "向量检索",
+        "向量数据库",
+        "向量库",
+        "向量化",
+        "嵌入",
+        "语义检索",
+        "语义搜索",
+        "知识库",
+        "切分",
+        "分块",
+        "文档问答",
+        "问答系统"
+      ]
+    },
+    {
+      "id": "agent",
+      "label": "Agent / 工具编排",
+      "label_en": "Agents & tool orchestration",
+      "description": "想做能调用工具、自己决定下一步的 AI（自动化助手、多步任务 agent）。重点练让模型可靠地调用函数、编排工具、管理状态。",
+      "description_en": "Build AI that calls tools and decides its own next step (automation assistants, multi-step agents). Focuses on reliable function calling, tool orchestration and state.",
+      "weight_delta": {
+        "llm.function_calling": 0.2,
+        "llm.tool_use": 0.25,
+        "llm.agent_state": 0.2,
+        "llm.structured_output": 0.15,
+        "llm.prompt": 0.1
+      },
+      "min_level_delta": {
+        "llm.function_calling": 1,
+        "llm.tool_use": 1
+      },
+      "promote_required": [
+        "llm.tool_use"
+      ],
+      "jd_signals": [
+        "agent",
+        "agents",
+        "agentic",
+        "function calling",
+        "function-calling",
+        "tool use",
+        "tool-use",
+        "tool calling",
+        "tool-calling",
+        "tool orchestration",
+        "orchestration",
+        "multi-step",
+        "multi step",
+        "react agent",
+        "planning",
+        "autonomous agent",
+        "langchain",
+        "langgraph",
+        "autogen",
+        "工具调用",
+        "函数调用",
+        "智能体",
+        "工具编排",
+        "多步",
+        "自主",
+        "编排",
+        "代理"
+      ]
+    },
+    {
+      "id": "eval",
+      "label": "评估与上线",
+      "label_en": "Evaluation & shipping",
+      "description": "想把 AI 应用做稳、敢上线。重点练离线/在线评估、质量回归、可观测性，让效果可衡量、可交付。",
+      "description_en": "Make your AI app reliable enough to ship. Focuses on offline/online evaluation, quality regression and observability so results are measurable.",
+      "weight_delta": {
+        "eval.offline": 0.2,
+        "eval.online": 0.15,
+        "eval.metrics": 0.2,
+        "eval.ab": 0.1,
+        "data.quality": 0.15,
+        "eng.observability": 0.15
+      },
+      "min_level_delta": {
+        "eval.offline": 1,
+        "eval.metrics": 1
+      },
+      "promote_required": [
+        "eval.offline"
+      ],
+      "jd_signals": [
+        "evaluation",
+        "offline eval",
+        "online eval",
+        "a/b test",
+        "ab test",
+        "benchmark",
+        "benchmarks",
+        "metrics",
+        "observability",
+        "monitoring",
+        "regression",
+        "guardrail",
+        "guardrails",
+        "hallucination",
+        "llm eval",
+        "评估",
+        "离线评估",
+        "在线评估",
+        "模型评估",
+        "效果评估",
+        "指标",
+        "监控",
+        "可观测",
+        "质量回归",
+        "基准",
+        "幻觉",
+        "护城河"
+      ]
+    }
+  ]
+}
