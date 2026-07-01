@@ -11,7 +11,7 @@ const COLORS = [
   "hsl(335 100% 65%)",  // magenta
 ];
 
-const STAR_COUNT = 50;
+const STAR_COUNT = 32;
 const GLOW_RADIUS = 140;
 
 interface GeneratedStar {

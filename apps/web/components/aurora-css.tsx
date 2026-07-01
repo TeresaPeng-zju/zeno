@@ -36,22 +36,21 @@ export function AuroraCss() {
     }
 
     function animate() {
-      frames += 1.5;
-
       // Smooth mouse influence
       mouseInfluence += (targetInfluence - mouseInfluence) * 0.08;
 
-      // Base frequency + mouse boost (larger range = more visible motion)
-      const boost = mouseInfluence * 0.006;
-      const bfx = 0.005 + 0.004 * Math.cos(frames * rad) + boost;
-      const bfy = 0.005 + 0.004 * Math.sin(frames * rad * 0.7) + boost;
-      filter!.setAttributeNS(null, "baseFrequency", `${bfx} ${bfy}`);
-
-      // Displacement scale: more intense near mouse
-      if (displacement) {
-        const baseScale = 120;
-        const extraScale = mouseInfluence * 120;
-        displacement.setAttributeNS(null, "scale", String(baseScale + extraScale));
+      // 性能：每帧改 feTurbulence 会让 5 层 blur+混合的极光每帧重算 SVG 滤镜（极贵）。
+      // 空闲时（鼠标不在顶部/未移动）冻结滤镜——浏览器缓存滤镜结果，极光靠 CSS transform
+      // 继续漂移，负载几乎为零；只有鼠标靠近顶部交互时才实时驱动湍流。
+      if (mouseInfluence > 0.008) {
+        frames += 1.5;
+        const boost = mouseInfluence * 0.006;
+        const bfx = 0.005 + 0.004 * Math.cos(frames * rad) + boost;
+        const bfy = 0.005 + 0.004 * Math.sin(frames * rad * 0.7) + boost;
+        filter!.setAttributeNS(null, "baseFrequency", `${bfx} ${bfy}`);
+        if (displacement) {
+          displacement.setAttributeNS(null, "scale", String(120 + mouseInfluence * 120));
+        }
       }
 
       animId = requestAnimationFrame(animate);

@@ -478,6 +478,11 @@ function ResultInner() {
           )}
         </Section>
 
+        {/* 能力资产组合 · 金融视角(把路线图讲成"按 ROI 配置你的时间") */}
+        <Reveal>
+          <CapabilityPortfolio data={data} />
+        </Reveal>
+
         {/* Section 3: roadmap journey */}
         <Section index={3} title={t("section3Title")} subtitle={t("section3Subtitle")}>
           {data.next_steps.length > 0 && (
@@ -992,6 +997,62 @@ function GapCard({ g }: { g: ResultResponse["gaps"][number] }) {
 }
 
 const TOP_GAPS = 6;
+
+/* 能力资产组合 / Human Capital Portfolio：把成长路线图讲成"按 ROI 配置你的时间"(金融视角) */
+function CapabilityPortfolio({ data }: { data: ResultResponse }) {
+  const t = useTranslations("result");
+  const steps = data.next_steps.slice(0, 4);
+  if (steps.length === 0) return null;
+  const totalW = steps.reduce((s, x) => s + Math.max(1, x.est_weeks), 0);
+  const weeks = data.pacing?.total_weeks ?? totalW;
+  const COLORS = ["#1BE5EE", "#FFB800", "#FF4D8D", "#00C896"];
+  return (
+    <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#121826]/50 p-6 backdrop-blur-xl sm:p-8">
+      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-cyan/70">Human Capital Portfolio</span>
+      <h3 className="mt-1 text-lg font-bold tracking-tight">{t("portfolioTitle")}</h3>
+      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t("portfolioSubtitle")}</p>
+
+      {data.strengths.length > 0 && (
+        <div className="mt-5">
+          <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/60">{t("portfolioHave")}</p>
+          <div className="flex flex-wrap gap-1.5">
+            {data.strengths.slice(0, 5).map((s) => (
+              <span key={s.skill_id} className="rounded-full border border-cyan/25 bg-cyan/[0.06] px-2.5 py-0.5 text-xs text-foreground/85">{s.skill_name}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-6">
+        <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/60">{t("portfolioAllocation", { weeks })}</p>
+        <div className="space-y-3.5">
+          {steps.map((x, i) => {
+            const pct = Math.round((Math.max(1, x.est_weeks) / totalW) * 100);
+            const c = COLORS[i % COLORS.length];
+            return (
+              <div key={x.skill_id}>
+                <div className="mb-1 flex items-baseline justify-between gap-3">
+                  <span className="truncate text-sm font-medium">{x.skill_name}</span>
+                  <span className="shrink-0 font-mono text-sm font-bold" style={{ color: c }}>{pct}%</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: `${pct}%` }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: 0.1 * i, ease: [0.16, 1, 0.3, 1] }}
+                    className="h-full rounded-full"
+                    style={{ background: c, boxShadow: `0 0 10px ${c}80` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function GapsGrid({ gaps }: { gaps: ResultResponse["gaps"] }) {
   const t = useTranslations("result");
