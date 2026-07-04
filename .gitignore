@@ -14,6 +14,9 @@ downloads/
 eggs/
 .eggs/
 lib/
+# 例外：前端源码目录 apps/web/lib 不能被上面这条 Python 的 lib/ 规则忽略（否则 Vercel 构建缺 @/lib/*）
+!apps/web/lib/
+!apps/web/lib/**
 lib64/
 parts/
 sdist/
