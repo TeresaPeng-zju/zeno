@@ -77,8 +77,14 @@ Zeno 把成长建模为**技能图谱**——`当前技能 → 缺失能力 → 
 | 前端 | Next.js 15（App Router）、React Flow、Framer Motion、next-intl（en / zh / zh-TW） |
 | 后端 | FastAPI (Python)、SQLAlchemy、Alembic |
 | 数据库 | Postgres 16 + pgvector |
-| LLM | DeepSeek / 任意兼容 OpenAI 的服务 —— *仅用于表达* |
+| LLM | **0G Compute**（去中心化、可验证）/ DeepSeek / 任意兼容 OpenAI 的服务 —— *仅用于表达* |
 | 引擎 | 确定性决策引擎 + RAG 资源召回 |
+
+### 基于 0G Compute 的可验证表达
+
+正因为 Zeno 把 LLM 严格限制在*仅表达*，措辞层就整体跑在 **[0G Compute](https://pc.0g.ai)**——一个去中心化、TEE 背书的推理网络——通过它的 OpenAI 兼容 Router 调用。决策（差距、排序、就绪度）完全由确定性引擎产出，只有「诊断 voice」的措辞交给它。每次生成会返回一个可链上验证的 **request id**，在结果页以 `0G 可验证推理` 徽章呈现——所以诊断的表达不是黑箱，而是可证明地跑在去中心化算力上。
+
+在 `apps/api/.env` 里设置 `ZG_API_KEY`（及可选的 `ZG_MODEL`）即可启用；留空则回退 DeepSeek，再回退确定性模板。
 
 ```
 zeno/
