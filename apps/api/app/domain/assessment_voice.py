@@ -191,14 +191,24 @@ def narrate(facts: dict, lang: str = "zh") -> dict:
         client = OpenAI(api_key=api_key, base_url=base_url)
         user = ("请基于以下事实，产出 {headline, body}：\n" if zh
                 else "Based on these facts, produce {headline, body}:\n") + json.dumps(facts, ensure_ascii=False, indent=1)
-        resp = client.chat.completions.create(
-            model=model, temperature=0.6, max_tokens=700,
-            response_format={"type": "json_object"},
-            messages=[{"role": "system", "content": SYSTEMS["zh" if zh else "en"]},
-                      {"role": "user", "content": user}],
-        )
+        messages = [{"role": "system", "content": SYSTEMS["zh" if zh else "en"]},
+                    {"role": "user", "content": user}]
+        # Not every provider (e.g. 0G's own models) supports response_format.
+        # Try the strict JSON mode first; on ANY error, retry without it and
+        # extract the JSON object from the text — so 0G still returns a verifiable
+        # response instead of silently falling back to the template.
+        try:
+            resp = client.chat.completions.create(
+                model=model, temperature=0.6, max_tokens=700,
+                response_format={"type": "json_object"}, messages=messages,
+            )
+        except Exception:
+            resp = client.chat.completions.create(
+                model=model, temperature=0.6, max_tokens=700, messages=messages,
+            )
         raw = _THINK_RE.sub("", resp.choices[0].message.content or "").strip()
-        data = json.loads(raw)
+        m = re.search(r"\{[\s\S]*\}", raw)  # tolerate prose/markdown around the JSON
+        data = json.loads(m.group(0) if m else raw)
         head = (data.get("headline") or "").strip()
         body = (data.get("body") or "").strip()
         if not body:
