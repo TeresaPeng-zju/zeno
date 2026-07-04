@@ -159,19 +159,40 @@ def build_facts(result, *, role_id: str, orientation: str, lang: str = "zh") -> 
     }
 
 
+def _voice_backend() -> tuple[str, str, str, str] | None:
+    """Pick the LLM backend for the expression layer.
+
+    Prefers 0G Compute (decentralized, verifiable inference) when configured;
+    falls back to DeepSeek; returns None when neither is set (→ template).
+    Returns (api_key, base_url, model, provider_label).
+    """
+    if settings.zg_api_key:
+        return (settings.zg_api_key, settings.zg_base_url, settings.zg_model, "0G Compute")
+    if settings.deepseek_api_key:
+        return (settings.deepseek_api_key, settings.deepseek_base_url, settings.deepseek_model, "DeepSeek")
+    return None
+
+
 def narrate(facts: dict, lang: str = "zh") -> dict:
-    """调 DeepSeek 把 facts 说成有节奏的人话 + 一句金句；失败回退确定性模板。返回 {headline, body}。"""
+    """把 facts 说成有节奏的人话 + 一句金句。
+
+    表达层优先跑在 **0G Compute**（去中心化、可验证推理）——决策仍由确定性引擎
+    产出，这里只负责措辞。0G 返回的 request id 让每次生成可链上验证（TEE 背书）。
+    失败或未配置时回退确定性模板。返回 {headline, body, verify?}。
+    """
     zh = _zh(lang)
-    if not settings.deepseek_api_key:
+    backend = _voice_backend()
+    if backend is None:
         return _template(facts, lang)
+    api_key, base_url, model, provider = backend
     try:
         from openai import OpenAI
 
-        client = OpenAI(api_key=settings.deepseek_api_key, base_url=settings.deepseek_base_url)
+        client = OpenAI(api_key=api_key, base_url=base_url)
         user = ("请基于以下事实，产出 {headline, body}：\n" if zh
                 else "Based on these facts, produce {headline, body}:\n") + json.dumps(facts, ensure_ascii=False, indent=1)
         resp = client.chat.completions.create(
-            model=settings.deepseek_model, temperature=0.6, max_tokens=700,
+            model=model, temperature=0.6, max_tokens=700,
             response_format={"type": "json_object"},
             messages=[{"role": "system", "content": SYSTEMS["zh" if zh else "en"]},
                       {"role": "user", "content": user}],
@@ -182,7 +203,16 @@ def narrate(facts: dict, lang: str = "zh") -> dict:
         body = (data.get("body") or "").strip()
         if not body:
             return _template(facts, lang)
-        return {"headline": head, "body": body}
+        out = {"headline": head, "body": body}
+        # Verifiable-inference receipt: surface the 0G request id so the UI can
+        # prove the expression ran on decentralized, TEE-backed compute.
+        if provider == "0G Compute":
+            out["verify"] = {
+                "provider": provider,
+                "model": model,
+                "request_id": getattr(resp, "id", None) or "",
+            }
+        return out
     except Exception:
         return _template(facts, lang)
 

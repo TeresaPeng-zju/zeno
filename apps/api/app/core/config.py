@@ -16,6 +16,15 @@ class Settings(BaseSettings):
     deepseek_api_key: str | None = None
     deepseek_model: str = "deepseek-chat"
     deepseek_base_url: str = "https://api.deepseek.com"
+    # 0G Compute — decentralized, verifiable inference (OpenAI-compatible Router).
+    # When zg_api_key is set, Zeno's EXPRESSION layer (the "voice" narrative) runs
+    # on 0G Compute instead of DeepSeek. Decisions stay in the deterministic engine;
+    # only the phrasing is delegated — and the on-chain request id makes each
+    # generation verifiable (TEE-backed). Get a key + model at https://pc.0g.ai.
+    zg_api_key: str | None = None
+    # Mainnet Router; testnet: https://router-api-testnet.integratenetwork.work/v1
+    zg_base_url: str = "https://router-api.0g.ai/v1"
+    zg_model: str = "gpt-oss-120b"
     # Embedding (Week 3 resource engine). 1536 = OpenAI text-embedding-3-small.
     embedding_provider: str = "mock"  # mock | openai
     embedding_model: str = "text-embedding-3-small"

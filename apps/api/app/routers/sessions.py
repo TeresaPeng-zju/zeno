@@ -112,7 +112,11 @@ def get_voice(
     out = voice_for_result(
         result, role_id=sess.role_id, orientation=result.orientation, lang=effective_lang
     )
-    return {"headline": out.get("headline", ""), "voice": out.get("body", "")}
+    return {
+        "headline": out.get("headline", ""),
+        "voice": out.get("body", ""),
+        "verify": out.get("verify"),  # 0G verifiable-inference receipt (or null)
+    }
 
 
 @router.post("/{session_id}/extract")

@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { type ZenoNodeData } from "@/components/zeno/career-graph";
 import { CircularProgress } from "@/components/zeno/circular-progress";
 import { RoleJourney } from "@/components/zeno/role-journey";
+import { PassportMint } from "@/components/zeno/passport-mint";
 import { Centered } from "@/components/site/centered";
 import { api, type JdMatchResponse, type OrientationOut, type ProgressEvent, type ResourceOut, type ResultResponse, type StreamEvent, type TimeBudget } from "@/lib/api";
 
@@ -113,6 +114,8 @@ function ResultInner() {
   const [targetRole, setTargetRole] = useState<string | null>(null);
   const [voice, setVoice] = useState<string | null>(null);
   const [voiceHead, setVoiceHead] = useState<string | null>(null);
+  // 0G verifiable-inference receipt for the expression layer (null → not on 0G).
+  const [verify, setVerify] = useState<{ provider: string; model: string; request_id: string } | null>(null);
 
   // The roles a user can target are the same orientations the engine supports.
   useEffect(() => {
@@ -138,12 +141,14 @@ function ResultInner() {
     let active = true;
     setVoice(null);
     setVoiceHead(null);
+    setVerify(null);
     fetch(`${base}/api/sessions/${sessionId}/voice?${qs.toString()}`)
       .then((r) => r.json())
       .then((d) => {
         if (!active) return;
         setVoice(typeof d?.voice === "string" ? d.voice : null);
         setVoiceHead(typeof d?.headline === "string" ? d.headline : null);
+        setVerify(d?.verify && d.verify.request_id ? d.verify : null);
       })
       .catch(() => { /* 非致命：没有就不显示 */ });
     return () => { active = false; };
@@ -354,7 +359,17 @@ function ResultInner() {
                       <span className="h-2 w-2 animate-pulse rounded-full bg-cyan shadow-[0_0_8px_#1BE5EE]" />
                       <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-cyan/70">Analysis Terminal // Zeno</span>
                     </div>
-                    <span className="font-mono text-[10px] uppercase tracking-wide text-slate-500">{t("termStatus")}</span>
+                    {verify ? (
+                      <span
+                        title={`${t("zgVerifiedTip")} · ${verify.model} · ${verify.request_id}`}
+                        className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wide text-emerald-300/90"
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+                        {t("zgVerified")} · {verify.request_id.slice(0, 10)}…
+                      </span>
+                    ) : (
+                      <span className="font-mono text-[10px] uppercase tracking-wide text-slate-500">{t("termStatus")}</span>
+                    )}
                   </div>
                   <div className="flex flex-col gap-6 p-7 md:flex-row md:gap-8">
                     {/* 左：Zippi + 就绪度微型仪表 */}
@@ -621,6 +636,15 @@ function ResultInner() {
             {t("saveMap")}
           </button>
           <Link href="/"><Button variant="outline">{t("reassess")}</Button></Link>
+          {/* AI×Web3: mint the migration journey as a Soulbound passport.
+              Hidden unless NEXT_PUBLIC_PASSPORT_ADDRESS is configured. */}
+          <PassportMint
+            fromRole="Frontend Engineer"
+            toRole="AI Application Engineer"
+            readiness={Math.round(data.readiness)}
+            strengths={data.strengths.length}
+            gaps={data.gaps.filter((g) => g.type === "required" && g.gap > 0).length}
+          />
         </div>
       </div>
     </main>

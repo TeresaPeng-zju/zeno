@@ -77,8 +77,14 @@ The full graph (23 skills, 4 dimensions, dependencies, and target-role orientati
 | Frontend | Next.js 15 (App Router), React Flow, Framer Motion, next-intl (en / zh / zh-TW) |
 | Backend | FastAPI (Python), SQLAlchemy, Alembic |
 | Database | Postgres 16 + pgvector |
-| LLM | DeepSeek / any OpenAI-compatible provider — *expression only* |
+| LLM | **0G Compute** (decentralized, verifiable) / DeepSeek / any OpenAI-compatible provider — *expression only* |
 | Engine | Deterministic decision engine + RAG resource retrieval |
+
+### Verifiable expression on 0G Compute
+
+Because Zeno already isolates the LLM to *expression only*, the phrasing layer runs on **[0G Compute](https://pc.0g.ai)** — a decentralized, TEE-backed inference network — via its OpenAI-compatible Router. The decision (gaps, ranking, readiness) stays fully deterministic; only the "voice" narrative is delegated. Each generation returns an on-chain-verifiable **request id**, surfaced on the result page as a `0G Verifiable Inference` badge — so the diagnosis narrative is provably produced on decentralized compute, not a black box.
+
+Enable it by setting `ZG_API_KEY` (+ optional `ZG_MODEL`) in `apps/api/.env`; leave it unset and Zeno falls back to DeepSeek, then a deterministic template.
 
 ```
 zeno/
