@@ -11,8 +11,18 @@
 // ABI encoding is done by hand to keep this file dependency-free.
 
 export type PassportData = {
+  /** Display name, localized to the UI language. */
   fromRole: string;
+  /** Display name, localized to the UI language. */
   toRole: string;
+  /**
+   * Canonical English role names written on-chain (and into the MRZ line).
+   * The on-chain SVG intentionally uses English — explorer/marketplace
+   * rendering environments don't guarantee CJK fonts. Defaults to the
+   * display names when omitted.
+   */
+  chainFromRole?: string;
+  chainToRole?: string;
   readiness: number; // 0-100
   strengths: number;
   gaps: number;
@@ -67,8 +77,8 @@ function encodeStringTail(s: string): string {
 
 export function encodeMintCall(d: PassportData): string {
   const readiness = Math.max(0, Math.min(100, Math.round(d.readiness)));
-  const tail1 = encodeStringTail(d.fromRole);
-  const tail2 = encodeStringTail(d.toRole);
+  const tail1 = encodeStringTail(d.chainFromRole ?? d.fromRole);
+  const tail2 = encodeStringTail(d.chainToRole ?? d.toRole);
   const headSize = 5 * 32;
   const offset1 = headSize;
   const offset2 = headSize + tail1.length / 2;

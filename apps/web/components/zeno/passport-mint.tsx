@@ -226,10 +226,10 @@ export function PassportMint(props: PassportData) {
                   </div>
                 </div>
 
-                {/* perforation + MRZ */}
+                {/* perforation + MRZ (always canonical English, like a real passport) */}
                 <div className="mt-5 border-t border-dashed border-white/15 pt-3">
                   <p className="truncate text-center font-mono text-[10px] tracking-[0.18em] text-violet-200/40">
-                    {mrz(props.fromRole, props.toRole)}
+                    {mrz(props.chainFromRole ?? props.fromRole, props.chainToRole ?? props.toRole)}
                   </p>
                   <p className="mt-1 text-center text-[10px] leading-relaxed text-muted-foreground/70">{t.footer}</p>
                 </div>

@@ -639,8 +639,10 @@ function ResultInner() {
           {/* AI×Web3: mint the migration journey as a Soulbound passport.
               Hidden unless NEXT_PUBLIC_PASSPORT_ADDRESS is configured. */}
           <PassportMint
-            fromRole="Frontend Engineer"
-            toRole="AI Application Engineer"
+            fromRole={tr("frontend")}
+            toRole={tr("aiEngineer")}
+            chainFromRole="Frontend Engineer"
+            chainToRole="AI Application Engineer"
             readiness={Math.round(data.readiness)}
             strengths={data.strengths.length}
             gaps={data.gaps.filter((g) => g.type === "required" && g.gap > 0).length}
