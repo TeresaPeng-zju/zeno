@@ -106,7 +106,9 @@
       "vectorSearch": "向量檢索",
       "functionCalling": "函式呼叫",
       "offlineEval": "離線評估"
-    }
+    },
+    "sourceBackend": "來自 595 條真實後端工程崗位的統計",
+    "sourceFullstack": "來自 403 條真實全棧工程崗位的統計"
   },
   "skills": {
     "title": "回憶一下你的經歷",
@@ -194,7 +196,7 @@
     "shareReadiness": "AI 就緒度",
     "shareHave": "已具備",
     "shareUnlock": "待解鎖",
-    "shareTagline": "由 Zeno 基于 759 條真實 AI 崗位繪制",
+    "shareTagline": "由 Zeno 基於 1,810 條真實崗位信號繪製",
     "shareCta": "分享我的 AI 基因",
     "linkCopied": "連結已複製 ✓",
     "generatingImage": "正在產生圖片…",

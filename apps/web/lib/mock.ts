@@ -847,7 +847,6 @@ export const mockApi = {
       { id: "frontend_engineer", label: "Frontend Engineer", label_zh: "前端工程师" },
       { id: "fullstack_engineer", label: "Full Stack Engineer", label_zh: "全栈工程师" },
       { id: "backend_engineer", label: "Backend Engineer", label_zh: "后端工程师" },
-      { id: "student", label: "Student", label_zh: "学生" },
     ],
     target_roles: [
       { id: "ai_engineer_applied", label: "AI Engineer (Applied)", label_zh: "AI 应用工程师" },

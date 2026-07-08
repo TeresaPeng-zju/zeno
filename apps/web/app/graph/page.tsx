@@ -15,8 +15,8 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import { Centered } from "@/components/site/centered";
+import { api } from "@/lib/api";
 
-const API = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
 
 // ── 成长图（前端策展内容，纯前端状态机；只在最后把已确认节点提交给 /answers）──
 // match = 该技能在 759 条真实前端 JD 里的普遍度（数据接地，不是 vibes）。
@@ -25,24 +25,58 @@ type GNode = {
   skill?: string; seed?: boolean; match?: number; jd?: number;
   why?: string; whyZh?: string; transferPath?: string[]; transferPathZh?: string[]; grows?: string[]; target?: boolean;
 };
-const GRAPH: Record<string, GNode> = {
-  ts: { id: "ts", label: "TypeScript Engineering", labelZh: "TypeScript 工程化", x: 40, y: 60, skill: "eng.typescript", seed: true, match: 61, why: "You already know how to constrain system behavior with types. AI engineering uses the same idea to constrain model behavior.", whyZh: "你已经懂得用类型约束系统的行为。AI 工程用的是同一个思路——约束模型的行为。", transferPath: ["TypeScript schema", "Structured Output", "Function Calling"], transferPathZh: ["TypeScript 模式", "结构化输出", "函数调用"], grows: ["structOut"] },
-  api: { id: "api", label: "API Design & Contracts", labelZh: "API 设计与契约", x: 40, y: 180, skill: "eng.api_design", seed: true, match: 43, why: "Designing API contracts is the same thinking as defining tool inputs for an LLM.", whyZh: "设计 API 契约，和为 LLM 定义工具输入是同一种思维。", transferPath: ["API contracts", "Tool inputs", "RAG / orchestration"], transferPathZh: ["API 契约", "工具输入", "RAG / 编排"], grows: ["fc", "rag"] },
-  deploy: { id: "deploy", label: "Deployment / CI·CD", labelZh: "部署 / CI·CD", x: 40, y: 300, skill: "eng.deploy", seed: true, match: 14, why: "Your deployment and reliability thinking transfers directly to latency & cost tradeoffs in AI apps.", whyZh: "你的部署与可靠性思维，可以直接迁移到 AI 应用的延迟与成本权衡上。", transferPath: ["Deployment thinking", "Latency & cost", "AI app reliability"], transferPathZh: ["部署思维", "延迟与成本", "AI 应用可靠性"], grows: ["cost"] },
-  err: { id: "err", label: "Error Handling", labelZh: "错误处理", x: 40, y: 420, skill: "eng.error_handling", seed: true, match: 7, why: "Handling API failures is the same muscle as tool-call retries and fallbacks.", whyZh: "处理 API 失败，和工具调用的重试与兜底是同一块肌肉。", transferPath: ["Error handling", "Tool-call fallback", "Reliable agents"], transferPathZh: ["错误处理", "工具调用兜底", "可靠 Agent"], grows: ["fc"] },
-  stream: { id: "stream", label: "SSE / Streaming", labelZh: "SSE / 流式", x: 40, y: 540, skill: "llm.streaming", seed: true, match: 4, why: "Your frontend SSE experience is literally what LLM streaming integration needs.", whyZh: "你的前端 SSE 经验，正是 LLM 流式集成需要的能力。", transferPath: ["Frontend SSE", "LLM streaming", "Realtime AI UX"], transferPathZh: ["前端 SSE", "LLM 流式", "实时 AI 体验"], grows: ["target"] },
-
+// 共享的 AI 能力层（各角色殊途同归）。jd = 该技能在 AI 岗位 JD 中的出现率。
+const CORE: Record<string, GNode> = {
   structOut: { id: "structOut", label: "Structured Output", labelZh: "结构化输出", x: 360, y: 40, skill: "llm.structured_output", jd: 4, grows: ["target"] },
   fc: { id: "fc", label: "Function Calling", labelZh: "函数调用", x: 360, y: 190, skill: "llm.function_calling", jd: 14, grows: ["tool"] },
   rag: { id: "rag", label: "Vector Search / RAG", labelZh: "向量检索 / RAG", x: 360, y: 330, skill: "data.vector_search", jd: 4, grows: ["eval"] },
   cost: { id: "cost", label: "Cost & Latency", labelZh: "成本与延迟", x: 360, y: 470, skill: "llm.cost_latency", jd: 29, grows: ["target"] },
-
   tool: { id: "tool", label: "Tool Orchestration (Agent)", labelZh: "工具编排（Agent）", x: 660, y: 190, skill: "llm.tool_use", jd: 73, grows: ["target"] },
   eval: { id: "eval", label: "Evaluation · the moat", labelZh: "评估 · 护城河", x: 660, y: 350, skill: "eval.offline", jd: 33, grows: ["target"] },
-
   target: { id: "target", label: "AI Application Engineer", labelZh: "AI 应用工程师", x: 940, y: 280, target: true },
 };
-const SEEDS = ["ts", "api", "deploy", "err", "stream"];
+
+// 种子模板（角色间可复用的文案；match 按角色的真实 JD 统计覆盖，见
+// apps/api/scripts/build_jd_evidence.py 同一标注函数在 51job 语料上的计算）。
+const SEED_DEFS: Record<string, Omit<GNode, "x" | "y" | "match">> = {
+  ts: { id: "ts", label: "TypeScript Engineering", labelZh: "TypeScript 工程化", skill: "eng.typescript", seed: true, why: "You already know how to constrain system behavior with types. AI engineering uses the same idea to constrain model behavior.", whyZh: "你已经懂得用类型约束系统的行为。AI 工程用的是同一个思路——约束模型的行为。", transferPath: ["TypeScript schema", "Structured Output", "Function Calling"], transferPathZh: ["TypeScript 模式", "结构化输出", "函数调用"], grows: ["structOut"] },
+  api: { id: "api", label: "API Design & Contracts", labelZh: "API 设计与契约", skill: "eng.api_design", seed: true, why: "Designing API contracts is the same thinking as defining tool inputs for an LLM.", whyZh: "设计 API 契约，和为 LLM 定义工具输入是同一种思维。", transferPath: ["API contracts", "Tool inputs", "RAG / orchestration"], transferPathZh: ["API 契约", "工具输入", "RAG / 编排"], grows: ["fc", "rag"] },
+  deploy: { id: "deploy", label: "Deployment / CI·CD", labelZh: "部署 / CI·CD", skill: "eng.deploy", seed: true, why: "Your deployment and reliability thinking transfers directly to latency & cost tradeoffs in AI apps.", whyZh: "你的部署与可靠性思维，可以直接迁移到 AI 应用的延迟与成本权衡上。", transferPath: ["Deployment thinking", "Latency & cost", "AI app reliability"], transferPathZh: ["部署思维", "延迟与成本", "AI 应用可靠性"], grows: ["cost"] },
+  err: { id: "err", label: "Error Handling", labelZh: "错误处理", skill: "eng.error_handling", seed: true, why: "Handling API failures is the same muscle as tool-call retries and fallbacks.", whyZh: "处理 API 失败，和工具调用的重试与兜底是同一块肌肉。", transferPath: ["Error handling", "Tool-call fallback", "Reliable agents"], transferPathZh: ["错误处理", "工具调用兜底", "可靠 Agent"], grows: ["fc"] },
+  stream: { id: "stream", label: "SSE / Streaming", labelZh: "SSE / 流式", skill: "llm.streaming", seed: true, why: "Your frontend SSE experience is literally what LLM streaming integration needs.", whyZh: "你的前端 SSE 经验，正是 LLM 流式集成需要的能力。", transferPath: ["Frontend SSE", "LLM streaming", "Realtime AI UX"], transferPathZh: ["前端 SSE", "LLM 流式", "实时 AI 体验"], grows: ["target"] },
+  obs: { id: "obs", label: "Observability", labelZh: "可观测性（日志/监控）", skill: "eng.observability", seed: true, why: "You already watch systems through logs and metrics. Evaluating LLM quality is the same discipline — new signals, same eyes.", whyZh: "你已经会用日志和指标看清系统——评估 LLM 质量用的是同一双眼睛，只是换了信号。", transferPath: ["Observability", "Quality signals", "LLM evaluation"], transferPathZh: ["可观测性", "质量信号", "LLM 评估"], grows: ["eval"] },
+  auth: { id: "auth", label: "Auth & Permissions", labelZh: "鉴权与权限", skill: "eng.auth", seed: true, why: "You've drawn permission boundaries for systems. Giving an agent safe access to tools is the same security instinct.", whyZh: "你给系统划过权限边界——给 Agent 的工具划边界，是同一种安全直觉。", transferPath: ["Auth & permissions", "Tool boundaries", "Trusted agents"], transferPathZh: ["鉴权与权限", "工具权限边界", "可信 Agent"], grows: ["tool"] },
+};
+
+// 每个角色：种子顺序 + 真实匹配度（同一标注函数对该角色 JD 子集的统计）。
+const ROLE_VARIANTS: Record<string, { seeds: [string, number, string[]?][] }> = {
+  // 759 条前端 JD
+  frontend: { seeds: [["ts", 61], ["api", 43], ["deploy", 14], ["err", 7], ["stream", 4]] },
+  // 595 条后端 JD；api 额外长出 structOut（schema 契约思维）
+  backend: { seeds: [["api", 48, ["structOut", "fc", "rag"]], ["deploy", 30], ["err", 17], ["obs", 12], ["auth", 3]] },
+  // 403 条全栈 JD
+  fullstack: { seeds: [["ts", 76], ["api", 70], ["deploy", 45], ["err", 19], ["obs", 12]] },
+};
+
+const SEED_Y = [60, 180, 300, 420, 540];
+
+function buildVariant(roleKey: string): { GRAPH: Record<string, GNode>; SEEDS: string[] } {
+  const variant = ROLE_VARIANTS[roleKey] ?? ROLE_VARIANTS.frontend;
+  const graph: Record<string, GNode> = { ...CORE };
+  const seeds: string[] = [];
+  variant.seeds.forEach(([id, match, growsOverride], i) => {
+    const def = SEED_DEFS[id];
+    graph[id] = { ...def, x: 40, y: SEED_Y[i], match, ...(growsOverride ? { grows: growsOverride } : {}) };
+    seeds.push(id);
+  });
+  return { GRAPH: graph, SEEDS: seeds };
+}
+
+function roleKeyOf(currentRole: string | null): "frontend" | "backend" | "fullstack" {
+  if (currentRole?.startsWith("backend")) return "backend";
+  if (currentRole?.startsWith("fullstack") || currentRole?.startsWith("full_stack")) return "fullstack";
+  return "frontend";
+}
 const DEPTH = [1, 2, 3, 4];
 const LVL_VAL: Record<number, string> = { 1: "tutorial", 2: "demo", 3: "shipped", 4: "expert" };
 
@@ -93,6 +127,8 @@ function GraphInner() {
   const router = useRouter();
   const params = useSearchParams();
   const sessionId = params.get("session");
+  const roleKey = roleKeyOf(params.get("current_role"));
+  const { GRAPH, SEEDS } = useMemo(() => buildVariant(roleKey), [roleKey]);
   const t = useTranslations("graph");
   const locale = useLocale();
   const zh = locale.startsWith("zh");
@@ -169,14 +205,19 @@ function GraphInner() {
       const sk = GRAPH[id]?.skill;
       if (sk && lv > 0 && lv > (skillLvl[sk] ?? 0)) skillLvl[sk] = lv;
     }
-    if (Object.keys(skillLvl).length === 0) return;
+    // Nothing confirmed yet (or everything answered "not yet"): the map has no
+    // signal to work with — still allow proceeding so the flow never dead-ends;
+    // the engine treats an empty observation set as "all gaps".
     setSubmitting(true);
     try {
+      // Use the mock-aware api client (NOT raw fetch): in NEXT_PUBLIC_USE_MOCK
+      // mode there is no backend, and raw fetch would silently strand the user.
       await Promise.all(Object.entries(skillLvl).map(([sk, lv]) =>
-        fetch(`${API}/api/sessions/${sessionId}/answers`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ skill_id: sk, answer_value: LVL_VAL[lv] ?? "demo" }) })));
+        api.submitAnswer(sessionId, sk, LVL_VAL[lv] ?? "demo")));
       router.push(`/result?session=${sessionId}`);
     } catch {
-      setSubmitting(false);
+      // Even if answer submission fails, don't strand the user on this page.
+      router.push(`/result?session=${sessionId}`);
     }
   }
 
@@ -201,7 +242,7 @@ function GraphInner() {
             <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted/40">
               <div className="h-full rounded-full bg-cyan transition-all duration-700" style={{ width: `${readiness}%` }} />
             </div>
-            <p className="mt-1 text-[10px] text-muted-foreground/70">{t("source")}</p>
+            <p className="mt-1 text-[10px] text-muted-foreground/70">{t(roleKey === "backend" ? "sourceBackend" : roleKey === "fullstack" ? "sourceFullstack" : "source")}</p>
           </div>
           {confirmedCount > 0 && (
             <button onClick={finish} disabled={submitting} className="shrink-0 rounded-full bg-cyan px-4 py-2 text-xs font-semibold text-[hsl(222_47%_6%)] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_24px_rgba(27,229,238,0.55)] active:scale-95 disabled:opacity-50">

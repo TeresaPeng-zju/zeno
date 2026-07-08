@@ -47,9 +47,19 @@
   "home": {
     "title": "看清你和 AI 工程师的真实距离。",
     "subtitle": "用真实招聘数据，诚实测一测你和目标岗位的距离。",
-    "rotatingWords": ["发现", "探索", "打造", "转型"],
+    "rotatingWords": [
+      "发现",
+      "探索",
+      "打造",
+      "转型"
+    ],
     "rotatingSuffix": "你的下一步。",
-    "typingPhrases": ["发现新的方向", "探索更多可能", "打造核心能力", "开启职业转型"],
+    "typingPhrases": [
+      "发现新的方向",
+      "探索更多可能",
+      "打造核心能力",
+      "开启职业转型"
+    ],
     "iAmA": "你现在是？",
     "targetRole": "你的目标：",
     "iWantTo": "我想成为：",
@@ -96,7 +106,9 @@
       "vectorSearch": "向量检索",
       "functionCalling": "函数调用",
       "offlineEval": "离线评估"
-    }
+    },
+    "sourceBackend": "来自 595 条真实后端工程岗位的统计",
+    "sourceFullstack": "来自 403 条真实全栈工程岗位的统计"
   },
   "skills": {
     "title": "回忆一下你的经历",
@@ -184,7 +196,7 @@
     "shareReadiness": "AI 就绪度",
     "shareHave": "已具备",
     "shareUnlock": "待解锁",
-    "shareTagline": "由 Zeno 基于 759 条真实 AI 岗位绘制",
+    "shareTagline": "由 Zeno 基于 1,810 条真实岗位信号绘制",
     "shareCta": "分享我的 AI 基因",
     "linkCopied": "链接已复制 ✓",
     "generatingImage": "正在生成图片…",

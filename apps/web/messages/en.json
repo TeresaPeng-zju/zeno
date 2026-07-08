@@ -47,9 +47,19 @@
   "home": {
     "title": "See how close you already are to AI Engineering",
     "subtitle": "Your existing engineering skills may already transfer to AI applications.",
-    "rotatingWords": ["Discover", "Explore", "Build", "Transform"],
+    "rotatingWords": [
+      "Discover",
+      "Explore",
+      "Build",
+      "Transform"
+    ],
     "rotatingSuffix": "what's next.",
-    "typingPhrases": ["Discover a new direction", "Explore what's possible", "Build core skills", "Begin your transition"],
+    "typingPhrases": [
+      "Discover a new direction",
+      "Explore what's possible",
+      "Build core skills",
+      "Begin your transition"
+    ],
     "iAmA": "What's your current role?",
     "targetRole": "Your goal:",
     "iWantTo": "I want to become:",
@@ -96,7 +106,9 @@
       "vectorSearch": "Vector search",
       "functionCalling": "Function calling",
       "offlineEval": "Offline eval"
-    }
+    },
+    "sourceBackend": "From patterns in 595 backend engineering jobs",
+    "sourceFullstack": "From patterns in 403 full-stack engineering jobs"
   },
   "skills": {
     "title": "Confirm your starting point",
@@ -184,7 +196,7 @@
     "shareReadiness": "AI-ready",
     "shareHave": "Already have",
     "shareUnlock": "To unlock",
-    "shareTagline": "Mapped by Zeno · against 759 real AI engineering jobs",
+    "shareTagline": "Mapped by Zeno · calibrated on 1,810 real job signals",
     "shareCta": "Share my AI DNA",
     "linkCopied": "Link copied ✓",
     "generatingImage": "Generating image…",
