@@ -7,6 +7,7 @@ import { useLocale } from "next-intl";
 import {
   canMint,
   explorerTxUrl,
+  getMyPassportId,
   mintPassport,
   type MintStage,
   type PassportData,
@@ -34,6 +35,7 @@ const L = {
       done: "已提交",
     } as Record<MintStage, string>,
     minted: "铸造成功 · 在 BaseScan 查看",
+    verifyPage: "查看链上验证页（可分享）",
     mintNote: "由你自己的钱包签名并支付测试网 gas · 每个钱包一枚，再次铸造即更新",
     error: "未完成（已取消或出错），可重试",
     close: "关闭",
@@ -58,6 +60,7 @@ const L = {
       done: "Submitted",
     } as Record<MintStage, string>,
     minted: "Minted · view on BaseScan",
+    verifyPage: "View on-chain verification page (shareable)",
     mintNote: "Signed & paid (testnet gas) by your own wallet · one per wallet, re-mint updates",
     error: "Not completed (rejected or failed) — try again",
     close: "Close",
@@ -82,6 +85,7 @@ const L = {
       done: "已提交",
     } as Record<MintStage, string>,
     minted: "鑄造成功 · 在 BaseScan 查看",
+    verifyPage: "查看鏈上驗證頁（可分享）",
     mintNote: "由你自己的錢包簽名並支付測試網 gas · 每個錢包一枚，再次鑄造即更新",
     error: "未完成（已取消或出錯），可重試",
     close: "關閉",
@@ -98,7 +102,7 @@ function mrz(from: string, to: string): string {
 type MintState =
   | { kind: "idle" }
   | { kind: "busy"; stage: MintStage }
-  | { kind: "success"; hash: string }
+  | { kind: "success"; hash: string; tokenId: number }
   | { kind: "error" };
 
 /**
@@ -121,7 +125,8 @@ export function PassportMint(props: PassportData) {
       const hash = await mintPassport(props, (stage) =>
         setMint({ kind: "busy", stage }),
       );
-      setMint({ kind: "success", hash });
+      const tokenId = await getMyPassportId().catch(() => 0);
+      setMint({ kind: "success", hash, tokenId });
     } catch {
       setMint({ kind: "error" });
     }
@@ -238,14 +243,26 @@ export function PassportMint(props: PassportData) {
                 {canMint() && (
                   <div className="mt-4">
                     {mint.kind === "success" ? (
-                      <a
-                        href={explorerTxUrl(mint.hash)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="block w-full rounded-full border border-emerald-400/40 bg-emerald-500/15 py-2 text-center text-sm font-semibold text-emerald-200 transition-all hover:bg-emerald-500/25"
-                      >
-                        ✓ {t.minted}
-                      </a>
+                      <div className="space-y-2">
+                        <a
+                          href={explorerTxUrl(mint.hash)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block w-full rounded-full border border-emerald-400/40 bg-emerald-500/15 py-2 text-center text-sm font-semibold text-emerald-200 transition-all hover:bg-emerald-500/25"
+                        >
+                          ✓ {t.minted}
+                        </a>
+                        {mint.tokenId > 0 && (
+                          <a
+                            href={`/passport/${mint.tokenId}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block w-full rounded-full border border-violet-400/40 bg-violet-500/10 py-2 text-center text-sm font-semibold text-violet-200 transition-all hover:bg-violet-500/20"
+                          >
+                            {t.verifyPage}
+                          </a>
+                        )}
+                      </div>
                     ) : (
                       <button
                         onClick={onMint}

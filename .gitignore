@@ -94,3 +94,6 @@ docs/Zeno*.md
 
 # 防止本地 pnpm 再生成锁文件干扰 Vercel（项目用 npm）
 pnpm-lock.yaml
+
+# 内测反馈存档（本地资料，不入库）
+feedback/

@@ -91,6 +91,21 @@ export function encodeMintCall(d: PassportData): string {
   return SELECTOR + head + tail1 + tail2;
 }
 
+/** Read the connected wallet's passport tokenId (0 = none yet). */
+export async function getMyPassportId(): Promise<number> {
+  const eth = (window as any).ethereum;
+  if (!eth || !PASSPORT_ADDRESS) return 0;
+  const accounts: string[] = await eth.request({ method: "eth_accounts" });
+  if (!accounts[0]) return 0;
+  // passportOf(address) selector
+  const data = "0x5d1c2634" + accounts[0].slice(2).toLowerCase().padStart(64, "0");
+  const res: string = await eth.request({
+    method: "eth_call",
+    params: [{ to: PASSPORT_ADDRESS, data }, "latest"],
+  });
+  return res && res !== "0x" ? parseInt(res, 16) : 0;
+}
+
 // ── Wallet flow ────────────────────────────────────────────────────────────
 
 export type MintStage = "connect" | "switch" | "confirm" | "done";

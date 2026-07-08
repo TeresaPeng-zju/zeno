@@ -38,6 +38,7 @@ Most tools either flatter you or overwhelm you. Zeno does one thing honestly: it
 2. **Discover what transfers** — an interactive star-map surfaces the engineering foundations that already carry over to AI work. Confirm them, and watch your map grow from `TypeScript → API → Streaming → Prompt → Tool Use → Agent`. Edges mean *capability transfer* ("you have this, so you're close to that") — not course prerequisites.
 3. **Get your migration map** — a scroll-driven narrative from *"where you are"* to *"your first step"*, plus your transferable strengths, the real gaps (core vs. bonus), and a prioritized roadmap with curated learning resources.
 4. **Tailor it to a real job** — paste a job description and Zeno detects which specialization it emphasizes (RAG / Agents / Evaluation) and re-scores your gaps and roadmap accordingly.
+5. **Own your journey on-chain (AI×Web3)** — one click mints your migration journey as a Soulbound Transfer Passport (ERC-5192, non-transferable) on Base Sepolia, rendered fully on-chain as SVG. Every passport gets a public verification page (`/passport/[id]`) that reads straight from the chain — anyone can verify it without trusting Zeno's servers. Re-minting updates the same token as you grow.
 
 Available in **English, 简体中文, and 繁體中文**.
 
