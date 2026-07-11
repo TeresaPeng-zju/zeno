@@ -23,6 +23,15 @@ const ZH_TW_LABELS: Record<string, string> = {
   "AI 应用工程师": "AI 應用工程師",
 };
 
+/* ---------- Coming-soon role (UI-only, not returned by /api/paths) --------- */
+// Student 路径在 path_config.json 里数据齐全，先在首页以"敬请期待"卡片占位，
+// 不进入会话 / 不参与 currentRole 状态，等真正发布再下放。
+const COMING_SOON_ROLE: { id: string; label: string; label_zh: string } = {
+  id: "student",
+  label: "Student",
+  label_zh: "学生",
+};
+
 function roleLabel(role: { label: string; label_zh: string }, locale: string) {
   if (locale === "en") return role.label;
   if (locale === "zh-TW") return ZH_TW_LABELS[role.label_zh] || role.label_zh;
@@ -172,13 +181,26 @@ export default function HomePage() {
                   // 骨架屏：带微弱蓝光的透明占位，保持极客感
                   <div key={i} className="h-[118px] animate-pulse rounded-2xl border border-cyan/10 bg-white/[0.02] shadow-[inset_0_0_20px_rgba(27,229,238,0.04)]" />
                 ))
-              : currentRoles.map((role) => (
+              : [...currentRoles, COMING_SOON_ROLE].map((role) => {
+                  const isComingSoon = role.id === COMING_SOON_ROLE.id;
+                  return (
                   <button
                     key={role.id}
                     type="button"
-                    onClick={() => setCurrentRole(role.id)}
+                    onClick={() => {
+                      if (isComingSoon) {
+                        setShake(true);
+                        return;
+                      }
+                      setCurrentRole(role.id);
+                    }}
                     disabled={loading}
-                    className="group relative flex flex-col items-center gap-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.02] px-4 py-7 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-cyan/40 hover:bg-white/[0.05] hover:shadow-[inset_0_0_22px_rgba(27,229,238,0.06)] active:scale-[0.97] disabled:opacity-60"
+                    className={
+                      "group relative flex flex-col items-center gap-3 overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300 active:scale-[0.97] disabled:opacity-60 " +
+                      (isComingSoon
+                        ? "cursor-not-allowed border-white/[0.05] bg-white/[0.01] px-4 py-7 hover:border-white/15 hover:bg-white/[0.03] hover:shadow-[inset_0_0_22px_rgba(255,255,255,0.04)]"
+                        : "border-white/[0.08] bg-white/[0.02] px-4 py-7 hover:-translate-y-1 hover:border-cyan/40 hover:bg-white/[0.05] hover:shadow-[inset_0_0_22px_rgba(27,229,238,0.06)]")
+                    }
                   >
                     {/* 选中高光：layoutId 在卡片间平滑滑动 */}
                     {currentRole === role.id && (
@@ -190,15 +212,41 @@ export default function HomePage() {
                         <span className="absolute bottom-0 left-1/2 h-1 w-1/2 -translate-x-1/2 bg-cyan blur-md" />
                       </motion.div>
                     )}
-                    <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-br from-cyan/[0.06] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                    <span className={"relative z-10 flex h-9 items-center justify-center transition-all duration-300 group-hover:scale-110 " + (currentRole === role.id ? "[filter:drop-shadow(0_0_8px_#1BE5EE)]" : "")}>
+                    {!isComingSoon && (
+                      <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-br from-cyan/[0.06] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    )}
+                    <span className={"relative z-10 flex h-9 items-center justify-center transition-all duration-300 " + (isComingSoon ? "opacity-40 grayscale group-hover:scale-105" : "group-hover:scale-110 ") + (currentRole === role.id ? "[filter:drop-shadow(0_0_8px_#1BE5EE)]" : "")}>
                       <RolePixelIcon roleId={role.id} size={32} />
                     </span>
-                    <span className={"relative z-10 text-base font-semibold tracking-tight transition-colors " + (currentRole === role.id ? "text-cyan" : "text-foreground group-hover:text-cyan")}>
+                    <span className={"relative z-10 text-base font-semibold tracking-tight transition-colors " + (isComingSoon ? "text-foreground/40" : currentRole === role.id ? "text-cyan" : "text-foreground group-hover:text-cyan")}>
                       {roleLabel(role, locale)}
                     </span>
+
+                    {/* 敬请期待：hover 浮出胶囊 + 角标常显 */}
+                    {isComingSoon && (
+                      <>
+                        <span className="absolute right-2 top-2 z-20 rounded-full border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-medium leading-none text-foreground/45">
+                          SOON
+                        </span>
+                        <div className="pointer-events-none absolute inset-x-3 bottom-3 z-20 flex justify-center">
+                          <AnimatePresence>
+                            <motion.span
+                              key="coming-soon-tooltip"
+                              initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -4, scale: 0.95 }}
+                              transition={{ duration: 0.18, ease: "easeOut" }}
+                              className="rounded-full border border-cyan/20 bg-[hsl(222_47%_6%)]/90 px-2.5 py-1 text-[11px] font-medium text-cyan/90 backdrop-blur-md opacity-0 group-hover:opacity-100"
+                            >
+                              {t("comingSoon")}
+                            </motion.span>
+                          </AnimatePresence>
+                        </div>
+                      </>
+                    )}
                   </button>
-                ))}
+                  );
+                })}
           </div>
 
           {/* Target role：核心卖点 = 终点 + 奖励，选中后点亮旋转流光边 */}
