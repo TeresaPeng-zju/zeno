@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     zg_api_key: str | None = None
     # Mainnet Router; testnet: https://router-api-testnet.integratenetwork.work/v1
     zg_base_url: str = "https://router-api.0g.ai/v1"
-    zg_model: str = "gpt-oss-120b"
+    zg_model: str = "zai-org/GLM-5-FP8"
     # Embedding (Week 3 resource engine). 1536 = OpenAI text-embedding-3-small.
     embedding_provider: str = "mock"  # mock | openai
     embedding_model: str = "text-embedding-3-small"

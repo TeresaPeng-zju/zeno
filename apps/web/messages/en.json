@@ -217,7 +217,7 @@
     "saveMap": "Save this map",
     "termStatus": "Status: Computed",
     "zgVerified": "0G Verifiable Inference",
-    "zgVerifiedTip": "This diagnosis's expression layer was generated on 0G Compute decentralized inference (TEE-backed); the request id is verifiable on-chain",
+    "zgVerifiedTip": "Generated on 0G Compute; the Router synchronously verified the TEE signature. Audit it with the Request ID and provider address",
     "termReady": "Ready for AI",
     "termGaps": "The real gaps to close:",
     "termBacking": "Computed against <u>{count} real job requirements</u> — not what you'd like to hear.",

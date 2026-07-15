@@ -83,9 +83,19 @@ The full graph (23 skills, 4 dimensions, dependencies, and target-role orientati
 
 ### Verifiable expression on 0G Compute
 
-Because Zeno already isolates the LLM to *expression only*, the phrasing layer runs on **[0G Compute](https://pc.0g.ai)** — a decentralized, TEE-backed inference network — via its OpenAI-compatible Router. The decision (gaps, ranking, readiness) stays fully deterministic; only the "voice" narrative is delegated. Each generation returns an on-chain-verifiable **request id**, surfaced on the result page as a `0G Verifiable Inference` badge — so the diagnosis narrative is provably produced on decentralized compute, not a black box.
+Because Zeno already isolates the LLM to *expression only*, the phrasing layer runs on **[0G Compute](https://pc.0g.ai)** — a decentralized, TEE-backed inference network — via its OpenAI-compatible Router. The decision (gaps, ranking, readiness) stays fully deterministic; only the "voice" narrative is delegated.
 
-Enable it by setting `ZG_API_KEY` (+ optional `ZG_MODEL`) in `apps/api/.env`; leave it unset and Zeno falls back to DeepSeek, then a deterministic template.
+For every 0G generation, Zeno sends `verify_tee: true` and reads the Router-native `x_0g_trace` receipt instead of treating the ordinary OpenAI-compatible completion id as proof. The receipt contains the 0G **Request ID**, the on-chain **provider address**, and the `tee_verified` result. The result page displays the `0G Verifiable Inference` badge only when synchronous TEE verification succeeds.
+
+Enable it in `apps/api/.env`:
+
+```bash
+ZG_API_KEY=sk-...
+ZG_BASE_URL=https://router-api.0g.ai/v1
+ZG_MODEL=<model-id-from-the-live-0G-catalog>
+```
+
+Choose a current model id from [0G Private Computer](https://pc.0g.ai/models). Keep the key server-side and never expose it through a `NEXT_PUBLIC_` variable. If `ZG_API_KEY` is unset or the request fails, Zeno falls back to DeepSeek and then to a deterministic template; no 0G verification badge is shown for fallback output.
 
 ```
 zeno/

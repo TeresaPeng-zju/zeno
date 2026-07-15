@@ -83,9 +83,19 @@ Zeno 把成长建模为**技能图谱**——`当前技能 → 缺失能力 → 
 
 ### 基于 0G Compute 的可验证表达
 
-正因为 Zeno 把 LLM 严格限制在*仅表达*，措辞层就整体跑在 **[0G Compute](https://pc.0g.ai)**——一个去中心化、TEE 背书的推理网络——通过它的 OpenAI 兼容 Router 调用。决策（差距、排序、就绪度）完全由确定性引擎产出，只有「诊断 voice」的措辞交给它。每次生成会返回一个可链上验证的 **request id**，在结果页以 `0G 可验证推理` 徽章呈现——所以诊断的表达不是黑箱，而是可证明地跑在去中心化算力上。
+正因为Zeno把LLM严格限制在*仅表达*，措辞层通过OpenAI兼容Router运行在 **[0G Compute](https://pc.0g.ai)** 去中心化、TEE背书的推理网络上。差距、排序和就绪度仍完全由确定性引擎产出，只有诊断文案交给模型生成。
 
-在 `apps/api/.env` 里设置 `ZG_API_KEY`（及可选的 `ZG_MODEL`）即可启用；留空则回退 DeepSeek，再回退确定性模板。
+每次调用0G时，Zeno都会发送`verify_tee:true`，并读取Router原生的`x_0g_trace`凭证，而不是把普通OpenAI兼容Completion ID当作验证凭证。该凭证包含0G **Request ID**、链上 **Provider地址**和`tee_verified`结果。只有Router同步验证TEE签名成功后，结果页才会显示`0G可验证推理`徽章。
+
+在`apps/api/.env`中配置：
+
+```bash
+ZG_API_KEY=sk-...
+ZG_BASE_URL=https://router-api.0g.ai/v1
+ZG_MODEL=<从0G实时模型列表选择的模型ID>
+```
+
+请从[0G Private Computer](https://pc.0g.ai/models)选择当前可用的模型ID。API Key必须保留在服务端，不能放入`NEXT_PUBLIC_`环境变量。未配置`ZG_API_KEY`或调用失败时，系统会依次回退DeepSeek和确定性模板；回退结果不会显示0G验证徽章。
 
 ```
 zeno/

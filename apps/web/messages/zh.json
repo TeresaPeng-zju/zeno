@@ -217,7 +217,7 @@
     "saveMap": "保存这张地图",
     "termStatus": "状态：已计算",
     "zgVerified": "0G 可验证推理",
-    "zgVerifiedTip": "本段诊断的表达层由 0G Compute 去中心化推理生成（TEE 背书），request id 可链上验证",
+    "zgVerifiedTip": "本段诊断的表达层由0G Compute生成，Router已同步验证TEE签名；可通过Request ID和Provider地址审计",
     "termReady": "AI 就绪度",
     "termGaps": "需要补上的真差距：",
     "termBacking": "基于 <u>{count} 条真实岗位要求</u>计算——只说实话，不挑好听的。",

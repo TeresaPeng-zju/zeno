@@ -23,6 +23,41 @@ _JD_FILE = Path(__file__).resolve().parent.parent / "data" / "jd_evidence.json"
 _AI_CAT_FIRST = {"llm": 0, "data": 0, "eval": 0, "foundation": 1}
 
 
+def _model_data(value: object) -> dict:
+    """Return provider extensions from either a plain dict or an SDK model."""
+    if isinstance(value, dict):
+        return value
+    if value is None:
+        return {}
+    dump = getattr(value, "model_dump", None)
+    if callable(dump):
+        data = dump()
+        return data if isinstance(data, dict) else {}
+    return {}
+
+
+def _zg_receipt(resp: object, model: str) -> dict | None:
+    """Extract the 0G Router receipt; never substitute the completion id."""
+    response_data = _model_data(resp)
+    model_extra = getattr(resp, "model_extra", None)
+    if isinstance(model_extra, dict):
+        response_data = {**response_data, **model_extra}
+
+    trace = response_data.get("x_0g_trace") or getattr(resp, "x_0g_trace", None)
+    trace_data = _model_data(trace)
+    request_id = trace_data.get("request_id")
+    if not request_id:
+        return None
+
+    return {
+        "provider": "0G Compute",
+        "model": model,
+        "request_id": str(request_id),
+        "provider_address": str(trace_data.get("provider") or ""),
+        "tee_verified": trace_data.get("tee_verified") is True,
+    }
+
+
 def _zh(lang: str) -> bool:
     return not (lang or "").startswith("en")
 
@@ -193,6 +228,9 @@ def narrate(facts: dict, lang: str = "zh") -> dict:
                 else "Based on these facts, produce {headline, body}:\n") + json.dumps(facts, ensure_ascii=False, indent=1)
         messages = [{"role": "system", "content": SYSTEMS["zh" if zh else "en"]},
                     {"role": "user", "content": user}]
+        provider_options = (
+            {"extra_body": {"verify_tee": True}} if provider == "0G Compute" else {}
+        )
         # Not every provider (e.g. 0G's own models) supports response_format.
         # Try the strict JSON mode first; on ANY error, retry without it and
         # extract the JSON object from the text — so 0G still returns a verifiable
@@ -201,10 +239,12 @@ def narrate(facts: dict, lang: str = "zh") -> dict:
             resp = client.chat.completions.create(
                 model=model, temperature=0.6, max_tokens=700,
                 response_format={"type": "json_object"}, messages=messages,
+                **provider_options,
             )
         except Exception:
             resp = client.chat.completions.create(
                 model=model, temperature=0.6, max_tokens=700, messages=messages,
+                **provider_options,
             )
         raw = _THINK_RE.sub("", resp.choices[0].message.content or "").strip()
         m = re.search(r"\{[\s\S]*\}", raw)  # tolerate prose/markdown around the JSON
@@ -214,14 +254,12 @@ def narrate(facts: dict, lang: str = "zh") -> dict:
         if not body:
             return _template(facts, lang)
         out = {"headline": head, "body": body}
-        # Verifiable-inference receipt: surface the 0G request id so the UI can
-        # prove the expression ran on decentralized, TEE-backed compute.
+        # Only surface the Router's x_0g_trace receipt. `resp.id` is merely the
+        # OpenAI-compatible completion id and is not a verification receipt.
         if provider == "0G Compute":
-            out["verify"] = {
-                "provider": provider,
-                "model": model,
-                "request_id": getattr(resp, "id", None) or "",
-            }
+            receipt = _zg_receipt(resp, model)
+            if receipt:
+                out["verify"] = receipt
         return out
     except Exception:
         return _template(facts, lang)

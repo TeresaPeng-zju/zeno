@@ -115,7 +115,13 @@ function ResultInner() {
   const [voice, setVoice] = useState<string | null>(null);
   const [voiceHead, setVoiceHead] = useState<string | null>(null);
   // 0G verifiable-inference receipt for the expression layer (null → not on 0G).
-  const [verify, setVerify] = useState<{ provider: string; model: string; request_id: string } | null>(null);
+  const [verify, setVerify] = useState<{
+    provider: string;
+    model: string;
+    request_id: string;
+    provider_address: string;
+    tee_verified: boolean;
+  } | null>(null);
 
   // The roles a user can target are the same orientations the engine supports.
   useEffect(() => {
@@ -359,9 +365,9 @@ function ResultInner() {
                       <span className="h-2 w-2 animate-pulse rounded-full bg-cyan shadow-[0_0_8px_#1BE5EE]" />
                       <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-cyan/70">Analysis Terminal // Zeno</span>
                     </div>
-                    {verify ? (
+                    {verify?.tee_verified ? (
                       <span
-                        title={`${t("zgVerifiedTip")} · ${verify.model} · ${verify.request_id}`}
+                        title={`${t("zgVerifiedTip")} · ${verify.model} · ${verify.request_id}${verify.provider_address ? ` · ${verify.provider_address}` : ""}`}
                         className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wide text-emerald-300/90"
                       >
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
