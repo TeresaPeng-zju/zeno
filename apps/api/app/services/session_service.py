@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.domain import competency, decision, pacing
 from app.domain.decision import SkillObservation
-from app.domain.orchestrator import SkillState, is_complete, select_next_skill
+from app.domain.orchestrator import SkillState, is_complete, select_next_skill, weighted_uncertainty
 from app.domain.question_bank import (
     ANSWER_OPTIONS,
     OPTIONS_BY_VALUE,
@@ -232,9 +232,10 @@ def build_result(
         if us.skill_id in competency.SKILLS_BY_ID
     }
     # 地基修正：把当前角色的可迁移地基技能按默认水平种进画像（前端 → TS/API/流式 自动算已具备）。
-    # 用户显式答过、且答得更高的不覆盖。
+    # 角色先验只补齐未知项。任何显式回答（包括 level 0）都是更强的证据，
+    # 不能被“这个角色通常会什么”的默认值覆盖。
     for sid, lvl in _transfer_defaults(sess.current_role, sess.role_id).items():
-        if sid in competency.SKILLS_BY_ID and (sid not in obs or obs[sid].level < lvl):
+        if sid in competency.SKILLS_BY_ID and sid not in obs:
             obs[sid] = SkillObservation(level=lvl, confidence=0.6)
 
     strengths = [
@@ -319,6 +320,7 @@ def build_result(
         orientation_label=competency.orientation_label(competency.get_orientation(orient), lang),
         status=sess.status,
         readiness=decision.compute_readiness(sess.role_id, obs, orient),
+        profile_uncertainty=round(weighted_uncertainty(sess.role_id, _states(sess), orient), 4),
         time_budget=plan.time_budget,
         pacing=PacingOut(
             time_budget=plan.time_budget,

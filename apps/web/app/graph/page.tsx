@@ -15,7 +15,7 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import { Centered } from "@/components/site/centered";
-import { api } from "@/lib/api";
+import { api, type QuestionOut } from "@/lib/api";
 
 
 // ── 成长图（前端策展内容，纯前端状态机；只在最后把已确认节点提交给 /answers）──
@@ -78,7 +78,9 @@ function roleKeyOf(currentRole: string | null): "frontend" | "backend" | "fullst
   return "frontend";
 }
 const DEPTH = [1, 2, 3, 4];
-const LVL_VAL: Record<number, string> = { 1: "tutorial", 2: "demo", 3: "shipped", 4: "expert" };
+const LVL_VAL: Record<number, string> = { 0: "none", 1: "tutorial", 2: "demo", 3: "shipped", 4: "expert" };
+const MIN_PROBES = 2;
+const MAX_PROBES = 4;
 
 type NData = Record<string, unknown> & { label: string; state: "seed" | "avail" | "confirmed" | "gap" | "target"; sub?: string; match?: number; matchLabel?: string };
 
@@ -143,13 +145,17 @@ function GraphInner() {
   const [modalPhase, setModalPhase] = useState<"ask" | "depth">("ask");
   const [reveal, setReveal] = useState<{ path: string[]; why: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [probe, setProbe] = useState<QuestionOut | null>(null);
+  const [probeCount, setProbeCount] = useState(0);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const onMove = useCallback((e: React.MouseEvent) => {
     if (glowRef.current) { glowRef.current.style.left = `${e.clientX}px`; glowRef.current.style.top = `${e.clientY}px`; }
   }, []);
 
-  const confirmedCount = useMemo(() => Object.values(confirmed).filter((l) => l > 0).length, [confirmed]);
-  const readiness = useMemo(() => Math.min(92, confirmedCount * 11), [confirmedCount]);
+  const answeredAnchors = useMemo(() => SEEDS.filter((id) => confirmed[id] !== undefined).length, [SEEDS, confirmed]);
+  const anchorsComplete = answeredAnchors === SEEDS.length;
+  const evidenceProgress = Math.round(((answeredAnchors + probeCount) / (SEEDS.length + MAX_PROBES)) * 100);
 
   const nodes: Node<NData>[] = useMemo(() => {
     return [...visible].map((id) => {
@@ -199,11 +205,11 @@ function GraphInner() {
   }
 
   async function finish() {
-    if (!sessionId) return;
+    if (!sessionId || !anchorsComplete) return;
     const skillLvl: Record<string, number> = {};
     for (const [id, lv] of Object.entries(confirmed)) {
       const sk = GRAPH[id]?.skill;
-      if (sk && lv > 0 && lv > (skillLvl[sk] ?? 0)) skillLvl[sk] = lv;
+      if (sk && (skillLvl[sk] === undefined || lv > skillLvl[sk])) skillLvl[sk] = lv;
     }
     // Nothing confirmed yet (or everything answered "not yet"): the map has no
     // signal to work with — still allow proceeding so the flow never dead-ends;
@@ -212,12 +218,37 @@ function GraphInner() {
     try {
       // Use the mock-aware api client (NOT raw fetch): in NEXT_PUBLIC_USE_MOCK
       // mode there is no backend, and raw fetch would silently strand the user.
-      await Promise.all(Object.entries(skillLvl).map(([sk, lv]) =>
-        api.submitAnswer(sessionId, sk, LVL_VAL[lv] ?? "demo")));
-      router.push(`/result?session=${sessionId}`);
-    } catch {
-      // Even if answer submission fails, don't strand the user on this page.
-      router.push(`/result?session=${sessionId}`);
+      for (const [sk, lv] of Object.entries(skillLvl)) {
+        await api.submitAnswer(sessionId, sk, LVL_VAL[lv]);
+      }
+      const next = await api.nextQuestion(sessionId);
+      if (next.result_ready || !next.question) router.push(`/result?session=${sessionId}`);
+      else setProbe(next.question);
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : t("submitFailed"));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function answerProbe(value: string) {
+    if (!sessionId || !probe) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const nextCount = probeCount + 1;
+      const next = await api.submitAnswer(sessionId, probe.skill_id, value);
+      setProbeCount(nextCount);
+      if (nextCount >= MAX_PROBES || (nextCount >= MIN_PROBES && (next.result_ready || !next.question))) {
+        router.push(`/result?session=${sessionId}`);
+        return;
+      }
+      if (next.question) setProbe(next.question);
+      else router.push(`/result?session=${sessionId}`);
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : t("submitFailed"));
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -237,20 +268,39 @@ function GraphInner() {
           <motion.img src="/icons/zippi/curious.png" onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/icons/zippi.png"; }} className="h-10 w-10 shrink-0" style={{ imageRendering: "pixelated" }} alt="" animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 2.4 }} />
           <div className="min-w-0 flex-1">
             <p className="text-xs leading-relaxed text-cyan/90">
-              {confirmedCount === 0 ? t("intro") : t("confirmed", { count: confirmedCount })}
+              {probe ? t("probeProgress", { current: probeCount + 1, max: MAX_PROBES }) : answeredAnchors === 0 ? t("intro") : t("answered", { count: answeredAnchors, max: SEEDS.length })}
             </p>
             <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted/40">
-              <div className="h-full rounded-full bg-cyan transition-all duration-700" style={{ width: `${readiness}%` }} />
+              <div className="h-full rounded-full bg-cyan transition-all duration-700" style={{ width: `${evidenceProgress}%` }} />
             </div>
             <p className="mt-1 text-[10px] text-muted-foreground/70">{t(roleKey === "backend" ? "sourceBackend" : roleKey === "fullstack" ? "sourceFullstack" : "source")}</p>
           </div>
-          {confirmedCount > 0 && (
+          {anchorsComplete && !probe && (
             <button onClick={finish} disabled={submitting} className="shrink-0 rounded-full bg-cyan px-4 py-2 text-xs font-semibold text-[hsl(222_47%_6%)] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_24px_rgba(27,229,238,0.55)] active:scale-95 disabled:opacity-50">
               {submitting ? "…" : t("seeMap")}
             </button>
           )}
         </div>
       </div>
+
+      {probe && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#080b12]/80 px-4 backdrop-blur-md">
+          <div className="w-full max-w-xl rounded-3xl border border-cyan/20 bg-[#121826] p-6 shadow-[0_0_60px_-16px_rgba(27,229,238,0.45)]">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan">{t("adaptiveProbe")}</p>
+            <h2 className="mt-3 text-xl font-semibold text-white">{probe.text}</h2>
+            {probe.help_text && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{probe.help_text}</p>}
+            <div className="mt-5 grid gap-2">
+              {probe.options.map((option) => (
+                <button key={option.value} disabled={submitting} onClick={() => void answerProbe(option.value)} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left text-sm transition hover:border-cyan/50 hover:bg-cyan/10 disabled:opacity-50">
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {submitError && <div className="fixed bottom-4 left-1/2 z-[60] -translate-x-1/2 rounded-xl border border-red-400/30 bg-red-950/90 px-4 py-2 text-xs text-red-200">{submitError}</div>}
 
       {/* 画布从顶部引导浮条下方开始，fitView 只在浮条以下排布，节点不会被浮条遮挡 */}
       <div className="absolute inset-x-0 bottom-0 top-[180px]">

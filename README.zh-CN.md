@@ -100,7 +100,7 @@ ZG_MODEL=<从0G实时模型列表选择的模型ID>
 ```
 zeno/
 ├── docker-compose.yml
-├── scripts/            # 一键安装与启动
+├── dev.sh              # 同时启动前后端
 └── apps/
     ├── api/            # FastAPI 后端（引擎、RAG、JD 匹配）
     └── web/            # Next.js 前端（星图、迁移地图）
@@ -114,16 +114,19 @@ zeno/
 
 - Node.js 20+
 - Python 3.11+
-- pnpm
+- npm
 - Postgres 16 + pgvector —— 用 Docker，或本地 / Homebrew 安装均可
 
 ### 一键启动（一条命令）
 
 ```bash
-npm run dev      # 或：bash scripts/dev.sh
+cd /path/to/zeno
+./dev.sh
 ```
 
-首次运行会自动完成全部安装（后端 venv + 依赖、前端依赖）、启动 Postgres（有 Docker 用 Docker，否则用本地 Homebrew 的 Postgres）、建表、灌入种子资源，然后同时拉起后端 **:8000** 和前端 **:3000**。Ctrl-C 一起关闭。**无需任何 API key**——引擎默认跑确定性 provider；只有想开启自然语言诊断和实时资源策展时，才需要配 DeepSeek key。
+如果脚本没有执行权限，可以运行 `bash dev.sh`。脚本会先停止占用 **3000** 和 **8000** 端口的旧进程，然后同时启动 FastAPI 后端（热更新）[http://localhost:8000](http://localhost:8000) 和 Next.js 前端 [http://localhost:3000](http://localhost:3000)。按 Ctrl-C 可同时停止两者。
+
+该命令要求后端虚拟环境已存在于 `apps/api/.venv`，且前端依赖已经安装；如果缺失，请先按下方“手动启动”完成一次安装。**无需任何 API key**——引擎默认使用确定性 provider；只有想开启自然语言诊断和实时资源策展时，才需要配置 DeepSeek key。
 
 ### 手动启动（想一步步来）
 
@@ -141,11 +144,46 @@ uvicorn app.main:app --reload --port 8000
 
 # 前端
 cd apps/web
-pnpm install
-pnpm dev
+npm install
+npm run dev
 ```
 
 访问 http://localhost:3000 开始体验。
+
+### 本地 BGE Embedding
+
+开发环境的资源召回默认使用本地多语言 BGE-M3。首次使用需要安装可选依赖；以后每次更换 embedding provider 或模型，都必须重建数据库中的全部资源向量：
+
+```bash
+cd apps/api
+source .venv/bin/activate
+pip install -e ".[bge]"
+python scripts/reembed_resources.py
+```
+
+### 半自动扩充学习资源库
+
+资源 Harness 会把网页先放进候选审核区，不会让大模型未经确认直接污染推荐库。配置
+`DEEPSEEK_API_KEY` 后，在 `apps/api` 目录运行：
+
+```bash
+# 先把仓库内 28 条人工精选资源幂等写入数据库
+.venv/bin/python scripts/curate_resources.py seed
+
+# urls.txt 每行一个可信来源 URL；也支持 [{"url": ..., "title": ...}] JSON
+.venv/bin/python scripts/curate_resources.py ingest urls.txt --source official-docs
+
+# 导出 DeepSeek 初标结果供人工审核
+.venv/bin/python scripts/curate_resources.py export pending-resources.json
+
+# 批准后才写入正式资源表并生成 BGE embedding
+.venv/bin/python scripts/curate_resources.py approve <candidate-id>
+.venv/bin/python scripts/curate_resources.py reject <candidate-id> --reason "内容过薄"
+```
+
+推荐先从官方文档、官方 GitHub 仓库、大学课程的白名单 URL 开始。人工只需审核待发布候选和维护一小份黄金评测集，不需要逐条手工标注整个资源库。
+
+首次运行会下载模型。BGE-M3 原生输出归一化的 1024 维向量，Zeno 会在末尾补零以兼容现有 1536 维 pgvector 字段，余弦排序不会改变。模型缓存和 `.env` 只保留在本地，不会提交到仓库。
 
 进阶配置（不用 Docker 的原生 Postgres、贡献指南）见 [`docs/`](docs/)。
 

@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
 import re
 import struct
 from abc import ABC, abstractmethod
 from functools import lru_cache
+from typing import Any
 
 from app.core.config import settings
 
@@ -111,10 +113,78 @@ class OpenAIEmbedder(EmbeddingProvider):
             return self._fallback.embed(texts)
 
 
+class BGEEmbedder(EmbeddingProvider):
+    """Local multilingual BGE embeddings via sentence-transformers.
+
+    BGE-M3 emits 1024-dimensional vectors. Zeno's existing pgvector column is
+    1536-dimensional, so shorter vectors are zero-padded. Padding a normalized
+    vector with zeros preserves its norm and cosine similarity exactly, while
+    avoiding a destructive database type migration.
+
+    The model is loaded lazily on the first embedding request so API startup
+    remains quick. Configuration and dependency errors fail loudly: silently
+    falling back to mock would mix incompatible vector spaces.
+    """
+
+    def __init__(self, model: Any | None = None) -> None:
+        self._model = model
+        self._model_name = settings.bge_model
+        self._device = settings.bge_device
+        self._batch_size = settings.bge_batch_size
+        self._cache_dir = settings.bge_cache_dir
+        self._dim = settings.embedding_dim
+
+    @property
+    def dim(self) -> int:
+        return self._dim
+
+    def _get_model(self) -> Any:
+        if self._model is None:
+            # Plain HTTPS is more reliable than the optional Xet transport on
+            # restricted or high-latency networks, and works with anonymous Hub access.
+            os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
+            try:
+                from sentence_transformers import SentenceTransformer
+            except ImportError as exc:
+                raise RuntimeError(
+                    'BGE embedding requires: pip install -e ".[bge]"'
+                ) from exc
+            self._model = SentenceTransformer(
+                self._model_name,
+                device=self._device,
+                cache_folder=self._cache_dir,
+            )
+        return self._model
+
+    def _fit_dimension(self, vector: list[float]) -> list[float]:
+        if len(vector) > self._dim:
+            raise ValueError(
+                f"BGE returned {len(vector)} dimensions, but EMBEDDING_DIM={self._dim}. "
+                "Increase the database vector dimension; truncation would damage quality."
+            )
+        if len(vector) < self._dim:
+            vector = vector + [0.0] * (self._dim - len(vector))
+        return vector
+
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        if not texts:
+            return []
+        encoded = self._get_model().encode(
+            texts,
+            batch_size=self._batch_size,
+            normalize_embeddings=True,
+            convert_to_numpy=True,
+            show_progress_bar=False,
+        )
+        return [self._fit_dimension(list(row)) for row in encoded]
+
+
 @lru_cache(maxsize=1)
 def get_embedder() -> EmbeddingProvider:
     if settings.embedding_provider == "openai" and settings.openai_api_key:
         return OpenAIEmbedder()
+    if settings.embedding_provider == "bge":
+        return BGEEmbedder()
     return MockEmbedder()
 
 

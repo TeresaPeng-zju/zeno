@@ -390,6 +390,9 @@ function ResultInner() {
                         <div className="mx-auto mt-2 h-1 w-16 overflow-hidden rounded-full bg-white/10">
                           <motion.div initial={{ width: 0 }} whileInView={{ width: `${Math.round(data.readiness)}%` }} viewport={{ once: true }} transition={{ duration: 1, delay: 0.3 }} className="h-full bg-cyan shadow-[0_0_8px_#1BE5EE]" />
                         </div>
+                        <p className="mt-2 rounded-full border border-white/10 bg-white/[0.03] px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-slate-400">
+                          {t("profileConfidence", { level: data.profile_uncertainty <= 0.2 ? t("confidenceHigh") : data.profile_uncertainty <= 0.45 ? t("confidenceMedium") : t("confidencePreliminary") })}
+                        </p>
                       </div>
                     </div>
                     {/* 右：诊断正文 + 缺口 code 标签 + 数据背书 */}

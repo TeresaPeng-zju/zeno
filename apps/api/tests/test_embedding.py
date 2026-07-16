@@ -2,7 +2,7 @@
 
 import math
 
-from app.llm.embedding import MockEmbedder, cosine_similarity
+from app.llm.embedding import BGEEmbedder, MockEmbedder, cosine_similarity
 
 
 def test_mock_embedding_is_deterministic():
@@ -32,3 +32,19 @@ def test_shared_tokens_increase_similarity():
 
 def test_dim_matches_config():
     assert len(MockEmbedder(dim=32).embed_one("x")) == 32
+
+
+class _FakeBGEModel:
+    def encode(self, texts, **kwargs):
+        import numpy as np
+
+        return np.array([[0.6, 0.8] for _ in texts])
+
+
+def test_bge_embedding_pads_without_changing_cosine(monkeypatch):
+    monkeypatch.setattr("app.llm.embedding.settings.embedding_dim", 4)
+    embedder = BGEEmbedder(model=_FakeBGEModel())
+    vectors = embedder.embed(["中文 query", "English resource"])
+
+    assert vectors == [[0.6, 0.8, 0.0, 0.0], [0.6, 0.8, 0.0, 0.0]]
+    assert cosine_similarity(vectors[0], vectors[1]) == 1.0

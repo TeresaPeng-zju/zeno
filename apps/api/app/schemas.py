@@ -201,6 +201,7 @@ class ResultResponse(BaseModel):
     orientation_label: str | None = None
     status: str
     readiness: float  # 0-100 weighted coverage of required skills
+    profile_uncertainty: float = Field(ge=0.0, le=1.0)
     time_budget: str = "standard"
     pacing: PacingOut | None = None
     # Section 0: raw profile (kept for the 画像 view)

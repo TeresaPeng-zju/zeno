@@ -947,6 +947,7 @@ export const mockApi = {
       orientation_label,
       status: "completed",
       readiness,
+      profile_uncertainty: 0.38,
       time_budget: budget,
       pacing,
       profile: buildProfile(loc),

@@ -26,9 +26,13 @@ class Settings(BaseSettings):
     zg_base_url: str = "https://router-api.0g.ai/v1"
     zg_model: str = "zai-org/GLM-5-FP8"
     # Embedding (Week 3 resource engine). 1536 = OpenAI text-embedding-3-small.
-    embedding_provider: str = "mock"  # mock | openai
+    embedding_provider: str = "mock"  # mock | openai | bge
     embedding_model: str = "text-embedding-3-small"
     embedding_dim: int = 1536
+    bge_model: str = "BAAI/bge-m3"
+    bge_device: str = "cpu"
+    bge_batch_size: int = 16
+    bge_cache_dir: str = ".cache/huggingface/hub"
 
     # Data files: default to bundled demos; override with env vars for
     # production versions with calibrated data (never committed to git).
@@ -70,6 +74,10 @@ class Settings(BaseSettings):
     # Curation agent (function-calling tool chain)
     agent_max_steps: int = 8  # safety cap on the tool loop
     agent_search_results: int = 5  # results pulled per search call
+    curation_user_agent: str = "ZenoResourceCurator/1.0 (+local-development)"
+    curation_fetch_timeout: float = 15.0
+    curation_max_chars: int = 12000
+    curation_auto_approve_threshold: float = 0.9
 
     @property
     def cors_origin_list(self) -> list[str]:

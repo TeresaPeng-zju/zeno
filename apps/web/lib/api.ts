@@ -148,6 +148,7 @@ export interface ResultResponse {
   orientation_label: string | null;
   status: string;
   readiness: number;
+  profile_uncertainty: number;
   time_budget: TimeBudget;
   pacing: PacingOut | null;
   profile: SkillProfileOut[];

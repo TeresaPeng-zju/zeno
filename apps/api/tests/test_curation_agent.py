@@ -15,6 +15,7 @@ from app.domain.curation_agent import (
     TruncateSummarizer,
     _UrlPatternChecker,
 )
+from app.domain.resource_harness import _ReadableHTML, stage_url, validate_annotation
 
 
 def test_seed_searcher_ranks_by_overlap():
@@ -36,6 +37,74 @@ def test_truncate_summarizer_bounds_length():
 def test_url_pattern_checker():
     assert _UrlPatternChecker().check("https://x/ok")[0] == 200
     assert _UrlPatternChecker().check("https://x/deprecated")[0] == 404
+
+
+def test_readable_html_drops_script_and_keeps_title():
+    parser = _ReadableHTML()
+    parser.feed("<html><title>Useful guide</title><script>noise()</script><main>Learn RAG safely</main></html>")
+    assert parser.title == "Useful guide"
+    assert "Learn RAG safely" in parser.parts
+    assert "noise" not in " ".join(parser.parts)
+
+
+def test_annotation_is_bounded_and_uses_catalog_ids():
+    value = validate_annotation({
+        "skill_ids": ["data.embedding", "data.embedding"],
+        "target_levels": {"data.embedding": 9},
+        "resource_type": "unknown",
+        "summary": "BGE model selection",
+        "quality_score": 1.5,
+        "confidence": -1,
+    })
+    assert value["skill_ids"] == ["data.embedding"]
+    assert value["target_levels"] == {"data.embedding": 4}
+    assert value["resource_type"] == "article"
+    assert value["quality_score"] == 1.0
+    assert value["confidence"] == 0.0
+
+
+def test_annotation_rejects_unknown_skill():
+    with pytest.raises(ValueError, match="unknown skill"):
+        validate_annotation({"skill_ids": ["invented.skill"]})
+
+
+def test_stage_url_keeps_model_output_in_review_queue(tmp_path):
+    from sqlalchemy import create_engine, select
+    from sqlalchemy.orm import Session
+
+    from app.core.db import Base
+    from app.models import Resource, ResourceCandidate
+
+    class Fetcher:
+        def fetch(self, url):
+            return {"url": url, "status": 200, "title": "BGE guide", "text": "Choose and evaluate embeddings."}
+
+    class Annotator:
+        model_name = "fake-deepseek"
+
+        def annotate(self, **kwargs):
+            return validate_annotation({
+                "skill_ids": ["data.embedding"],
+                "target_levels": {"data.embedding": 2},
+                "summary": "Embedding model selection",
+                "quality_score": 0.8,
+                "confidence": 0.85,
+            })
+
+    engine = create_engine(f"sqlite:///{tmp_path / 'curation.db'}")
+    Base.metadata.create_all(engine)
+    with Session(engine) as db:
+        candidate = stage_url(
+            db,
+            url="https://example.com/bge",
+            source="test",
+            fetcher=Fetcher(),
+            annotator=Annotator(),
+        )
+        assert candidate.status == "pending"
+        assert candidate.annotation["skill_ids"] == ["data.embedding"]
+        assert db.scalar(select(ResourceCandidate)) is not None
+        assert db.scalar(select(Resource)) is None
 
 
 def _postgres_available() -> bool:

@@ -100,7 +100,7 @@ Choose a current model id from [0G Private Computer](https://pc.0g.ai/models). K
 ```
 zeno/
 ├── docker-compose.yml
-├── scripts/            # one-command setup & dev
+├── dev.sh              # starts the API and web app together
 └── apps/
     ├── api/            # FastAPI backend (engine, RAG, JD matching)
     └── web/            # Next.js frontend (star-map, migration map)
@@ -114,16 +114,19 @@ zeno/
 
 - Node.js 20+
 - Python 3.11+
-- pnpm
+- npm
 - Postgres 16 + pgvector — via Docker, or a local/Homebrew install
 
 ### Quick start (one command)
 
 ```bash
-npm run dev      # or: bash scripts/dev.sh
+cd /path/to/zeno
+./dev.sh
 ```
 
-The first run installs everything (backend venv + deps, frontend deps), starts Postgres (Docker if present, otherwise your local Homebrew install), runs migrations, seeds the resource library, then launches the API on **:8000** and the web app on **:3000**. Press Ctrl-C to stop both. **No API key needed** — the engine runs fully on deterministic providers; add a DeepSeek key only to enable the natural-language voice and live resource curation.
+If the script is not executable, use `bash dev.sh`. It stops existing processes on ports **3000** and **8000**, then launches the FastAPI backend with reload on [http://localhost:8000](http://localhost:8000) and the Next.js frontend on [http://localhost:3000](http://localhost:3000). Press Ctrl-C to stop both.
+
+This command expects the backend virtual environment at `apps/api/.venv` and the frontend dependencies to be installed. Follow the manual setup below once if they are missing. **No API key is needed** for the deterministic engine; add a DeepSeek key only to enable the natural-language voice and live resource curation.
 
 ### Manual setup (step by step)
 
@@ -141,11 +144,45 @@ uvicorn app.main:app --reload --port 8000
 
 # Frontend
 cd apps/web
-pnpm install
-pnpm dev
+npm install
+npm run dev
 ```
 
 Open http://localhost:3000.
+
+### Local BGE embeddings
+
+Resource retrieval uses local multilingual BGE-M3 embeddings by default in the
+development `.env`. Install the optional runtime once, then rebuild all stored
+resource vectors whenever the embedding provider or model changes:
+
+```bash
+cd apps/api
+source .venv/bin/activate
+pip install -e ".[bge]"
+python scripts/reembed_resources.py
+```
+
+### Semi-automatic resource curation
+
+The curation harness stages fetched pages in a review queue; model output never
+enters retrieval before approval. Set `DEEPSEEK_API_KEY`, then run from `apps/api`:
+
+```bash
+.venv/bin/python scripts/curate_resources.py seed
+.venv/bin/python scripts/curate_resources.py ingest urls.txt --source official-docs
+.venv/bin/python scripts/curate_resources.py export pending-resources.json
+.venv/bin/python scripts/curate_resources.py approve <candidate-id>
+.venv/bin/python scripts/curate_resources.py reject <candidate-id> --reason "too thin"
+```
+
+Start with allow-listed official documentation, official GitHub repositories,
+and university courses. DeepSeek proposes structured labels; humans only review
+publication candidates and maintain a small gold evaluation set.
+
+The first run downloads the model. BGE-M3's normalized 1024-dimensional output
+is zero-padded to the existing 1536-dimensional pgvector column; cosine ranking
+is unchanged. The model cache and `.env` remain local and are not committed.
 
 For advanced setup (native Postgres without Docker, contributor guidelines), see [`docs/`](docs/).
 

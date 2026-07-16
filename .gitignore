@@ -35,6 +35,7 @@ htmlcov/
 .dmypy.json
 dmypy.json
 .ruff_cache/
+.cache/
 .ipynb_checkpoints/
 .env
 .env.local
@@ -97,3 +98,6 @@ pnpm-lock.yaml
 
 # 内测反馈存档（本地资料，不入库）
 feedback/
+
+# 本地上线盘点（持续更新，不提交远程仓库）
+LAUNCH_AUDIT_LOCAL.md
