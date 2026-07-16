@@ -12,8 +12,8 @@
 @layer base {
   :root {
     /* Typography — Plus Jakarta Sans for Latin, Noto Sans SC for CJK */
-    --font-jakarta: "Plus Jakarta Sans";
-    --font-noto-sc: "Noto Sans SC";
+    --font-jakarta: -apple-system, BlinkMacSystemFont, "Segoe UI";
+    --font-noto-sc: "PingFang SC", "Microsoft Yahei", "Noto Sans SC";
     --font-source-code-pro: "Source Code Pro";
     --default-font-family: var(--font-jakarta), var(--font-noto-sc),
       -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft Yahei",
@@ -69,7 +69,9 @@
 @layer utilities {
   /* ── 减弱动态：尊重系统设置，同时省电/降负载 ─────────────────── */
   @media (prefers-reduced-motion: reduce) {
-    .aurora-layer,
+    .aurora-backdrop,
+    .aurora-backdrop::before,
+    .aurora-backdrop::after,
     .star-dot,
     .border-beam::before {
       animation: none !important;
@@ -117,17 +119,54 @@
     80% { transform: translateX(4px); }
   }
 
-  /* ── CSS Aurora layers ───────────────────────────────────────── */
-  .aurora-layer {
-    position: absolute;
-    filter: url(#aurora-wave) blur(40px);
-    mix-blend-mode: color-dodge;
-    opacity: 0.7;
-    animation: aurora-drift 12s ease-in-out infinite alternate;
+  /* ── Filter-free aurora: one smooth layer, no clipped rectangles ─────── */
+  .aurora-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    background:
+      radial-gradient(85% 42% at 72% 2%, hsl(183 86% 52% / 0.18), transparent 72%),
+      radial-gradient(72% 38% at 18% 16%, hsl(270 65% 55% / 0.14), transparent 74%),
+      radial-gradient(95% 46% at 48% 31%, hsl(205 72% 52% / 0.12), transparent 70%),
+      radial-gradient(80% 42% at 92% 50%, hsl(285 62% 52% / 0.11), transparent 74%),
+      radial-gradient(82% 38% at 8% 68%, hsl(183 78% 48% / 0.12), transparent 76%),
+      radial-gradient(90% 40% at 58% 100%, hsl(230 68% 50% / 0.08), transparent 76%);
+    opacity: 0.92;
   }
-  @keyframes aurora-drift {
-    0%   { transform: rotate(-8deg) scaleX(1.3) translateY(0); }
-    100% { transform: rotate(-5deg) scaleX(1.4) translateY(-20px); }
+
+  .aurora-backdrop::before,
+  .aurora-backdrop::after {
+    content: "";
+    position: absolute;
+    inset: -18%;
+    will-change: transform;
+    transform: translate3d(0, 0, 0) scale(1.04);
+  }
+
+  .aurora-backdrop::before {
+    background:
+      radial-gradient(48% 30% at 28% 34%, hsl(183 86% 52% / 0.13), transparent 74%),
+      radial-gradient(42% 28% at 76% 46%, hsl(270 68% 56% / 0.11), transparent 76%);
+    animation: aurora-float-a 24s ease-in-out infinite alternate;
+  }
+
+  .aurora-backdrop::after {
+    background:
+      radial-gradient(44% 26% at 64% 24%, hsl(205 78% 56% / 0.1), transparent 75%),
+      radial-gradient(46% 30% at 38% 78%, hsl(183 72% 48% / 0.08), transparent 76%);
+    animation: aurora-float-b 31s ease-in-out infinite alternate;
+  }
+
+  @keyframes aurora-float-a {
+    from { transform: translate3d(-3%, -2%, 0) scale(1.04); }
+    to   { transform: translate3d(4%, 3%, 0) scale(1.1); }
+  }
+
+  @keyframes aurora-float-b {
+    from { transform: translate3d(3%, -3%, 0) scale(1.08); }
+    to   { transform: translate3d(-4%, 2%, 0) scale(1.03); }
   }
 
   /* ── Border Beam (conic-gradient rotating light) ────────────── */

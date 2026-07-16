@@ -114,13 +114,7 @@ export default function HomePage() {
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <section className="container relative z-10 flex min-h-[calc(100vh_-_4rem)] flex-col items-center justify-center py-8 text-center before:pointer-events-none before:absolute before:inset-0 before:-z-[1] before:rounded-full before:bg-[radial-gradient(ellipse_at_center,rgba(10,15,30,0.4)_0%,transparent_70%)]">
         {/* title */}
-        <motion.h1
-          custom={0}
-          variants={fadeUp}
-          initial="hidden"
-          animate="show"
-          className="mt-8 cursor-default pb-3 text-5xl font-extrabold leading-[1.15] tracking-tight sm:text-7xl sm:leading-[1.2] lg:text-8xl"
-        >
+        <h1 className="mt-8 cursor-default pb-3 text-5xl font-extrabold leading-[1.15] tracking-tight sm:text-7xl sm:leading-[1.2] lg:text-8xl">
           {locale === "en" ? (
             <>
               <RotatingText
@@ -151,7 +145,7 @@ export default function HomePage() {
               loop={true}
             />
           )}
-        </motion.h1>
+        </h1>
 
         {/* subtitle (static) */}
         <motion.p

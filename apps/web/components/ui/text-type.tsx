@@ -46,15 +46,17 @@ const TextType = ({
   reverseMode = false,
   ...props
 }: TextTypeProps) => {
-  const [displayedText, setDisplayedText] = useState("");
-  const [currentCharIndex, setCurrentCharIndex] = useState(0);
+  const textArray = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
+  // The full first phrase is present in the server response. This keeps the hero
+  // copy paintable before hydration instead of making LCP wait for a typewriter.
+  const firstText = textArray[0] ?? "";
+  const [displayedText, setDisplayedText] = useState(firstText);
+  const [currentCharIndex, setCurrentCharIndex] = useState(firstText.length);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(!startOnVisible);
   const cursorRef = useRef<HTMLSpanElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const textArray = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
 
   const getRandomSpeed = useCallback(() => {
     if (!variableSpeed) return typingSpeed;
