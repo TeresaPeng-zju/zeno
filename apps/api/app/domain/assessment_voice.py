@@ -4,7 +4,7 @@
   - 事实（就绪度 / 优势 / 缺口分类 / 最该先补的一步 / JD 需求）全部来自 decision 引擎；
   - 这里只负责『讲人话』，由 SYSTEM 锁死信任底线（诊断不承诺、不奉承、会用≠自圆其说）；
   - 没有 DeepSeek key 或调用失败时，回退确定性模板，永远有输出。
-  - 输出结构：{"headline": 一句可截图分享的扎心判断, "body": 有节奏的短段落（段间空行）}。
+  - 输出结构化诊断；body 仅作为旧客户端的兼容字段。
 """
 from __future__ import annotations
 
@@ -63,47 +63,38 @@ def _zh(lang: str) -> bool:
 
 
 _SYSTEM_ZH = (
-    "你是一位温暖、有经验的职业引路人——像一个真心希望对方成功的学长，不是面试官或教官。"
-    "温和、体贴、鼓励，绝不用『最要命』『硬骨头』这类逼人的词。\n\n"
-    "【输出格式——最重要】像 Claude 那样有阅读节奏，绝不要写成一大坨：\n"
-    "- body 里每段只有 1-2 句话，段与段之间空一行；\n"
-    "- 用户第一眼就能扫读，而不是面对一堵墙。\n\n"
-    "【body 的叙述节奏，照这个走】\n"
-    "1. 先一句肯定他简历里的具体强项（点名，如 Prompt、SSE）；\n"
-    "2. 一句『你离目标已经很近了，就绪度大概 X%』；\n"
-    "3. 点破：真正要补的就一两件——不是 Prompt、不是 Agent，而是 ⟪那 1-2 个真缺口⟫；\n"
-    "4. 一句『为什么是这个』（已具备的前置 / 它解锁什么 / 市场要它）；\n"
-    "5. 一句**具体到能动手**的建议（例：先做一个带 Evaluation 的 RAG）；\n"
-    "6. 结尾一句诚实声明（措辞可改，意思别丢）：不保证你拿到 offer，没人能保证；但这些判断是对照真实招聘要求老实算的，不是挑你爱听的说。\n\n"
-    "【headline】另给一句『可截图发朋友圈』的扎心判断，20-35 字，点破他最大的特点。"
-    "例：『你最大的优势不是 Prompt，而是工程化——AI 不会替代它，会放大它。』\n\n"
-    "【铁律】只用我给你的事实，绝不编造数字或技能；诊断不承诺；不奉承；对 AI 能帮写的技能要点明『会用≠面试能自圆其说』。\n\n"
-    '只返回 JSON：{"headline": "一句可截图的判断", "body": "按上面节奏的短段落，段间用空行分隔"}'
+    "你是Zeno的职业诊断表达层。确定性引擎已经完成判断，你只负责把事实讲清楚。"
+    "语气温暖、克制、具体，不奉承，不制造焦虑。\n\n"
+    "只返回JSON，字段必须完整：headline、summary、primary_gap、next_action、honest_note。\n"
+    "- headline：14-24个汉字，不加引号，不写百分比，不用破折号；\n"
+    "- summary：用1-2句话说明已有基础和已确认技能覆盖下限；必须说明未采集能力不计分，它不是准确率或拿到offer的概率；\n"
+    "- primary_gap：必须讲事实中的『最先补一步』，并用日常工作语言解释它解决什么问题；\n"
+    "- next_action：只给一个可在近期完成、能被验收的动作，必须与事实中的最先补一步有关；\n"
+    "- honest_note：一句诚实边界，说明判断来自真实岗位要求，但不保证求职结果。\n\n"
+    "全文180-260字。不要写Markdown，不要使用『不是Prompt、不是Agent』这种对比句，"
+    "不要声称用户『已经很接近目标』。每句话最多出现一个AI术语，术语首次出现时用通俗语言解释。"
+    "只使用提供的事实，不补充未经给出的经历、数字或技能。"
 )
 
 _SYSTEM_EN = (
-    "You are a warm, experienced mentor — a caring senior who wants this person to succeed, "
-    "never an interviewer or drill sergeant. Gentle, encouraging; never harsh or lecturing.\n\n"
-    "[FORMAT — most important] Have reading rhythm like Claude; never a wall of text:\n"
-    "- each paragraph in body is 1-2 sentences, with a blank line between paragraphs.\n\n"
-    "[body rhythm] 1) name 1-2 concrete strengths from their resume; 2) 'you're closer than you think, "
-    "readiness ~X%'; 3) the real gap is just one or two things — not Prompt, not Agent, but ⟪the real gaps⟫; "
-    "4) why this one (prereqs they have / what it unlocks / market demand); 5) one concrete, actionable suggestion "
-    "(e.g. build a RAG with evaluation); 6) honest closer: can't promise an offer, no one can, but these are "
-    "computed honestly against real job requirements, not flattery.\n\n"
-    "[headline] also give one screenshot-worthy, striking judgment (~10-15 words) naming their biggest trait.\n\n"
-    "[RULES] only use the facts I give; diagnose, don't promise; no flattery; for AI-codable skills note "
-    "'using it ≠ defending it in an interview'.\n\n"
-    'Return ONLY JSON: {"headline": "one screenshot-worthy line", "body": "short paragraphs separated by blank lines"}'
+    "You are Zeno's expression layer. A deterministic engine has already made the decisions; "
+    "your job is only to explain its facts clearly, warmly, and without hype.\n\n"
+    "Return JSON only, with all fields: headline, summary, primary_gap, next_action, honest_note.\n"
+    "headline: 6-12 words, no percentage or em dash. summary: 1-2 sentences about existing foundations "
+    "and the confirmed skill-coverage lower bound; state that unassessed skills receive no credit and that this is neither accuracy nor the probability of receiving an offer. primary_gap: explain "
+    "the exact Best first step in plain work language. next_action: one near-term, verifiable action tied to that same step. "
+    "honest_note: one sentence stating the evidence boundary and no employment guarantee.\n\n"
+    "Use 100-150 words total. No Markdown. Do not claim the user is already close to the target. "
+    "Use at most one AI term per sentence and explain it plainly on first use. Use only supplied facts."
 )
 
 SYSTEMS = {"zh": _SYSTEM_ZH, "en": _SYSTEM_EN}
 
 _LABELS = {
-    "zh": {"role": "目标岗位", "ready": "就绪度", "strengths": "优势(AI相关在前)",
+    "zh": {"role": "目标岗位", "ready": "已确认技能覆盖下限", "evidence": "已采集必备能力依据", "strengths": "优势(AI相关在前)",
            "core": "真护城河缺口(AI替不了)", "defend": "AI能实现但面试要讲清",
            "first": "最先补一步", "why": "为什么是这一步", "redline": "红线"},
-    "en": {"role": "Target role", "ready": "Readiness", "strengths": "Strengths (AI-relevant first)",
+    "en": {"role": "Target role", "ready": "Confirmed skill-coverage lower bound", "evidence": "Required-skill evidence collected", "strengths": "Strengths (AI-relevant first)",
            "core": "Real moat gaps (AI can't do for you)", "defend": "AI can implement, but you must defend it",
            "first": "Best first step", "why": "Why this step", "redline": "Red line"},
 }
@@ -185,6 +176,7 @@ def build_facts(result, *, role_id: str, orientation: str, lang: str = "zh") -> 
     return {
         lab["role"]: C.role_label(lang),
         lab["ready"]: f"{round(result.readiness)}%",
+        lab["evidence"]: f"{result.assessed_required_count}/{result.required_skill_count}",
         lab["strengths"]: strength_names,
         lab["core"]: core,
         lab["defend"]: ai_defend,
@@ -224,8 +216,8 @@ def narrate(facts: dict, lang: str = "zh") -> dict:
         from openai import OpenAI
 
         client = OpenAI(api_key=api_key, base_url=base_url)
-        user = ("请基于以下事实，产出 {headline, body}：\n" if zh
-                else "Based on these facts, produce {headline, body}:\n") + json.dumps(facts, ensure_ascii=False, indent=1)
+        user = ("请基于以下事实生成结构化诊断：\n" if zh
+                else "Produce the structured diagnosis from these facts:\n") + json.dumps(facts, ensure_ascii=False, indent=1)
         messages = [{"role": "system", "content": SYSTEMS["zh" if zh else "en"]},
                     {"role": "user", "content": user}]
         provider_options = (
@@ -249,11 +241,12 @@ def narrate(facts: dict, lang: str = "zh") -> dict:
         raw = _THINK_RE.sub("", resp.choices[0].message.content or "").strip()
         m = re.search(r"\{[\s\S]*\}", raw)  # tolerate prose/markdown around the JSON
         data = json.loads(m.group(0) if m else raw)
-        head = (data.get("headline") or "").strip()
-        body = (data.get("body") or "").strip()
-        if not body:
+        keys = ("summary", "primary_gap", "next_action", "honest_note")
+        head = str(data.get("headline") or "").strip()
+        sections = {key: str(data.get(key) or "").strip() for key in keys}
+        if not head or any(not value for value in sections.values()):
             return _template(facts, lang)
-        out = {"headline": head, "body": body}
+        out = {"headline": head, "body": "\n\n".join(sections.values()), "sections": sections}
         # Only surface the Router's x_0g_trace receipt. `resp.id` is merely the
         # OpenAI-compatible completion id and is not a verification receipt.
         if provider == "0G Compute":
@@ -266,7 +259,7 @@ def narrate(facts: dict, lang: str = "zh") -> dict:
 
 
 def _template(facts: dict, lang: str = "zh") -> dict:
-    """确定性兜底：没有 LLM 也给『有节奏 + 一句金句』的输出。"""
+    """确定性兜底：没有LLM也返回与生成结果相同的结构。"""
     zh = _zh(lang)
     lab = _LABELS["zh" if zh else "en"]
     strengths = facts.get(lab["strengths"]) or []
@@ -277,33 +270,28 @@ def _template(facts: dict, lang: str = "zh") -> dict:
     ready = facts.get(lab["ready"], "")
     core = facts.get(lab["core"]) or []
     if zh:
-        head = (f"你最大的底气是工程化，不是会用 AI——这一点 AI 不会替代，只会放大。"
-                if strengths else "你不是从零开始，你比想象中更近。")
-        paras = []
-        if strengths:
-            paras.append(f"先说句实在的，你底子不差——{'、'.join(strengths[:3])}这些都拿得出手。")
-        paras.append(f"其实你离「{role}」没那么远，就绪度大概 {ready}。")
-        if core:
-            paras.append(f"真正要补的就那么几件，不是 Prompt、不是 Agent，而是：{'、'.join(core[:2])}。")
-        if first:
-            paras.append((f"先从「{first}」下手" + ("——" + "；".join(why) if why else "") + "。"))
-        if defend:
-            paras.append("一个提醒：" + defend[0] + "——AI 能帮你写，但面试会追问背后的取舍。")
-        paras.append("最后一句心里话：我不敢保证你照这么走就能拿 offer，没人能保证；但这些判断都是对照真实招聘要求老实算的，不是挑你爱听的说。")
-        return {"headline": head, "body": "\n\n".join(paras)}
-    head = "Your real edge is engineering, not prompting — AI won't replace it, it'll amplify it." if strengths else "You're closer than you think."
-    paras = []
-    if strengths:
-        paras.append(f"Honestly, you've got a solid base — {', '.join(strengths[:3])} are already there.")
-    paras.append(f"You're closer to {role} than you think — readiness ~{ready}.")
-    if core:
-        paras.append(f"The real gap is just a couple of things — not Prompt, not Agent, but: {', '.join(core[:2])}.")
-    if first:
-        paras.append(f"Start with {first}" + (" — " + "; ".join(why) if why else "") + ".")
-    if defend:
-        paras.append("One heads-up: " + defend[0] + " — AI can write it, but interviewers probe the trade-offs.")
-    paras.append("Straight up: I can't promise this lands you an offer — no one can; but these are computed honestly against real job requirements, not flattery.")
-    return {"headline": head, "body": "\n\n".join(paras)}
+        head = "把已有工程能力变成可验证的AI作品" if strengths else "先找到最值得补上的一项能力"
+        summary = ((f"你已经具备{'、'.join(strengths[:3])}等可迁移基础。" if strengths else "这是一份初步能力画像。")
+                   + f"目前对「{role}」已确认的技能覆盖下限为{ready}；尚未采集的能力不计分，它不是诊断准确率或拿到offer的概率。")
+        gap = first or (core[0] if core else "目标岗位要求")
+        primary_gap = f"当前优先差距是「{gap}」。先理解它在真实工作中解决的问题，再补实现方法。"
+        detail = "；".join(why[:2])
+        next_action = (f"下一步先完成一个能展示「{first}」的小项目，并用可运行结果或说明文档验收。" if first
+                       else "下一步选一个核心差距完成小项目，并用可运行结果验收。")
+        if detail:
+            next_action += f"排序依据是：{detail}。"
+        honest_note = "这份判断依据真实岗位要求和当前回答计算，不保证求职结果，也不会替代面试验证。"
+    else:
+        head = "Turn engineering foundations into verifiable AI work" if strengths else "Start with the highest-value skill gap"
+        summary = ((f"You already have transferable foundations in {', '.join(strengths[:3])}. " if strengths else "This is an initial skill profile. ")
+                   + f"Your confirmed skill-coverage lower bound for {role} is {ready}. Unassessed skills receive no credit; this is neither diagnostic accuracy nor the probability of receiving an offer.")
+        gap = first or (core[0] if core else "the target role requirements")
+        primary_gap = f"Your priority gap is {gap}. First understand the work problem it solves, then learn the implementation."
+        next_action = (f"Build one small, runnable project that demonstrates {first}, and use its output or documentation as the acceptance check."
+                       if first else "Build a small project for one core gap and use a runnable result as the acceptance check.")
+        honest_note = "This diagnosis is computed from real job requirements and your answers; it cannot guarantee an employment outcome."
+    sections = {"summary": summary, "primary_gap": primary_gap, "next_action": next_action, "honest_note": honest_note}
+    return {"headline": head, "body": "\n\n".join(sections.values()), "sections": sections}
 
 
 def voice_for_result(result, *, role_id: str, orientation: str, lang: str = "zh") -> dict:

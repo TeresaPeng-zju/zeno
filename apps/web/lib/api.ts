@@ -37,6 +37,7 @@ export interface JdMatchResponse {
 export interface OptionOut {
   value: string;
   label: string;
+  example?: string | null;
 }
 
 export interface Progress {
@@ -58,6 +59,26 @@ export interface QuestionOut {
 export interface NextQuestionResponse {
   result_ready: boolean;
   question: QuestionOut | null;
+}
+
+export interface CorrectionEvidenceOut {
+  evidence_id: string;
+  skill_id: string;
+  project: string;
+  actions: string[];
+  ownership: string;
+  outcome: string;
+  evidence_quote: string;
+  llm_suggested_level: number | null;
+  rule_level: number;
+  rule_version: string;
+  current_level: number;
+  provider: string;
+}
+
+export interface CorrectionConfirmOut {
+  status: "confirmed" | "kept";
+  level: number;
 }
 
 export interface SkillProfileOut {
@@ -96,6 +117,7 @@ export interface ResourceOut {
   platform: string;
   last_verified_at: string | null;
   freshness_reason: string | null;
+  ai_curated?: boolean;
 }
 
 export interface SupportingStrength {
@@ -148,7 +170,10 @@ export interface ResultResponse {
   orientation_label: string | null;
   status: string;
   readiness: number;
+  projected_readiness: number;
   profile_uncertainty: number;
+  assessed_required_count: number;
+  required_skill_count: number;
   time_budget: TimeBudget;
   pacing: PacingOut | null;
   profile: SkillProfileOut[];
@@ -358,13 +383,33 @@ const realApi = {
       body: JSON.stringify({ jd }),
     }),
 
-  nextQuestion: (sessionId: string) =>
-    http<NextQuestionResponse>(`/api/sessions/${sessionId}/next-question`),
+  nextQuestion: (sessionId: string, forceContinue = false, requiredOnly = false) => {
+    const qs = new URLSearchParams();
+    if (forceContinue) qs.set("force_continue", "true");
+    if (requiredOnly) qs.set("required_only", "true");
+    return http<NextQuestionResponse>(`/api/sessions/${sessionId}/next-question${qs.size ? `?${qs}` : ""}`);
+  },
 
-  submitAnswer: (sessionId: string, skillId: string, answerValue: string) =>
-    http<NextQuestionResponse>(`/api/sessions/${sessionId}/answers`, {
+  submitAnswer: (sessionId: string, skillId: string, answerValue: string, forceContinue = false, answerSource: "standard" | "user_correction" = "standard", requiredOnly = false) => {
+    const qs = new URLSearchParams();
+    if (forceContinue) qs.set("force_continue", "true");
+    if (requiredOnly) qs.set("required_only", "true");
+    return http<NextQuestionResponse>(`/api/sessions/${sessionId}/answers${qs.size ? `?${qs}` : ""}`, {
       method: "POST",
-      body: JSON.stringify({ skill_id: skillId, answer_value: answerValue }),
+      body: JSON.stringify({ skill_id: skillId, answer_value: answerValue, answer_source: answerSource }),
+    });
+  },
+
+  analyzeCorrection: (sessionId: string, skillId: string, text: string) =>
+    http<CorrectionEvidenceOut>(`/api/sessions/${sessionId}/corrections/analyze`, {
+      method: "POST",
+      body: JSON.stringify({ skill_id: skillId, text }),
+    }),
+
+  confirmCorrection: (sessionId: string, evidenceId: string, action: "confirm" | "keep") =>
+    http<CorrectionConfirmOut>(`/api/sessions/${sessionId}/corrections/confirm`, {
+      method: "POST",
+      body: JSON.stringify({ evidence_id: evidenceId, action }),
     }),
 
   result: (sessionId: string, timeBudget?: TimeBudget, orientation?: string) => {

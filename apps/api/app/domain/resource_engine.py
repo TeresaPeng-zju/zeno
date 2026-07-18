@@ -41,6 +41,7 @@ class ScoredResource:
     last_verified_at: datetime | None
     quality_score: float
     relevance: float  # 0-1 cosine similarity from recall
+    ai_curated: bool = False
     freshness: float = 0.0
     fit: float = 0.0
     final: float = 0.0
@@ -97,5 +98,15 @@ def rerank(
 
     alive = [c for c in candidates if c.freshness_status != "dead"]
     alive.sort(key=lambda c: (c.final, c.quality_score), reverse=True)
+    # Redirects can leave both an old seed URL and its canonical replacement.
+    # Keep the strongest copy so users never see duplicate resource cards.
+    unique: list[ScoredResource] = []
+    seen_titles: set[str] = set()
+    for candidate in alive:
+        title_key = "".join(candidate.title.lower().split())
+        if title_key in seen_titles:
+            continue
+        seen_titles.add(title_key)
+        unique.append(candidate)
     limit = limit if limit is not None else settings.resources_per_step
-    return alive[:limit]
+    return unique[:limit]

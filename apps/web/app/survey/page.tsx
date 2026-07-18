@@ -16,6 +16,7 @@ function SurveyInner() {
   const t = useTranslations("survey");
   const tc = useTranslations("common");
   const sessionId = params.get("session");
+  const requiredOnly = params.get("required_only") === "1";
 
   const [question, setQuestion] = useState<QuestionOut | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,7 +31,7 @@ function SurveyInner() {
   const loadNext = useCallback(async () => {
     if (!sessionId) return;
     try {
-      const res = await api.nextQuestion(sessionId);
+      const res = await api.nextQuestion(sessionId, requiredOnly, requiredOnly);
       if (res.result_ready || !res.question) {
         finish();
         return;
@@ -41,7 +42,7 @@ function SurveyInner() {
       setError(e instanceof Error ? e.message : tc("loadFailed"));
       setLoading(false);
     }
-  }, [sessionId, finish]);
+  }, [sessionId, finish, requiredOnly]);
 
   useEffect(() => {
     if (started.current) return;
@@ -59,7 +60,9 @@ function SurveyInner() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await api.submitAnswer(sessionId, question.skill_id, answerValue);
+      const res = await api.submitAnswer(
+        sessionId, question.skill_id, answerValue, requiredOnly, "standard", requiredOnly
+      );
       if (res.result_ready || !res.question) {
         finish();
         return;
@@ -89,7 +92,7 @@ function SurveyInner() {
       <div className="w-full max-w-xl space-y-4">
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>{t("assessment")}</span>
+            <span>{requiredOnly ? t("requiredAssessment") : t("assessment")}</span>
             <span>
               {t("progress", { current: answered + 1, max })}
             </span>

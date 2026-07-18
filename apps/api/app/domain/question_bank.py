@@ -42,6 +42,47 @@ def option_label(value: str, lang: str = "en") -> str:
     return label if label != f"option.{value}" else fallback
 
 
+def option_example(skill_id: str, value: str, lang: str = "en") -> str | None:
+    """Give each generic proficiency tier a skill-specific observable example."""
+    if value == "none":
+        return None
+    skill = competency.SKILLS_BY_ID[skill_id]
+    name = competency.skill_name(skill_id, lang)
+    usages = skill.ai_usage_en if lang == "en" else skill.ai_usage
+    action = usages[0] if usages else name
+
+    if skill_id == "llm.prompt":
+        special = {
+            "tutorial": "例如：能说明角色、约束和示例分别解决什么问题",
+            "demo": "例如：为一个小功能写过结构化Prompt，并迭代过输入输出",
+            "shipped": "例如：在真实项目中维护过Prompt，并处理过失败案例",
+            "expert": "例如：设计过可复用Prompt模板，并处理过版本、评测和失败回退",
+        }
+        special_en = {
+            "tutorial": "For example: can explain what roles, constraints, and examples each solve",
+            "demo": "For example: wrote and iterated a structured prompt for a small feature",
+            "shipped": "For example: maintained prompts in production and handled failures",
+            "expert": "For example: designed reusable prompt templates with versioning, evaluation, and fallbacks",
+        }
+        return (special_en if lang == "en" else special).get(value)
+
+    if lang == "en":
+        templates = {
+            "tutorial": f"For example: can explain the basic purpose of {name}",
+            "demo": f"For example: used it in a small feature to {action.rstrip('.')}",
+            "shipped": "For example: delivered it in a real project and debugged failures",
+            "expert": "For example: can design the approach, evaluate results, and improve it continuously",
+        }
+    else:
+        templates = {
+            "tutorial": f"例如：能说明{name}的基本用途",
+            "demo": f"例如：在小功能中尝试过{action.rstrip('。')}",
+            "shipped": "例如：在真实项目中交付过，并处理过失败或异常情况",
+            "expert": "例如：能设计整体方案、评测结果并持续优化",
+        }
+    return templates.get(value)
+
+
 def default_question_text(skill_id: str, lang: str = "en") -> str:
     return t(lang, "question.text", skill=competency.skill_name(skill_id, lang))
 

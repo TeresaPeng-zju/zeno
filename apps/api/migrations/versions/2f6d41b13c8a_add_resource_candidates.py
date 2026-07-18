@@ -15,6 +15,11 @@ depends_on = None
 
 
 def upgrade() -> None:
+    # Some local databases created this table through an earlier bootstrap
+    # script before the Alembic revision was introduced. Keep the migration
+    # safe for those databases instead of failing or deleting existing rows.
+    if "resource_candidates" in sa.inspect(op.get_bind()).get_table_names():
+        return
     op.create_table(
         "resource_candidates",
         sa.Column("id", sa.String(), nullable=False),

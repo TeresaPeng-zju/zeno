@@ -1,6 +1,25 @@
+@import url("/assets/fonts/misans/MiSans-Regular.min.css");
+@import url("/assets/fonts/misans/MiSans-Semibold.min.css");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@font-face {
+  font-family: "Geist Sans";
+  src: url("/assets/fonts/geist/Geist-Variable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/assets/fonts/geist/GeistMono-Variable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
 
 /* ── Border Beam: @property must be top-level, outside @layer ── */
 @property --beam-angle {
@@ -11,15 +30,14 @@
 
 @layer base {
   :root {
-    /* Typography — Plus Jakarta Sans for Latin, Noto Sans SC for CJK */
-    --font-jakarta: -apple-system, BlinkMacSystemFont, "Segoe UI";
-    --font-noto-sc: "PingFang SC", "Microsoft Yahei", "Noto Sans SC";
-    --font-source-code-pro: "Source Code Pro";
-    --default-font-family: var(--font-jakarta), var(--font-noto-sc),
-      -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft Yahei",
-      "Hiragino Sans GB", Arial, sans-serif, "Apple Color Emoji",
+    /* Typography — Geist for Latin/UI, MiSans for CJK, Geist Mono for terminal. */
+    --font-latin: "Geist Sans";
+    --font-cjk: "MiSans", "PingFang SC", "Microsoft Yahei", "Noto Sans SC";
+    --font-display: "Geist Sans", "MiSans", "PingFang SC", sans-serif;
+    --default-font-family: var(--font-latin), var(--font-cjk),
+      -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif, "Apple Color Emoji",
       "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-    --default-font-family-monospace: var(--font-source-code-pro), ui-monospace,
+    --default-font-family-monospace: "Geist Mono", ui-monospace,
       SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
       monospace;
 
@@ -67,6 +85,12 @@
 }
 
 @layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    text-wrap: balance;
+  }
+
   /* ── 减弱动态：尊重系统设置，同时省电/降负载 ─────────────────── */
   @media (prefers-reduced-motion: reduce) {
     .aurora-backdrop,

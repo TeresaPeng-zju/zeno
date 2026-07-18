@@ -426,8 +426,8 @@
     },
     {
       "id": "llm.structured_output",
-      "name": "结构化输出 / JSON schema 约束",
-      "name_en": "Structured output / JSON schema",
+      "name": "结构化输出 / JSON Schema 约束",
+      "name_en": "Structured output / JSON Schema",
       "category": "llm",
       "learnability": 0.65,
       "layer": "L2",
@@ -439,12 +439,12 @@
       ],
       "ai_usage": [
         "用 JSON mode / response_format 强制模型输出结构化数据",
-        "定义 JSON schema 约束模型输出字段类型与范围",
+        "定义 JSON Schema 约束模型输出字段类型与范围",
         "对模型返回做 schema 校验与容错解析"
       ],
       "ai_usage_en": [
         "Use JSON mode / response_format to enforce structured model output",
-        "Define JSON schema to constrain output field types and ranges",
+        "Define JSON Schema to constrain output field types and ranges",
         "Validate and fault-tolerantly parse model responses against schema"
       ],
       "non_ai_boundaries": [

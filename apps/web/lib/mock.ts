@@ -89,8 +89,8 @@ const SKILL_NAMES: Record<string, Bi> = {
   "data.quality": { en: "Data quality & dedup", zh: "数据质量与去重" },
   "llm.prompt": { en: "Prompt structure design", zh: "Prompt 结构设计" },
   "llm.structured_output": {
-    en: "Structured output / JSON schema",
-    zh: "结构化输出 / JSON schema 约束",
+    en: "Structured output / JSON Schema",
+    zh: "结构化输出 / JSON Schema 约束",
   },
   "llm.function_calling": { en: "Function / tool calling", zh: "函数 / 工具调用" },
   "llm.tool_use": { en: "Multi-tool orchestration", zh: "多工具编排" },
@@ -468,8 +468,8 @@ const RESOURCES: Record<string, Array<{
   "llm.structured_output": [
     {
       title: {
-        en: "Structured Outputs: constrain model output with JSON schema",
-        zh: "Structured Outputs：用 JSON schema 约束模型输出",
+        en: "Structured Outputs: constrain model output with JSON Schema",
+        zh: "Structured Outputs：用 JSON Schema 约束模型输出",
       },
       url: "https://platform.openai.com/docs/guides/structured-outputs",
       platform: "OpenAI Docs",
@@ -597,8 +597,8 @@ function stepSeeds(orientation: string): StepSeed[] {
       skill_id: "llm.structured_output",
       target_level: 3,
       action_title: {
-        en: "Constrain LLM output with a JSON schema and validate it",
-        zh: "用 JSON schema 约束 LLM 输出并做校验",
+        en: "Constrain LLM output with a JSON Schema and validate it",
+        zh: "用 JSON Schema 约束 LLM 输出并做校验",
       },
       why: {
         en: "The key to turning the model into a reliable service; quick to pick up given your existing TypeScript / API contract skills.",
@@ -820,7 +820,22 @@ function questionFor(skillId: string, answered: number, loc: Locale): QuestionOu
     text,
     help_text,
     ui_type: "single_select",
-    options: PROFICIENCY_META.map((p) => ({ value: p.value, label: pick(p.label, loc) })),
+    options: PROFICIENCY_META.map((p) => {
+      const isZh = loc === "zh";
+      const examples: Record<string, string | null> = {
+        none: null,
+        tutorial: isZh ? `例如：能说明${sk}的基本用途` : `For example: can explain the basic purpose of ${sk}`,
+        demo: isZh ? `例如：在个人小功能中实际用过${sk}` : `For example: used ${sk} in a small personal feature`,
+        shipped: isZh ? "例如：在真实项目中交付过，并处理过失败或异常情况" : "For example: delivered it in a real project and debugged failures",
+        expert: isZh ? "例如：能设计整体方案、评测结果并持续优化" : "For example: can design the approach, evaluate results, and improve it continuously",
+      };
+      if (skillId === "llm.prompt" && p.value === "expert") {
+        examples.expert = isZh
+          ? "例如：设计过可复用Prompt模板，并处理过版本、评测和失败回退"
+          : "For example: designed reusable prompt templates with versioning, evaluation, and fallbacks";
+      }
+      return { value: p.value, label: pick(p.label, loc), example: examples[p.value] };
+    }),
     progress: { answered, max: SURVEY_SKILLS.length },
   };
 }
@@ -915,13 +930,31 @@ export const mockApi = {
     }, 320);
   },
 
-  nextQuestion: (sessionId: string): Promise<NextQuestionResponse> =>
+  nextQuestion: (sessionId: string, _forceContinue = false, _requiredOnly = false): Promise<NextQuestionResponse> =>
     delay(nextQuestionFor(sessionId, currentLocale())),
 
-  submitAnswer: (sessionId: string): Promise<NextQuestionResponse> => {
+  submitAnswer: (sessionId: string, _skillId?: string, _answerValue?: string, _forceContinue = false, _answerSource: "standard" | "user_correction" = "standard", _requiredOnly = false): Promise<NextQuestionResponse> => {
     answeredBySession[sessionId] = (answeredBySession[sessionId] ?? 0) + 1;
     return delay(nextQuestionFor(sessionId, currentLocale()), 180);
   },
+
+  analyzeCorrection: (sessionId: string, skillId: string, text: string) => delay({
+    evidence_id: `mock-${sessionId}-${skillId}`,
+    skill_id: skillId,
+    project: "Zeno",
+    actions: text.split(/[。；;\n]/).filter(Boolean).slice(0, 3),
+    ownership: text.includes("独立") ? "独立实现" : "参与实现",
+    outcome: text.includes("Demo") || text.includes("上线") ? "完成可运行Demo" : "",
+    evidence_quote: text.slice(0, 180),
+    llm_suggested_level: 3,
+    rule_level: text.includes("主导") || text.includes("架构") ? 4 : text.includes("独立") ? 3 : 2,
+    rule_version: "correction-v1",
+    current_level: 1,
+    provider: "mock",
+  }, 500),
+
+  confirmCorrection: (_sessionId: string, _evidenceId: string, action: "confirm" | "keep") =>
+    delay({ status: action === "confirm" ? "confirmed" as const : "kept" as const, level: action === "confirm" ? 3 : 1 }, 180),
 
   result: (sessionId: string, timeBudget?: TimeBudget, orientationOverride?: string): Promise<ResultResponse> => {
     const loc = currentLocale();
@@ -947,7 +980,10 @@ export const mockApi = {
       orientation_label,
       status: "completed",
       readiness,
+      projected_readiness: Math.min(100, readiness + 18),
       profile_uncertainty: 0.38,
+      assessed_required_count: 9,
+      required_skill_count: 16,
       time_budget: budget,
       pacing,
       profile: buildProfile(loc),

@@ -59,3 +59,11 @@ def test_fresh_beats_stale_at_equal_relevance():
         gap_target_level=2,
     )
     assert out[0].url == "fresh"
+
+
+def test_redirected_duplicate_titles_are_collapsed():
+    old = _r("old-url", 0.4)
+    new = _r("canonical-url", 0.9)
+    old.title = new.title = "Same official guide"
+    out = rerank([old, new], gap_target_level=2)
+    assert [r.url for r in out] == ["canonical-url"]

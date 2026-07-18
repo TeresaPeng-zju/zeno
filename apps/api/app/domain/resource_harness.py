@@ -104,7 +104,9 @@ class DeepSeekAnnotator:
                 "Choose 1-3 skill_ids only from skill_catalog.",
                 "target_levels are integers 1-4 for each chosen skill.",
                 "quality_score and confidence are numbers 0-1.",
-                "Reject marketing pages, thin pages, job listings, and unrelated content.",
+                "This is a launch-stage library: map any accessible learning content to the closest skills.",
+                "Do not reject merely for being brief, introductory, commercial, or imperfect.",
+                "Set rejection_reason only when the content is unrelated to learning any catalog skill.",
                 "summary must describe observable learning outcomes, <= 120 Chinese characters.",
             ],
             "schema": {
@@ -206,7 +208,7 @@ def approve_candidate(db: Session, candidate: ResourceCandidate) -> None:
     annotation = validate_annotation(candidate.annotation or {})
     if annotation["rejection_reason"]:
         raise ValueError("cannot approve a rejected annotation")
-    resource_service.upsert_resource(
+    resource = resource_service.upsert_resource(
         db,
         title=candidate.title,
         url=candidate.url,
@@ -218,6 +220,11 @@ def approve_candidate(db: Session, candidate: ResourceCandidate) -> None:
         summary=annotation["summary"],
         quality_score=annotation["quality_score"],
     )
+    # Annotation only runs after WebFetcher receives a successful HTTP response.
+    resource.freshness_status = "fresh"
+    resource.http_status = 200
+    resource.last_verified_at = datetime.now(timezone.utc)
+    resource.verify_note = f"LLM-assisted intake via {candidate.model_name or 'unknown model'}"
     candidate.status = "approved"
     candidate.reviewed_at = datetime.now(timezone.utc)
     db.commit()

@@ -88,6 +88,31 @@ class UserSkill(Base):
     session: Mapped["SurveySession"] = relationship(back_populates="user_skills")
 
 
+class SkillCorrectionEvidence(Base):
+    """Auditable evidence supplied through “you underestimated me”.
+
+    The LLM extraction is stored verbatim, but only ``rule_level`` can be
+    offered to the user. A level reaches ``user_skills`` only after explicit
+    confirmation.
+    """
+
+    __tablename__ = "skill_correction_evidence"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    session_id: Mapped[str] = mapped_column(ForeignKey("sessions.id"), index=True)
+    skill_id: Mapped[str] = mapped_column(String, index=True)
+    raw_text: Mapped[str] = mapped_column(Text, nullable=False)
+    extraction: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    llm_suggested_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    rule_level: Mapped[int] = mapped_column(Integer, nullable=False)
+    rule_version: Mapped[str] = mapped_column(String, nullable=False)
+    provider: Mapped[str] = mapped_column(String, default="deterministic-fallback")
+    status: Mapped[str] = mapped_column(String, default="pending")  # pending|confirmed|kept
+    confirmed_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class Resource(Base):
     """Learning resource for the prescription/roadmap (Week 3 resource engine).
 

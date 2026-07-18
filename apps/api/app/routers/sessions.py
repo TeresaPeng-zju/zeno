@@ -9,6 +9,10 @@ from app.core.db import get_db
 from app.i18n import Lang, get_lang
 from app.schemas import (
     AnswerIn,
+    CorrectionAnalyzeIn,
+    CorrectionConfirmIn,
+    CorrectionConfirmOut,
+    CorrectionEvidenceOut,
     NextQuestionResponse,
     ResultResponse,
     SessionCreateRequest,
@@ -46,19 +50,25 @@ def create_session(
 @router.get("/{session_id}/next-question", response_model=NextQuestionResponse)
 def get_next_question(
     session_id: str,
+    force_continue: bool = Query(default=False),
+    required_only: bool = Query(default=False),
     db: Session = Depends(get_db),
     lang: Lang = Depends(get_lang),
 ) -> NextQuestionResponse:
     sess = session_service.get_session(db, session_id)
     if sess is None:
         raise HTTPException(status_code=404, detail="session not found")
-    return session_service.next_question(db, sess, lang)
+    return session_service.next_question(
+        db, sess, lang, force_continue=force_continue, required_only=required_only
+    )
 
 
 @router.post("/{session_id}/answers", response_model=NextQuestionResponse)
 def submit_answer(
     session_id: str,
     payload: AnswerIn,
+    force_continue: bool = Query(default=False),
+    required_only: bool = Query(default=False),
     db: Session = Depends(get_db),
     lang: Lang = Depends(get_lang),
 ) -> NextQuestionResponse:
@@ -66,10 +76,66 @@ def submit_answer(
     if sess is None:
         raise HTTPException(status_code=404, detail="session not found")
     try:
-        session_service.record_answer(db, sess, payload.skill_id, payload.answer_value)
+        session_service.record_answer(
+            db,
+            sess,
+            payload.skill_id,
+            payload.answer_value,
+            answer_source=payload.answer_source,
+        )
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
-    return session_service.next_question(db, sess, lang)
+    return session_service.next_question(
+        db, sess, lang, force_continue=force_continue, required_only=required_only
+    )
+
+
+@router.post("/{session_id}/corrections/analyze", response_model=CorrectionEvidenceOut)
+def analyze_correction(
+    session_id: str,
+    payload: CorrectionAnalyzeIn,
+    db: Session = Depends(get_db),
+    lang: Lang = Depends(get_lang),
+) -> CorrectionEvidenceOut:
+    sess = session_service.get_session(db, session_id)
+    if sess is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    try:
+        record = session_service.analyze_correction(db, sess, payload.skill_id, payload.text, lang)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    current = next((item.level for item in sess.user_skills if item.skill_id == payload.skill_id), 0)
+    data = record.extraction or {}
+    return CorrectionEvidenceOut(
+        evidence_id=record.id,
+        skill_id=record.skill_id,
+        project=str(data.get("project") or ""),
+        actions=[str(item) for item in data.get("actions") or []],
+        ownership=str(data.get("ownership") or ""),
+        outcome=str(data.get("outcome") or ""),
+        evidence_quote=str(data.get("evidence_quote") or ""),
+        llm_suggested_level=record.llm_suggested_level,
+        rule_level=record.rule_level,
+        rule_version=record.rule_version,
+        current_level=current,
+        provider=record.provider,
+    )
+
+
+@router.post("/{session_id}/corrections/confirm", response_model=CorrectionConfirmOut)
+def confirm_correction(
+    session_id: str,
+    payload: CorrectionConfirmIn,
+    db: Session = Depends(get_db),
+) -> CorrectionConfirmOut:
+    sess = session_service.get_session(db, session_id)
+    if sess is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    try:
+        status, level = session_service.confirm_correction(db, sess, payload.evidence_id, payload.action)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return CorrectionConfirmOut(status=status, level=level)
 
 
 @router.get("/{session_id}/result", response_model=ResultResponse)
@@ -115,6 +181,7 @@ def get_voice(
     return {
         "headline": out.get("headline", ""),
         "voice": out.get("body", ""),
+        "sections": out.get("sections"),
         "verify": out.get("verify"),  # 0G verifiable-inference receipt (or null)
     }
 

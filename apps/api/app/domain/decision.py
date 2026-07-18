@@ -255,12 +255,19 @@ def select_next_steps(
         ]
 
         mv = get_migration_value(sid)
-        priority = g.gap_score * mv * (1 + beginner_boost * skill.learnability)
+        raw_priority = g.gap_score * mv * (1 + beginner_boost * skill.learnability)
+        # A dependent cannot be the user's immediate priority while one of its
+        # prerequisites is still missing. Topological order enforces the hard
+        # sequence; this penalty keeps the displayed score consistent with that
+        # same explanation instead of showing a blocked skill as "more urgent".
+        priority = raw_priority * (BLOCKED_PENALTY if blocked_by else 1.0)
 
         components = {
             "gap_score": round(g.gap_score, 4),
             "requirement_weight": round(g.req.weight, 4),
             "migration_value": round(mv, 4),
+            "raw_priority": round(raw_priority, 4),
+            "blocked_penalty": BLOCKED_PENALTY if blocked_by else 1.0,
             "priority": round(priority, 4),
             "learnability": round(skill.learnability, 4),
             "unblocks_count": len(unblocks),
@@ -354,7 +361,7 @@ _CATEGORY_BLUEPRINTS: dict[str, dict[str, list[str]]] = {
     "llm": {
         "steps": [
             "为一个真实任务写出带角色/约束/示例的 prompt",
-            "加上 JSON schema 约束并校验输出",
+            "加上 JSON Schema 约束并校验输出",
             "接入一次函数/工具调用完成闭环",
             "记录成本与延迟，做一轮 prompt 精简",
         ],
@@ -373,6 +380,33 @@ _CATEGORY_BLUEPRINTS: dict[str, dict[str, list[str]]] = {
 
 # Skill-specific blueprints for the high-weight skills most likely to surface.
 _SKILL_BLUEPRINTS: dict[str, dict[str, list[str]]] = {
+    "eng.observability": {
+        "steps": [
+            "选一个已有服务，定义需要观察的请求成功率、延迟和错误类型",
+            "为关键请求补上结构化日志，并让同一次请求共享 trace ID",
+            "接入 OpenTelemetry，记录一次从入口到模型或数据库的完整链路",
+            "主动制造一次超时或错误，用日志、指标和 trace 定位原因",
+        ],
+        "acceptance": ["提交可运行仓库和一条完整 trace 截图", "附一次故障定位记录及关键指标说明"],
+    },
+    "data.text_processing": {
+        "steps": [
+            "选一组包含页眉、乱码、重复段落和特殊字符的真实文档",
+            "实现格式解析、编码统一、噪声移除和正文保留的清洗管线",
+            "为每类清洗规则补边界样例和自动化测试",
+            "对比清洗前后的有效文本比例，并记录误删案例",
+        ],
+        "acceptance": ["提交可运行的文本清洗管线和测试", "附清洗前后样例及误删检查记录"],
+    },
+    "data.quality": {
+        "steps": [
+            "为语料定义完整性、重复率、乱码率和元数据缺失率",
+            "实现文档级与段落级去重，并保留来源和版本信息",
+            "在入库前运行质量检查，把不合格数据隔离并记录原因",
+            "对同一批语料生成质量报告，比较治理前后的指标",
+        ],
+        "acceptance": ["提交可复跑的数据质量检查和去重代码", "附治理前后指标报告及隔离样例"],
+    },
     "data.chunking": {
         "steps": [
             "了解固定窗口 / 语义切分 / 递归切分三种策略",
@@ -503,7 +537,7 @@ _CATEGORY_BLUEPRINTS_EN: dict[str, dict[str, list[str]]] = {
     "llm": {
         "steps": [
             "Write a prompt with role/constraints/examples for a real task",
-            "Add a JSON schema constraint and validate the output",
+            "Add a JSON Schema constraint and validate the output",
             "Wire in one function/tool call to close the loop",
             "Record cost and latency, then do a round of prompt trimming",
         ],
@@ -528,6 +562,42 @@ _CATEGORY_BLUEPRINTS_EN: dict[str, dict[str, list[str]]] = {
 
 # English skill-specific blueprints (mirror of _SKILL_BLUEPRINTS).
 _SKILL_BLUEPRINTS_EN: dict[str, dict[str, list[str]]] = {
+    "eng.observability": {
+        "steps": [
+            "Choose an existing service and define request success, latency, and error signals",
+            "Add structured logs and propagate one trace ID through each request",
+            "Instrument it with OpenTelemetry and capture a full application trace",
+            "Trigger a timeout or error and locate the cause using logs, metrics, and traces",
+        ],
+        "acceptance": [
+            "Submit a runnable repo and a screenshot of one complete trace",
+            "Attach one incident-debugging record and explain the key signals",
+        ],
+    },
+    "data.text_processing": {
+        "steps": [
+            "Choose real documents containing headers, encoding noise, duplicates, and special characters",
+            "Build a cleaning pipeline for parsing, encoding normalization, noise removal, and body preservation",
+            "Add edge examples and automated tests for every cleaning rule",
+            "Compare usable-text ratios before and after cleaning and record false removals",
+        ],
+        "acceptance": [
+            "Submit the runnable text-cleaning pipeline and tests",
+            "Attach before/after samples and a false-removal review",
+        ],
+    },
+    "data.quality": {
+        "steps": [
+            "Define corpus completeness, duplicate rate, encoding-error rate, and missing-metadata rate",
+            "Implement document- and passage-level deduplication while preserving source and version metadata",
+            "Run quality gates before ingestion and quarantine failures with reasons",
+            "Generate a report comparing quality metrics before and after governance",
+        ],
+        "acceptance": [
+            "Submit reproducible data-quality checks and deduplication code",
+            "Attach a before/after metrics report and quarantined examples",
+        ],
+    },
     "data.chunking": {
         "steps": [
             "Learn the three strategies: fixed-window / semantic / recursive splitting",

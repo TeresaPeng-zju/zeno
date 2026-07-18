@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
 
 import { locales, localeNames, type Locale } from "@/i18n/config";
 import { setUserLocale } from "@/i18n/locale";
 
 export function LanguageSwitcher() {
   const active = useLocale() as Locale;
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -28,7 +30,7 @@ export function LanguageSwitcher() {
     setOpen(false);
     startTransition(async () => {
       await setUserLocale(locale);
-      window.location.reload();
+      router.refresh();
     });
   }
 

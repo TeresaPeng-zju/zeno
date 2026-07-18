@@ -165,20 +165,25 @@ python scripts/reembed_resources.py
 
 ### Semi-automatic resource curation
 
-The curation harness stages fetched pages in a review queue; model output never
-enters retrieval before approval. Set `DEEPSEEK_API_KEY`, then run from `apps/api`:
+The curation harness normally stages fetched pages in a review queue. During the
+launch phase, `--auto-publish` can publish successfully fetched, DeepSeek-labelled
+resources immediately; failed/dead links remain outside retrieval. Every machine
+annotation stays in the candidate ledger for later human review. Set
+`DEEPSEEK_API_KEY`, then run from `apps/api`:
 
 ```bash
 .venv/bin/python scripts/curate_resources.py seed
 .venv/bin/python scripts/curate_resources.py ingest urls.txt --source official-docs
+.venv/bin/python scripts/curate_resources.py ingest urls.txt --source official-docs --auto-publish
+.venv/bin/python scripts/curate_resources.py label-seeds --auto-publish
 .venv/bin/python scripts/curate_resources.py export pending-resources.json
 .venv/bin/python scripts/curate_resources.py approve <candidate-id>
 .venv/bin/python scripts/curate_resources.py reject <candidate-id> --reason "too thin"
 ```
 
 Start with allow-listed official documentation, official GitHub repositories,
-and university courses. DeepSeek proposes structured labels; humans only review
-publication candidates and maintain a small gold evaluation set.
+and university courses. DeepSeek proposes structured labels; humans can later
+override them and maintain a small gold evaluation set.
 
 The first run downloads the model. BGE-M3's normalized 1024-dimensional output
 is zero-padded to the existing 1536-dimensional pgvector column; cosine ranking

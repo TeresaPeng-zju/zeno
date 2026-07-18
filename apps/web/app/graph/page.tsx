@@ -15,7 +15,7 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import { Centered } from "@/components/site/centered";
-import { api, type QuestionOut } from "@/lib/api";
+import { api, type CorrectionEvidenceOut, type QuestionOut } from "@/lib/api";
 
 
 // ── 成长图（前端策展内容，纯前端状态机；只在最后把已确认节点提交给 /answers）──
@@ -24,15 +24,16 @@ type GNode = {
   id: string; label: string; labelZh?: string; x: number; y: number;
   skill?: string; seed?: boolean; match?: number; jd?: number;
   why?: string; whyZh?: string; transferPath?: string[]; transferPathZh?: string[]; grows?: string[]; target?: boolean;
+  explain?: string; explainZh?: string;
 };
 // 共享的 AI 能力层（各角色殊途同归）。jd = 该技能在 AI 岗位 JD 中的出现率。
 const CORE: Record<string, GNode> = {
-  structOut: { id: "structOut", label: "Structured Output", labelZh: "结构化输出", x: 360, y: 40, skill: "llm.structured_output", jd: 4, grows: ["target"] },
-  fc: { id: "fc", label: "Function Calling", labelZh: "函数调用", x: 360, y: 190, skill: "llm.function_calling", jd: 14, grows: ["tool"] },
-  rag: { id: "rag", label: "Vector Search / RAG", labelZh: "向量检索 / RAG", x: 360, y: 330, skill: "data.vector_search", jd: 4, grows: ["eval"] },
-  cost: { id: "cost", label: "Cost & Latency", labelZh: "成本与延迟", x: 360, y: 470, skill: "llm.cost_latency", jd: 29, grows: ["target"] },
-  tool: { id: "tool", label: "Tool Orchestration (Agent)", labelZh: "工具编排（Agent）", x: 660, y: 190, skill: "llm.tool_use", jd: 73, grows: ["target"] },
-  eval: { id: "eval", label: "Evaluation · the moat", labelZh: "评估 · 护城河", x: 660, y: 350, skill: "eval.offline", jd: 33, grows: ["target"] },
+  structOut: { id: "structOut", label: "Structured Output", labelZh: "结构化输出", explain: "Make the model return a predictable JSON shape your UI can safely render.", explainZh: "让AI必须按你规定的JSON格式回答，前端可以直接、安全地渲染。", x: 360, y: 40, skill: "llm.structured_output", jd: 4, grows: ["target"] },
+  fc: { id: "fc", label: "Function Calling", labelZh: "函数调用", explain: "Not a normal code call: the model chooses an API or tool and prepares its arguments.", explainZh: "不是代码里的普通函数调用，而是让模型选择API或工具，并自动生成调用参数。", x: 360, y: 190, skill: "llm.function_calling", jd: 14, grows: ["tool"] },
+  rag: { id: "rag", label: "Vector Search / RAG", labelZh: "向量检索 / RAG", explain: "Let AI find evidence in your own documents before it answers.", explainZh: "让AI先从你的资料中找到相关证据，再根据证据回答。", x: 360, y: 330, skill: "data.vector_search", jd: 4, grows: ["eval"] },
+  cost: { id: "cost", label: "Cost & Latency", labelZh: "成本与延迟", explain: "Keep each AI request fast enough for users and affordable enough to ship.", explainZh: "控制一次AI请求要等多久、消耗多少Token和费用，让产品真正能上线。", x: 360, y: 470, skill: "llm.cost_latency", jd: 29, grows: ["target"] },
+  tool: { id: "tool", label: "Tool Orchestration (Agent)", labelZh: "工具编排（Agent）", explain: "Let AI complete several tool steps in order and recover when one fails.", explainZh: "让AI按顺序完成查资料、调用接口、整理结果，并处理失败与重试。", x: 660, y: 190, skill: "llm.tool_use", jd: 73, grows: ["target"] },
+  eval: { id: "eval", label: "Evaluation · the moat", labelZh: "评估 · 护城河", explain: "Use a fixed test set and metrics to check whether AI answers are reliable.", explainZh: "用固定问题集和指标，检查AI回答是否准确、稳定、值得信任。", x: 660, y: 350, skill: "eval.offline", jd: 33, grows: ["target"] },
   target: { id: "target", label: "AI Application Engineer", labelZh: "AI 应用工程师", x: 940, y: 280, target: true },
 };
 
@@ -79,10 +80,9 @@ function roleKeyOf(currentRole: string | null): "frontend" | "backend" | "fullst
 }
 const DEPTH = [1, 2, 3, 4];
 const LVL_VAL: Record<number, string> = { 0: "none", 1: "tutorial", 2: "demo", 3: "shipped", 4: "expert" };
-const MIN_PROBES = 2;
 const MAX_PROBES = 4;
 
-type NData = Record<string, unknown> & { label: string; state: "seed" | "avail" | "confirmed" | "gap" | "target"; sub?: string; match?: number; matchLabel?: string };
+type NData = Record<string, unknown> & { label: string; state: "seed" | "avail" | "confirmed" | "gap" | "target"; sub?: string; match?: number; matchLabel?: string; explain?: string };
 
 function GNodeView({ data }: NodeProps) {
   const d = data as NData;
@@ -108,6 +108,22 @@ function GNodeView({ data }: NodeProps) {
           <span className={"relative h-2 w-2 rounded-full " + dot} />
         </span>
         <span className="text-xs font-medium tracking-tight">{d.label}</span>
+        {d.explain && (
+          <span
+            role="note"
+            tabIndex={0}
+            aria-label={d.explain}
+            className="group/info relative ml-auto flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-cyan/30 bg-cyan/[0.06] font-mono text-[9px] font-bold text-cyan/70 outline-none transition hover:border-cyan/70 hover:bg-cyan/15 hover:text-cyan focus-visible:border-cyan focus-visible:ring-2 focus-visible:ring-cyan/30"
+            onClick={(event) => event.stopPropagation()}
+          >
+            ?
+            <span className="pointer-events-none absolute bottom-[calc(100%+10px)] left-1/2 z-50 w-64 -translate-x-1/2 translate-y-1 rounded-xl border border-cyan/20 bg-[#101722]/95 px-3 py-2.5 text-left font-sans text-[11px] font-normal leading-relaxed text-slate-200 opacity-0 shadow-[0_0_28px_-8px_rgba(27,229,238,0.45)] backdrop-blur-xl transition duration-200 group-hover/info:translate-y-0 group-hover/info:opacity-100 group-focus-visible/info:translate-y-0 group-focus-visible/info:opacity-100">
+              <span className="mb-1 block font-medium text-cyan">{d.label}</span>
+              {d.explain}
+              <span className="absolute left-1/2 top-full h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-cyan/20 bg-[#101722]" />
+            </span>
+          </span>
+        )}
         {d.state === "avail" && <span className="ml-auto text-[10px]">✨</span>}
       </div>
       {d.state === "seed" && d.match !== undefined && (
@@ -137,12 +153,18 @@ function GraphInner() {
   const gLabel = (g: GNode) => (zh && g.labelZh ? g.labelZh : g.label);
   const gWhy = (g: GNode) => (zh && g.whyZh ? g.whyZh : g.why ?? "");
   const gPath = (g: GNode) => (zh && g.transferPathZh ? g.transferPathZh : g.transferPath ?? []);
+  const gExplain = (g: GNode) => (zh && g.explainZh ? g.explainZh : g.explain ?? "");
   const depthLabel = (lv: number) => t(`depth${lv}`);
 
   const [visible, setVisible] = useState<Set<string>>(() => new Set([...SEEDS, "target"]));
   const [confirmed, setConfirmed] = useState<Record<string, number>>({});
+  const [correctedNodes, setCorrectedNodes] = useState<Set<string>>(() => new Set());
   const [picking, setPicking] = useState<string | null>(null);
-  const [modalPhase, setModalPhase] = useState<"ask" | "depth">("ask");
+  const [modalPhase, setModalPhase] = useState<"ask" | "depth" | "correctionInput" | "correctionReview">("ask");
+  const [confirmationMode, setConfirmationMode] = useState<"standard" | "correction">("standard");
+  const [correctionText, setCorrectionText] = useState("");
+  const [correctionEvidence, setCorrectionEvidence] = useState<CorrectionEvidenceOut | null>(null);
+  const [correctionBusy, setCorrectionBusy] = useState(false);
   const [reveal, setReveal] = useState<{ path: string[]; why: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [probe, setProbe] = useState<QuestionOut | null>(null);
@@ -165,11 +187,11 @@ function GraphInner() {
         : lv === undefined ? (g.seed ? "seed" : "avail")
         : lv > 0 ? "confirmed" : "gap";
       const sub = g.target ? undefined
-        : lv !== undefined ? (lv > 0 ? depthLabel(lv) : t("notYet"))
+        : lv !== undefined ? (lv > 0 ? `${correctedNodes.has(id) ? `${t("correctedByYou")} · ` : ""}${depthLabel(lv)}` : t("notYet"))
         : g.seed ? undefined : g.jd !== undefined ? t("jobsPct", { pct: g.jd }) : undefined;
-      return { id, type: "g", position: { x: g.x, y: g.y }, data: { label: gLabel(g), state, sub, match: g.seed ? g.match : undefined, matchLabel: g.seed && g.match !== undefined ? t("aiMatch", { pct: g.match }) : undefined } };
+      return { id, type: "g", position: { x: g.x, y: g.y }, data: { label: gLabel(g), state, sub, explain: gExplain(g) || undefined, match: g.seed ? g.match : undefined, matchLabel: g.seed && g.match !== undefined ? t("aiMatch", { pct: g.match }) : undefined } };
     });
-  }, [visible, confirmed]);
+  }, [visible, confirmed, correctedNodes]);
 
   const edges: Edge[] = useMemo(() => {
     const out: Edge[] = [];
@@ -187,12 +209,21 @@ function GraphInner() {
     if (!g || g.target) return;
     setPicking(node.id);
     setModalPhase("ask");
+    setConfirmationMode("standard");
+    setCorrectionText("");
+    setCorrectionEvidence(null);
   }, []);
 
   function confirmAt(level: number) {
     if (!picking) return;
     const g = GRAPH[picking];
     setConfirmed((c) => ({ ...c, [picking]: level }));
+    setCorrectedNodes((previous) => {
+      const next = new Set(previous);
+      if (confirmationMode === "correction") next.add(picking);
+      else next.delete(picking);
+      return next;
+    });
     if (level > 0) {
       setVisible((v) => {
         const n = new Set(v);
@@ -204,12 +235,50 @@ function GraphInner() {
     setPicking(null);
   }
 
+  async function analyzeCorrection() {
+    if (!sessionId || !picking || !GRAPH[picking]?.skill || correctionText.trim().length < 12) return;
+    setCorrectionBusy(true);
+    setSubmitError(null);
+    try {
+      const evidence = await api.analyzeCorrection(sessionId, GRAPH[picking].skill!, correctionText.trim());
+      setCorrectionEvidence(evidence);
+      setModalPhase("correctionReview");
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : t("correctionAnalyzeFailed"));
+    } finally {
+      setCorrectionBusy(false);
+    }
+  }
+
+  async function resolveCorrection(action: "confirm" | "keep") {
+    if (!sessionId || !correctionEvidence) return;
+    setCorrectionBusy(true);
+    setSubmitError(null);
+    try {
+      await api.confirmCorrection(sessionId, correctionEvidence.evidence_id, action);
+      if (action === "confirm") {
+        setConfirmationMode("correction");
+        confirmAt(correctionEvidence.rule_level);
+      } else {
+        setPicking(null);
+      }
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : t("correctionConfirmFailed"));
+    } finally {
+      setCorrectionBusy(false);
+    }
+  }
+
   async function finish() {
     if (!sessionId || !anchorsComplete) return;
     const skillLvl: Record<string, number> = {};
+    const skillSource: Record<string, "standard" | "user_correction"> = {};
     for (const [id, lv] of Object.entries(confirmed)) {
       const sk = GRAPH[id]?.skill;
-      if (sk && (skillLvl[sk] === undefined || lv > skillLvl[sk])) skillLvl[sk] = lv;
+      if (sk && (skillLvl[sk] === undefined || lv > skillLvl[sk])) {
+        skillLvl[sk] = lv;
+        skillSource[sk] = correctedNodes.has(id) ? "user_correction" : "standard";
+      }
     }
     // Nothing confirmed yet (or everything answered "not yet"): the map has no
     // signal to work with — still allow proceeding so the flow never dead-ends;
@@ -219,9 +288,9 @@ function GraphInner() {
       // Use the mock-aware api client (NOT raw fetch): in NEXT_PUBLIC_USE_MOCK
       // mode there is no backend, and raw fetch would silently strand the user.
       for (const [sk, lv] of Object.entries(skillLvl)) {
-        await api.submitAnswer(sessionId, sk, LVL_VAL[lv]);
+        await api.submitAnswer(sessionId, sk, LVL_VAL[lv], true, skillSource[sk] ?? "standard");
       }
-      const next = await api.nextQuestion(sessionId);
+      const next = await api.nextQuestion(sessionId, true);
       if (next.result_ready || !next.question) router.push(`/result?session=${sessionId}`);
       else setProbe(next.question);
     } catch (e) {
@@ -237,9 +306,9 @@ function GraphInner() {
     setSubmitError(null);
     try {
       const nextCount = probeCount + 1;
-      const next = await api.submitAnswer(sessionId, probe.skill_id, value);
+      const next = await api.submitAnswer(sessionId, probe.skill_id, value, true);
       setProbeCount(nextCount);
-      if (nextCount >= MAX_PROBES || (nextCount >= MIN_PROBES && (next.result_ready || !next.question))) {
+      if (nextCount >= MAX_PROBES) {
         router.push(`/result?session=${sessionId}`);
         return;
       }
@@ -286,13 +355,24 @@ function GraphInner() {
       {probe && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#080b12]/80 px-4 backdrop-blur-md">
           <div className="w-full max-w-xl rounded-3xl border border-cyan/20 bg-[#121826] p-6 shadow-[0_0_60px_-16px_rgba(27,229,238,0.45)]">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan">{t("adaptiveProbe")}</p>
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan">{t("adaptiveProbe")}</p>
+              <p className="shrink-0 rounded-full border border-cyan/20 bg-cyan/[0.06] px-3 py-1 font-mono text-[10px] tracking-wide text-cyan/80">
+                {t("probeCount", { current: probeCount + 1, max: MAX_PROBES })}
+              </p>
+            </div>
+            <div className="mt-3 grid grid-cols-4 gap-1.5" aria-hidden>
+              {Array.from({ length: MAX_PROBES }, (_, index) => (
+                <span key={index} className={`h-1 rounded-full transition-colors ${index <= probeCount ? "bg-cyan shadow-[0_0_8px_rgba(27,229,238,0.55)]" : "bg-white/10"}`} />
+              ))}
+            </div>
             <h2 className="mt-3 text-xl font-semibold text-white">{probe.text}</h2>
             {probe.help_text && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{probe.help_text}</p>}
             <div className="mt-5 grid gap-2">
               {probe.options.map((option) => (
                 <button key={option.value} disabled={submitting} onClick={() => void answerProbe(option.value)} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left text-sm transition hover:border-cyan/50 hover:bg-cyan/10 disabled:opacity-50">
-                  {option.label}
+                  <span className="block text-slate-100">{option.label}</span>
+                  {option.example && <span className="mt-1 block text-xs leading-relaxed text-slate-500">{option.example}</span>}
                 </button>
               ))}
             </div>
@@ -316,21 +396,52 @@ function GraphInner() {
                 <p className="text-center text-sm font-semibold">{gLabel(pickG)}</p>
                 <p className="mb-3 mt-1 text-center text-xs text-muted-foreground">{t("checkPrompt")}</p>
                 <div className="grid gap-2">
-                  <button onClick={() => setModalPhase("depth")} className="rounded-lg border border-cyan/50 bg-cyan/10 px-3 py-2 text-xs font-medium text-cyan">{t("thatsMe")}</button>
-                  <button onClick={() => setModalPhase("depth")} className="rounded-lg border border-gold/50 bg-gold/10 px-3 py-2 text-xs font-medium text-gold">{t("underestimated")}</button>
+                  <button onClick={() => { setConfirmationMode("standard"); setModalPhase("depth"); }} className="rounded-lg border border-cyan/50 bg-cyan/10 px-3 py-2 text-xs font-medium text-cyan">{t("thatsMe")}</button>
+                  <button onClick={() => { setConfirmationMode("correction"); setModalPhase("correctionInput"); }} className="rounded-lg border border-gold/50 bg-gold/10 px-3 py-2 text-xs font-medium text-gold">{t("underestimated")}</button>
                   <button onClick={() => confirmAt(0)} className="rounded-lg border border-border/60 px-3 py-2 text-xs text-muted-foreground">{t("notReally")}</button>
                 </div>
               </>
-            ) : (
+            ) : modalPhase === "depth" ? (
               <>
-                <p className="mb-3 text-center text-sm font-semibold">{t("howDeep")}</p>
-                <div className="grid grid-cols-2 gap-2">
+                <p className="text-center text-sm font-semibold">{t("howDeep")}</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
                   {DEPTH.map((lv) => (
-                    <button key={lv} onClick={() => confirmAt(lv)} className="rounded-lg border border-border/60 px-3 py-2 text-xs text-foreground transition-colors hover:border-cyan/50 hover:text-cyan">{depthLabel(lv)}</button>
+                    <button key={lv} onClick={() => confirmAt(lv)} className="rounded-lg border border-border/60 px-3 py-2 text-left text-xs text-foreground transition-colors hover:border-cyan/50 hover:text-cyan">
+                      <span className="block font-medium">{depthLabel(lv)}</span>
+                    </button>
                   ))}
                 </div>
               </>
-            )}
+            ) : modalPhase === "correctionInput" ? (
+              <>
+                <p className="text-sm font-semibold">{t("correctionInputTitle")}</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t("correctionInputHint")}</p>
+                <textarea value={correctionText} onChange={(event) => setCorrectionText(event.target.value)} rows={5} autoFocus placeholder={t("correctionPlaceholder")} className="mt-3 w-full resize-none rounded-xl border border-white/10 bg-black/20 p-3 text-sm leading-relaxed text-slate-100 outline-none placeholder:text-slate-600 focus:border-gold/50" />
+                <div className="mt-3 flex gap-2">
+                  <button onClick={() => setModalPhase("ask")} className="flex-1 rounded-lg border border-white/10 px-3 py-2 text-xs text-muted-foreground">{t("back")}</button>
+                  <button disabled={correctionBusy || correctionText.trim().length < 12} onClick={() => void analyzeCorrection()} className="flex-[2] rounded-lg bg-gold px-3 py-2 text-xs font-semibold text-[#151006] disabled:opacity-40">{correctionBusy ? t("correctionAnalyzing") : t("correctionAnalyze")}</button>
+                </div>
+                <p className="mt-2 text-[10px] leading-relaxed text-slate-500">{t("correctionPrivacy")}</p>
+              </>
+            ) : correctionEvidence ? (
+              <>
+                <p className="text-sm font-semibold">{t("correctionReviewTitle", { level: correctionEvidence.rule_level, label: depthLabel(correctionEvidence.rule_level) })}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{t("correctionReviewHint")}</p>
+                <div className="mt-3 space-y-3 rounded-xl border border-gold/20 bg-gold/[0.04] p-3">
+                  <blockquote className="border-l-2 border-gold/60 pl-3 text-xs leading-relaxed text-slate-300">“{correctionEvidence.evidence_quote}”</blockquote>
+                  {correctionEvidence.actions.length > 0 && <div><p className="font-mono text-[9px] uppercase tracking-wider text-gold/70">{t("correctionActions")}</p><p className="mt-1 text-xs leading-relaxed text-slate-300">{correctionEvidence.actions.join(" · ")}</p></div>}
+                  <div className="flex flex-wrap gap-2 font-mono text-[9px] text-slate-500"><span>{correctionEvidence.rule_version}</span><span>·</span><span>{correctionEvidence.provider}</span></div>
+                </div>
+                <p className="mt-3 rounded-lg border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-xs leading-relaxed text-slate-400">
+                  {t(`correctionBoundary${correctionEvidence.rule_level}`)}
+                </p>
+                <div className="mt-3 grid gap-2">
+                  <button disabled={correctionBusy} onClick={() => void resolveCorrection("confirm")} className="rounded-lg bg-gold px-3 py-2 text-xs font-semibold text-[#151006]">{t("correctionConfirm", { level: correctionEvidence.rule_level })}</button>
+                  <button disabled={correctionBusy} onClick={() => void resolveCorrection("keep")} className="rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-300">{t("correctionKeep")}</button>
+                  <button disabled={correctionBusy} onClick={() => setModalPhase("correctionInput")} className="text-xs text-muted-foreground hover:text-gold">{t("correctionModify")}</button>
+                </div>
+              </>
+            ) : null}
             <button onClick={() => setPicking(null)} className="mt-2 w-full text-center text-xs text-muted-foreground">{t("cancel")}</button>
           </div>
         </div>

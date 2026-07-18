@@ -1,5 +1,7 @@
 """Session service: glue between persistence, orchestrator and LLM."""
 
+from datetime import datetime, timezone
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -11,11 +13,12 @@ from app.domain.question_bank import (
     OPTIONS_BY_VALUE,
     default_help_text,
     default_question_text,
+    option_example,
     option_label,
 )
 from app.i18n import t
 from app.llm.factory import get_llm_provider
-from app.models import SurveySession, UserSkill
+from app.models import SkillCorrectionEvidence, SurveySession, UserSkill
 from app.core.config import settings
 
 import json
@@ -111,7 +114,11 @@ def _build_question(skill_id: str, answered: int, lang: str = "en") -> QuestionO
         text=text,
         help_text=help_text,
         options=[
-            OptionOut(value=o.value, label=option_label(o.value, lang))
+            OptionOut(
+                value=o.value,
+                label=option_label(o.value, lang),
+                example=option_example(skill_id, o.value, lang),
+            )
             for o in ANSWER_OPTIONS
         ],
         progress=Progress(answered=answered, max=_max_questions()),
@@ -125,17 +132,28 @@ def _max_questions() -> int:
 
 
 def next_question(
-    db: Session, sess: SurveySession, lang: str = "en"
+    db: Session,
+    sess: SurveySession,
+    lang: str = "en",
+    force_continue: bool = False,
+    required_only: bool = False,
 ) -> NextQuestionResponse:
     states = _states(sess)
+    if required_only:
+        # Keep the continuation count aligned with the result card: transferable
+        # role foundations already counted as evidence must not be asked again.
+        for sid, level in _transfer_defaults(sess.current_role, sess.role_id).items():
+            states.setdefault(sid, SkillState(level=level, confidence=0.6))
     orient = _orientation(sess)
-    if is_complete(sess.role_id, states, orient):
+    if not force_continue and is_complete(sess.role_id, states, orient):
         if sess.status != "completed":
             sess.status = "completed"
             db.commit()
         return NextQuestionResponse(result_ready=True)
 
-    skill_id = select_next_skill(sess.role_id, states, orient)
+    skill_id = select_next_skill(
+        sess.role_id, states, orient, required_only=required_only
+    )
     if skill_id is None:
         sess.status = "completed"
         db.commit()
@@ -147,12 +165,25 @@ def next_question(
     )
 
 
-def record_answer(db: Session, sess: SurveySession, skill_id: str, answer_value: str) -> None:
+def record_answer(
+    db: Session,
+    sess: SurveySession,
+    skill_id: str,
+    answer_value: str,
+    answer_source: str = "standard",
+) -> None:
     if skill_id not in competency.SKILLS_BY_ID:
         raise ValueError(f"unknown skill_id: {skill_id}")
     option = OPTIONS_BY_VALUE.get(answer_value)
     if option is None:
         raise ValueError(f"invalid answer_value: {answer_value}")
+    if answer_source not in {"standard", "user_correction"}:
+        raise ValueError(f"invalid answer_source: {answer_source}")
+    evidence_type = (
+        f"user_correction_{option.evidence_type}"
+        if answer_source == "user_correction"
+        else option.evidence_type
+    )
 
     existing = db.scalar(
         select(UserSkill).where(
@@ -165,16 +196,81 @@ def record_answer(db: Session, sess: SurveySession, skill_id: str, answer_value:
                 session_id=sess.id,
                 skill_id=skill_id,
                 level=option.level,
-                evidence_type=option.evidence_type,
+                evidence_type=evidence_type,
                 confidence=option.confidence,
             )
         )
     else:
         existing.level = option.level
-        existing.evidence_type = option.evidence_type
+        existing.evidence_type = evidence_type
         existing.confidence = option.confidence
     db.commit()
     db.refresh(sess)
+
+
+def analyze_correction(
+    db: Session, sess: SurveySession, skill_id: str, text: str, lang: str
+) -> SkillCorrectionEvidence:
+    """Extract natural-language evidence, then apply the deterministic ceiling."""
+    from app.domain import correction_evidence
+
+    if skill_id not in competency.SKILLS_BY_ID:
+        raise ValueError(f"unknown skill_id: {skill_id}")
+    extracted, provider = correction_evidence.extract(
+        text, skill_name=competency.skill_name(skill_id, lang), lang=lang
+    )
+    suggested = extracted.get("suggested_level")
+    suggested = suggested if isinstance(suggested, int) and 1 <= suggested <= 4 else None
+    record = SkillCorrectionEvidence(
+        session_id=sess.id,
+        skill_id=skill_id,
+        raw_text=text.strip(),
+        extraction=extracted,
+        llm_suggested_level=suggested,
+        rule_level=correction_evidence.calibrate(text, extracted),
+        rule_version=correction_evidence.RULE_VERSION,
+        provider=provider,
+        status="pending",
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return record
+
+
+def confirm_correction(
+    db: Session, sess: SurveySession, evidence_id: str, action: str
+) -> tuple[str, int]:
+    record = db.scalar(
+        select(SkillCorrectionEvidence).where(
+            SkillCorrectionEvidence.id == evidence_id,
+            SkillCorrectionEvidence.session_id == sess.id,
+        )
+    )
+    if record is None:
+        raise ValueError("correction evidence not found")
+    current = db.scalar(
+        select(UserSkill).where(
+            UserSkill.session_id == sess.id, UserSkill.skill_id == record.skill_id
+        )
+    )
+    current_level = current.level if current else 0
+    if action == "confirm":
+        # The rule result—not the LLM suggestion—is the only value committed.
+        answer_value = {1: "tutorial", 2: "demo", 3: "shipped", 4: "expert"}[record.rule_level]
+        record_answer(db, sess, record.skill_id, answer_value, answer_source="user_correction")
+        final_level = record.rule_level
+        record.status = "confirmed"
+        record.confirmed_level = final_level
+    elif action == "keep":
+        final_level = current_level
+        record.status = "kept"
+        record.confirmed_level = current_level
+    else:
+        raise ValueError("invalid correction action")
+    record.confirmed_at = datetime.now(timezone.utc)
+    db.commit()
+    return record.status, final_level
 
 
 def _resources_for_step(
@@ -237,6 +333,19 @@ def build_result(
     for sid, lvl in _transfer_defaults(sess.current_role, sess.role_id).items():
         if sid in competency.SKILLS_BY_ID and sid not in obs:
             obs[sid] = SkillObservation(level=lvl, confidence=0.6)
+
+    # Result confidence and result coverage must use the same evidence set.
+    # Previously profile_uncertainty only saw persisted survey answers while
+    # readiness also saw role-transfer foundations. That made the UI describe a
+    # sound coverage calculation as having mysteriously weak evidence.
+    required = [
+        r for r in competency.requirements_for_role(sess.role_id, orient)
+        if r.type == "required"
+    ]
+    evidence_states = {
+        sid: SkillState(level=item.level, confidence=item.confidence)
+        for sid, item in obs.items()
+    }
 
     strengths = [
         StrengthOut(
@@ -313,6 +422,17 @@ def build_result(
         for ns in steps
     ]
 
+    # Deterministic conditional projection: only grant the target level of the
+    # roadmap steps currently shown. This is not an LLM forecast and not a job
+    # promise; it answers "what would coverage be after these acceptance checks?"
+    projected_obs = dict(obs)
+    for step in steps:
+        previous = projected_obs.get(step.skill_id)
+        projected_obs[step.skill_id] = SkillObservation(
+            level=max(previous.level if previous else 0, step.target_level),
+            confidence=previous.confidence if previous else 0.7,
+        )
+
     return ResultResponse(
         session_id=sess.id,
         role_id=sess.role_id,
@@ -320,7 +440,10 @@ def build_result(
         orientation_label=competency.orientation_label(competency.get_orientation(orient), lang),
         status=sess.status,
         readiness=decision.compute_readiness(sess.role_id, obs, orient),
-        profile_uncertainty=round(weighted_uncertainty(sess.role_id, _states(sess), orient), 4),
+        projected_readiness=decision.compute_readiness(sess.role_id, projected_obs, orient),
+        profile_uncertainty=round(weighted_uncertainty(sess.role_id, evidence_states, orient), 4),
+        assessed_required_count=sum(1 for r in required if r.skill_id in obs),
+        required_skill_count=len(required),
         time_budget=plan.time_budget,
         pacing=PacingOut(
             time_budget=plan.time_budget,

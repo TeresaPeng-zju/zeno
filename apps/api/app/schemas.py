@@ -44,6 +44,7 @@ class JdMatchResponse(BaseModel):
 class OptionOut(BaseModel):
     value: str
     label: str
+    example: str | None = None
 
 
 class SkillItemOut(BaseModel):
@@ -99,6 +100,37 @@ class AnswerIn(BaseModel):
     skill_id: str
     answer_value: str = Field(..., description="Must be one of the fixed option values")
     question_id: str | None = None
+    answer_source: str = Field(default="standard", pattern="^(standard|user_correction)$")
+
+
+class CorrectionAnalyzeIn(BaseModel):
+    skill_id: str
+    text: str = Field(min_length=12, max_length=3000)
+
+
+class CorrectionEvidenceOut(BaseModel):
+    evidence_id: str
+    skill_id: str
+    project: str = ""
+    actions: list[str] = Field(default_factory=list)
+    ownership: str = ""
+    outcome: str = ""
+    evidence_quote: str = ""
+    llm_suggested_level: int | None = None
+    rule_level: int
+    rule_version: str
+    current_level: int
+    provider: str
+
+
+class CorrectionConfirmIn(BaseModel):
+    evidence_id: str
+    action: str = Field(pattern="^(confirm|keep)$")
+
+
+class CorrectionConfirmOut(BaseModel):
+    status: str
+    level: int
 
 
 class SkillProfileOut(BaseModel):
@@ -139,6 +171,7 @@ class ResourceOut(BaseModel):
     platform: str
     last_verified_at: str | None = None
     freshness_reason: str | None = None
+    ai_curated: bool = False
 
 
 class NextStepOut(BaseModel):
@@ -201,7 +234,10 @@ class ResultResponse(BaseModel):
     orientation_label: str | None = None
     status: str
     readiness: float  # 0-100 weighted coverage of required skills
+    projected_readiness: float  # coverage after completing the current roadmap
     profile_uncertainty: float = Field(ge=0.0, le=1.0)
+    assessed_required_count: int = Field(ge=0)
+    required_skill_count: int = Field(ge=0)
     time_budget: str = "standard"
     pacing: PacingOut | None = None
     # Section 0: raw profile (kept for the 画像 view)

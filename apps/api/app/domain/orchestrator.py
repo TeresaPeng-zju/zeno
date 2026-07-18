@@ -35,12 +35,17 @@ def ask_priority(req: RoleRequirement, confidence: float) -> float:
 
 
 def select_next_skill(
-    role_id: str, states: dict[str, SkillState], orientation_id: str = ORIENTATION_BASE
+    role_id: str,
+    states: dict[str, SkillState],
+    orientation_id: str = ORIENTATION_BASE,
+    required_only: bool = False,
 ) -> str | None:
     """Pick the unanswered requirement skill with the highest ask_priority."""
     best_skill: str | None = None
     best_score = -1.0
     for req in requirements_for_role(role_id, orientation_id):
+        if required_only and req.type != "required":
+            continue
         if req.skill_id in states:  # already answered
             continue
         score = ask_priority(req, confidence=0.0)

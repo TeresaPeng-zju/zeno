@@ -136,6 +136,7 @@ def _to_scored(r: Resource, target_level: int, relevance: float) -> ScoredResour
         last_verified_at=r.last_verified_at,
         quality_score=r.quality_score,
         relevance=relevance,
+        ai_curated=(r.verify_note or "").startswith("LLM-assisted intake"),
     )
 
 
@@ -211,6 +212,7 @@ def recommend_out(
             platform=s.platform,
             last_verified_at=s.last_verified_at.isoformat() if s.last_verified_at else None,
             freshness_reason=_freshness_reason(s, lang),
+            ai_curated=s.ai_curated,
         )
         for s in top
     ]

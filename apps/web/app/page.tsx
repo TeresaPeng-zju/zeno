@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
 
 import RotatingText from "@/components/ui/rotating-text";
@@ -216,27 +216,11 @@ export default function HomePage() {
                       {roleLabel(role, locale)}
                     </span>
 
-                    {/* 敬请期待：hover 浮出胶囊 + 角标常显 */}
+                    {/* 敬请期待：右上角标常显 */}
                     {isComingSoon && (
-                      <>
-                        <span className="absolute right-2 top-2 z-20 rounded-full border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-medium leading-none text-foreground/45">
-                          SOON
-                        </span>
-                        <div className="pointer-events-none absolute inset-x-3 bottom-3 z-20 flex justify-center">
-                          <AnimatePresence>
-                            <motion.span
-                              key="coming-soon-tooltip"
-                              initial={{ opacity: 0, y: -4, scale: 0.95 }}
-                              animate={{ opacity: 1, y: 0, scale: 1 }}
-                              exit={{ opacity: 0, y: -4, scale: 0.95 }}
-                              transition={{ duration: 0.18, ease: "easeOut" }}
-                              className="rounded-full border border-cyan/20 bg-[hsl(222_47%_6%)]/90 px-2.5 py-1 text-[11px] font-medium text-cyan/90 backdrop-blur-md opacity-0 group-hover:opacity-100"
-                            >
-                              {t("comingSoon")}
-                            </motion.span>
-                          </AnimatePresence>
-                        </div>
-                      </>
+                      <span className="absolute right-2 top-2 z-20 rounded-full border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-medium leading-none text-foreground/45">
+                        SOON
+                      </span>
                     )}
                   </button>
                   );
@@ -264,7 +248,7 @@ export default function HomePage() {
                 <div className="relative z-10 flex flex-col items-center gap-2 rounded-2xl border border-cyan/20 bg-[#0a0f1e] px-10 py-6 backdrop-blur-xl">
                   <span className="flex h-10 items-center justify-center transition-transform duration-500 group-hover:scale-125">
                     <Image
-                      src="/icons/icon-ai-engineer.png"
+                      src="/assets/ai-engineer-icon.png"
                       alt={targetRoles[0].label}
                       width={40}
                       height={40}

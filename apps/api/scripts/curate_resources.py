@@ -3,7 +3,8 @@
 
 Examples:
   .venv/bin/python scripts/curate_resources.py seed
-  .venv/bin/python scripts/curate_resources.py ingest urls.txt --source official-docs
+  .venv/bin/python scripts/curate_resources.py ingest urls.txt --source official-docs --auto-publish
+  .venv/bin/python scripts/curate_resources.py label-seeds --auto-publish
   .venv/bin/python scripts/curate_resources.py export pending.json
   .venv/bin/python scripts/curate_resources.py approve <candidate-id>
   .venv/bin/python scripts/curate_resources.py reject <candidate-id> --reason "too thin"
@@ -40,6 +41,17 @@ def main() -> None:
     ingest = sub.add_parser("ingest", help="fetch and DeepSeek-label URL candidates")
     ingest.add_argument("input", type=Path, help="newline URL file or JSON list")
     ingest.add_argument("--source", default="manual")
+    ingest.add_argument(
+        "--auto-publish",
+        action="store_true",
+        help="publish successfully fetched and LLM-labelled candidates; dead links stay failed",
+    )
+    label_seeds = sub.add_parser("label-seeds", help="fetch and DeepSeek-label the bundled seed URLs")
+    label_seeds.add_argument(
+        "--auto-publish",
+        action="store_true",
+        help="publish successfully fetched and LLM-labelled seeds",
+    )
     export = sub.add_parser("export", help="export candidates for human review")
     export.add_argument("output", type=Path)
     export.add_argument("--status", default="pending", choices=["pending", "approved", "rejected", "failed", "all"])
@@ -55,15 +67,19 @@ def main() -> None:
             for item in SEED_RESOURCES:
                 resource_service.upsert_resource(db, **item)
             print(json.dumps({"seeded": len(SEED_RESOURCES)}, ensure_ascii=False))
-        elif args.command == "ingest":
+        elif args.command in {"ingest", "label-seeds"}:
             results = []
-            for item in _urls(args.input):
+            items = _urls(args.input) if args.command == "ingest" else SEED_RESOURCES
+            default_source = args.source if args.command == "ingest" else "seed-llm"
+            for item in items:
                 candidate = stage_url(
                     db,
                     url=item["url"],
                     title=item.get("title", ""),
-                    source=item.get("source", args.source),
+                    source=item.get("source", item.get("platform", default_source)),
                 )
+                if args.auto_publish and candidate.status == "pending":
+                    approve_candidate(db, candidate)
                 results.append({"id": candidate.id, "url": candidate.url, "status": candidate.status, "error": candidate.error})
                 print(json.dumps(results[-1], ensure_ascii=False))
         elif args.command == "export":
