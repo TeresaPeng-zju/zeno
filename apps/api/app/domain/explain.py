@@ -54,6 +54,46 @@ def _jd_evidence_for(skill_id: str) -> dict:
     }
 
 
+def ranking_reasons_for_step(step: NextStep, lang: str = "en") -> list[str]:
+    """User-facing ranking reasons built only from decision inputs and evidence."""
+    reasons: list[str] = []
+    jd = _jd_evidence_for(step.skill_id)
+    frequency = float(jd.get("frequency") or 0)
+    if jd.get("grounded") and frequency > 0:
+        reasons.append(
+            t(
+                lang,
+                "ranking.jd",
+                total=int(jd.get("n_jds") or 0),
+                pct=round(frequency * 100),
+            )
+        )
+
+    if step.unblocks:
+        names = t(lang, "join.sep").join(_name(skill_id, lang) for skill_id in step.unblocks[:3])
+        reasons.append(
+            t(
+                lang,
+                "ranking.unblocks",
+                count=len(step.unblocks),
+                names=names,
+            )
+        )
+
+    migration = float(step.score_components.get("migration_value") or 0)
+    if migration > 0:
+        reasons.append(
+            t(
+                lang,
+                "ranking.migration",
+                pct=round(migration * 100),
+                current=step.current_level,
+                target=step.target_level,
+            )
+        )
+    return reasons
+
+
 @lru_cache(maxsize=1)
 def _graph_digest() -> str:
     """Short content hash of the skill graph — the 'which graph version' stamp."""

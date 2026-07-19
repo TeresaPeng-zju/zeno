@@ -219,15 +219,13 @@ def analyze_correction(
     extracted, provider = correction_evidence.extract(
         text, skill_name=competency.skill_name(skill_id, lang), lang=lang
     )
-    suggested = extracted.get("suggested_level")
-    suggested = suggested if isinstance(suggested, int) and 1 <= suggested <= 4 else None
     record = SkillCorrectionEvidence(
         session_id=sess.id,
         skill_id=skill_id,
         raw_text=text.strip(),
         extraction=extracted,
-        llm_suggested_level=suggested,
-        rule_level=correction_evidence.calibrate(text, extracted),
+        llm_suggested_level=None,
+        rule_level=correction_evidence.calibrate(extracted),
         rule_version=correction_evidence.RULE_VERSION,
         provider=provider,
         status="pending",
@@ -300,6 +298,7 @@ def build_result(
     time_budget: str | None = None,
     lang: str = "en",
     orientation: str | None = None,
+    include_resources: bool = True,
 ) -> ResultResponse:
     profile = [
         SkillProfileOut(
@@ -399,6 +398,7 @@ def build_result(
     weeks_by_skill = {p.skill_id: p.est_weeks for p in plan.steps}
 
     from app.core.config import settings as _cfg
+    from app.domain.explain import ranking_reasons_for_step
 
     next_steps = [
         NextStepOut(
@@ -416,7 +416,12 @@ def build_result(
             est_weeks=weeks_by_skill.get(ns.skill_id, 0),
             unblocks=ns.unblocks,
             blocked_by=ns.blocked_by,
-            recommended_resources=_resources_for_step(db, ns.skill_id, ns.target_level, lang),
+            recommended_resources=(
+                _resources_for_step(db, ns.skill_id, ns.target_level, lang)
+                if include_resources
+                else []
+            ),
+            ranking_reasons=ranking_reasons_for_step(ns, lang),
             score_components=ns.score_components if _cfg.feature_score_components_api else None,
         )
         for ns in steps

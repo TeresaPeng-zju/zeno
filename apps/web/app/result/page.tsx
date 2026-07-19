@@ -147,7 +147,11 @@ function ResultInner() {
 
   // 大模型「像真人」测评：懒加载拉 /voice（无 DeepSeek key 时后端回退确定性模板）
   useEffect(() => {
-    if (!sessionId) return;
+    // Wait for the deterministic roadmap first. Starting both requests together
+    // used to duplicate resource retrieval and contend with local BGE inference.
+    if (!sessionId || !data) return;
+    if (data.time_budget !== budget) return;
+    if (targetRole && data.orientation !== targetRole) return;
     const base = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
     const qs = new URLSearchParams({ lang: locale });
     if (budget) qs.set("time_budget", budget);
@@ -171,7 +175,7 @@ function ResultInner() {
       })
       .catch(() => { /* 非致命：没有就不显示 */ });
     return () => { active = false; };
-  }, [sessionId, budget, targetRole, locale]);
+  }, [sessionId, budget, targetRole, locale, data]);
 
   // 纯前端「标记完成」：按 session 持久化到 localStorage，不进后端、不影响 readiness
   const doneKey = sessionId ? `zeno:done:${sessionId}` : null;
@@ -561,7 +565,21 @@ function ResultInner() {
                             )}
                           </div>
                           <h3 className="mt-0.5 text-base font-semibold">{ns.action_title}</h3>
-                          <p className="mt-1 text-sm text-muted-foreground">{ns.why}</p>
+                          {ns.ranking_reasons?.length > 0 ? (
+                            <div className="mt-3 rounded-xl border border-cyan/15 bg-cyan/[0.025] px-4 py-3">
+                              <p className="text-[11px] font-semibold text-cyan/80">{t("rankingReasons")}</p>
+                              <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-slate-300/85">
+                                {ns.ranking_reasons.map((reason, index) => (
+                                  <li key={index} className="flex gap-2">
+                                    <span className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-gold/80" />
+                                    <span>{reason}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : (
+                            <p className="mt-1 text-sm text-muted-foreground">{ns.why}</p>
+                          )}
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
                           <div>
@@ -577,7 +595,7 @@ function ResultInner() {
                             </ul>
                           </div>
                         </div>
-                        <Resources items={ns.recommended_resources} />
+                        <Resources items={ns.recommended_resources} skillId={ns.skill_id} skillName={ns.skill_name} />
                         <div className="flex items-center justify-between gap-3 border-t border-border/40 pt-3">
                           <p className="text-xs text-muted-foreground">
                             {isDone ? t("doneMet") : t("doneHint")}
@@ -668,8 +686,9 @@ function TargetRoleSection({
     try {
       const m = await api.matchOrientation(jd);
       setMatch(m);
-      // A confident specialty → re-score against it; otherwise stay general.
-      onPick(m.matched ? m.orientation : null);
+      // Analysis only proposes a direction. Re-scoring happens after the user
+      // confirms the grounded evidence below.
+      if (!m.matched) onPick(null);
     } catch {
       setHint(t("targetEmpty"));
     } finally {
@@ -740,9 +759,20 @@ function TargetRoleSection({
                   {t("targetSignals", { signals: match.signals.slice(0, 8).join("、") })}
                 </p>
               )}
+              {match.needs_confirmation && (
+                <p className="text-xs text-gold">{t("targetNeedsConfirmation")}</p>
+              )}
               <p className="text-xs text-muted-foreground">
                 {refreshing ? t("targetRecomputing") : t("targetMatchedHint")}
               </p>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => onPick(match.orientation)}
+                className="mt-1 rounded-full border border-cyan/60 bg-cyan/10 px-3.5 py-1.5 text-xs font-semibold text-cyan transition-colors hover:bg-cyan/15 disabled:opacity-50"
+              >
+                {t("targetApply")}
+              </button>
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">{t("targetNoMatch")}</p>
@@ -1169,45 +1199,95 @@ function formatVerified(iso: string | null, locale: string): string | null {
   return d.toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", { year: "numeric", month: "2-digit", day: "2-digit" });
 }
 
-function Resources({ items }: { items: ResourceOut[] }) {
+function Resources({ items, skillId, skillName }: { items: ResourceOut[]; skillId: string; skillName: string }) {
   const t = useTranslations("result");
   const locale = useLocale();
-  if (!items || items.length === 0) {
-    return (
-      <div className="hairline rounded-xl bg-surface/40 p-3 text-xs text-muted-foreground">
-        {t("resourcesEmpty")}
-      </div>
-    );
+  const [open, setOpen] = useState(false);
+  const [url, setUrl] = useState("");
+  const [title, setTitle] = useState("");
+  const [reason, setReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+
+  async function submitRecommendation() {
+    if (!url.trim() || reason.trim().length < 8) return;
+    setSubmitting(true);
+    setStatus("idle");
+    try {
+      await api.recommendResource(skillId, url.trim(), title.trim(), reason.trim());
+      setStatus("success");
+      setUrl("");
+      setTitle("");
+      setReason("");
+    } catch {
+      setStatus("error");
+    } finally {
+      setSubmitting(false);
+    }
   }
+
   return (
-    <div className="space-y-2">
-      <p className="text-xs font-semibold text-muted-foreground">{t("resourcesTitle")}</p>
-      <ul className="space-y-2">
-        {items.map((r) => {
-          const verified = formatVerified(r.last_verified_at, locale);
-          return (
-            <li key={r.url}>
-              <a
-                href={r.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hairline group flex items-start justify-between gap-3 rounded-xl bg-surface/40 p-3 transition-colors hover:bg-surface/70"
-              >
-                <div className="min-w-0 space-y-0.5">
-                  <p className="truncate text-sm font-medium text-foreground group-hover:text-cyan">{r.title}</p>
-                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-muted-foreground">
-                    <span className="rounded bg-accent px-1.5 py-0.5 text-accent-foreground">{r.platform}</span>
-                    {verified && <span>{t("verifiedOn", { date: verified })}</span>}
-                    {r.freshness_reason && <span className="text-cyan/80">{r.freshness_reason}</span>}
-                    {r.ai_curated && <span className="rounded border border-purple-400/20 bg-purple-400/10 px-1.5 py-0.5 text-purple-200/80">{t("aiCurated")}</span>}
-                  </div>
-                </div>
-                <span className="shrink-0 pt-0.5 text-xs text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-cyan">↗</span>
-              </a>
-            </li>
-          );
-        })}
-      </ul>
+    <div className="space-y-2.5">
+      {items && items.length > 0 ? (
+        <>
+          <p className="text-xs font-semibold text-muted-foreground">{t("resourcesTitle")}</p>
+          <ul className="space-y-2">
+            {items.map((r) => {
+              const verified = formatVerified(r.last_verified_at, locale);
+              return (
+                <li key={r.url}>
+                  <a
+                    href={r.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hairline group flex items-start justify-between gap-3 rounded-xl bg-surface/40 p-3 transition-colors hover:bg-surface/70"
+                  >
+                    <div className="min-w-0 space-y-0.5">
+                      <p className="truncate text-sm font-medium text-foreground group-hover:text-cyan">{r.title}</p>
+                      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-muted-foreground">
+                        <span className="rounded bg-accent px-1.5 py-0.5 text-accent-foreground">{r.platform}</span>
+                        {verified && <span>{t("verifiedOn", { date: verified })}</span>}
+                        {r.freshness_reason && <span className="text-cyan/80">{r.freshness_reason}</span>}
+                        {r.ai_curated && <span className="rounded border border-purple-400/20 bg-purple-400/10 px-1.5 py-0.5 text-purple-200/80">{t("aiCurated")}</span>}
+                      </div>
+                    </div>
+                    <span className="shrink-0 pt-0.5 text-xs text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-cyan">↗</span>
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      ) : (
+        <div className="hairline rounded-xl bg-surface/40 p-3 text-xs text-muted-foreground">
+          {t("resourcesEmpty")}
+        </div>
+      )}
+
+      <button type="button" onClick={() => { setOpen((value) => !value); setStatus("idle"); }} className="text-xs text-cyan/75 transition-colors hover:text-cyan">
+        {open ? t("recommendResourceClose") : t("recommendResourceCta")}
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+            <div className="space-y-2.5 rounded-xl border border-cyan/15 bg-cyan/[0.025] p-3.5">
+              <div>
+                <p className="text-xs font-semibold text-slate-200">{t("recommendResourceTitle", { skill: skillName })}</p>
+                <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">{t("recommendResourceHint")}</p>
+              </div>
+              <input type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder={t("recommendResourceUrl")} className="w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-100 outline-none placeholder:text-slate-600 focus:border-cyan/40" />
+              <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder={t("recommendResourceName")} className="w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-100 outline-none placeholder:text-slate-600 focus:border-cyan/40" />
+              <textarea value={reason} onChange={(event) => setReason(event.target.value)} rows={3} placeholder={t("recommendResourceReason")} className="w-full resize-none rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs leading-relaxed text-slate-100 outline-none placeholder:text-slate-600 focus:border-cyan/40" />
+              {status === "success" && <p className="text-xs text-emerald-300">{t("recommendResourceSuccess")}</p>}
+              {status === "error" && <p className="text-xs text-red-300">{t("recommendResourceError")}</p>}
+              <button type="button" disabled={submitting || !url.trim() || reason.trim().length < 8} onClick={() => void submitRecommendation()} className="rounded-lg border border-cyan/35 bg-cyan/10 px-3 py-2 text-xs font-semibold text-cyan transition-colors hover:bg-cyan/15 disabled:cursor-not-allowed disabled:opacity-40">
+                {submitting ? t("recommendResourceSubmitting") : t("recommendResourceSubmit")}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

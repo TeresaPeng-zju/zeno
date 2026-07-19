@@ -90,6 +90,7 @@ ai-engineer-icon.png
 !apps/web/public/assets/ai-engineer-icon.png
 .gitignore.annotated
 docs/feedback/
+docs/jd-llm-annotation-plan.md
 
 # 过程文档 / 设计简报（本地保留，不入库）
 docs/Zeno*.md

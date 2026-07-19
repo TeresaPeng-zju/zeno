@@ -98,10 +98,6 @@ class OrientationModifier:
     weight_delta: dict[str, float] = field(default_factory=dict)
     min_level_delta: dict[str, int] = field(default_factory=dict)
     promote_required: frozenset[str] = field(default_factory=frozenset)
-    # Lowercase keyword signals that, when found in a job description, point at
-    # this orientation. Used by `classify_jd` to auto-detect a target role's
-    # focus from a pasted JD (so the user never has to know what "RAG" means).
-    jd_signals: tuple[str, ...] = field(default_factory=tuple)
 
 
 # --------------------------------------------------------------------------- #
@@ -122,7 +118,6 @@ def _build_orientation(o: dict) -> OrientationModifier:
         weight_delta=dict(o.get("weight_delta", {})),
         min_level_delta=dict(o.get("min_level_delta", {})),
         promote_required=frozenset(o.get("promote_required", ())),
-        jd_signals=tuple(s.lower() for s in o.get("jd_signals", ())),
     )
 
 
@@ -177,44 +172,6 @@ ORIENTATIONS: dict[str, OrientationModifier] = {
 # --------------------------------------------------------------------------- #
 def get_orientation(orientation_id: str | None) -> OrientationModifier:
     return ORIENTATIONS.get(orientation_id or ORIENTATION_BASE, ORIENTATIONS[ORIENTATION_BASE])
-
-
-# Minimum distinct keyword hits before a job description is confidently mapped
-# to a non-base orientation. A single stray term (e.g. "vector") must NOT flip
-# the result; a genuinely retrieval-heavy JD easily clears this bar.
-_JD_MATCH_THRESHOLD = 2
-
-
-def classify_jd(text: str) -> tuple[str, list[str]]:
-    """Infer a target orientation from a pasted job description.
-
-    Deterministic, language-neutral keyword matching: counts the distinct
-    `jd_signals` each non-base orientation hits, and returns the best-scoring
-    orientation that clears `_JD_MATCH_THRESHOLD`. Falls back to `base` (general)
-    when no orientation is clearly emphasized — so a vague or off-topic JD simply
-    keeps the general assessment instead of being force-fit into a specialty.
-
-    Returns ``(orientation_id, matched_signals)`` where ``matched_signals`` are
-    the exact keyword terms found (deduped, in declaration order) — handy for
-    telling the user *why* we picked that direction.
-    """
-    haystack = (text or "").lower()
-    if not haystack.strip():
-        return ORIENTATION_BASE, []
-
-    best_id = ORIENTATION_BASE
-    best_hits: list[str] = []
-    for orient in ORIENTATIONS.values():
-        if orient.id == ORIENTATION_BASE or not orient.jd_signals:
-            continue
-        # Dedup while preserving the orientation's declared signal order.
-        hits = list(dict.fromkeys(s for s in orient.jd_signals if s in haystack))
-        if len(hits) > len(best_hits):
-            best_id, best_hits = orient.id, hits
-
-    if len(best_hits) < _JD_MATCH_THRESHOLD:
-        return ORIENTATION_BASE, []
-    return best_id, best_hits
 
 
 def _apply_modifier(req: RoleRequirement, mod: OrientationModifier) -> RoleRequirement:

@@ -35,10 +35,12 @@ class JdMatchResponse(BaseModel):
     orientation: str  # detected orientation id ('base' when nothing stands out)
     orientation_label: str
     description: str
-    matched: bool  # True when a specialty orientation was confidently detected
+    matched: bool  # True when grounded evidence supports a specialty suggestion
     signals: list[str] = Field(
-        default_factory=list, description="Keyword terms found in the JD."
+        default_factory=list, description="Verbatim JD evidence supporting the suggestion."
     )
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    needs_confirmation: bool = False
 
 
 class OptionOut(BaseModel):
@@ -190,6 +192,7 @@ class NextStepOut(BaseModel):
     unblocks: list[str] = Field(default_factory=list)
     blocked_by: list[str] = Field(default_factory=list)
     recommended_resources: list[ResourceOut] = Field(default_factory=list)
+    ranking_reasons: list[str] = Field(default_factory=list)
     score_components: dict[str, float] | None = Field(
         default=None,
         description="Auditable score breakdown. Only present when FEATURE_SCORE_COMPONENTS_API=true.",

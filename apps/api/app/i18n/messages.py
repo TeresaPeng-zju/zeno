@@ -58,6 +58,17 @@ MESSAGES: Dict[str, Dict[str, str]] = {
         "why.transfer": (
             "Highly transferable from your background ({pct}%), quick to pick up. "
         ),
+        "ranking.jd": (
+            "Across {total} multi-source job records, the weighted demand signal "
+            "for this skill is about {pct}%."
+        ),
+        "ranking.unblocks": (
+            "It is a prerequisite for {count} skills still on your path, including {names}."
+        ),
+        "ranking.migration": (
+            "Its migration coefficient is {pct}%; with your current L{current} → L{target} gap, "
+            "it offers strong learning leverage."
+        ),
         # Pacing summaries
         "pacing.empty": "No actions to schedule yet.",
         "pacing.parallel": (
@@ -147,6 +158,9 @@ MESSAGES: Dict[str, Dict[str, str]] = {
         "why.unblocks": "它是「{names}」的前置依赖，先学能解锁后续路径。",
         "why.blocked": "注意：建议先补齐其依赖「{names}」。",
         "why.transfer": "你的背景迁移度高（{pct}%），上手快。",
+        "ranking.jd": "基于{total}条多来源岗位记录的加权统计，这项能力的需求信号约为{pct}%。",
+        "ranking.unblocks": "它是当前路线中{count}项后续能力的前置节点，包括「{names}」。",
+        "ranking.migration": "该能力的迁移系数为{pct}%；结合你当前L{current}到目标L{target}的差距，学习杠杆较高。",
         # Pacing summaries
         "pacing.empty": "暂无需要排期的动作。",
         "pacing.parallel": (

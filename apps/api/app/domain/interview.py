@@ -1,4 +1,4 @@
-"""AI Interview：一段项目经历 → DeepSeek 抽取技能(+水平+原话依据+相邻猜测)，输入哈希缓存。
+"""AI Interview：项目经历 → grounded skill evidence → rubric levels.
 
 这是 Zeno 的黑客松方向：不再点 20 个胶囊，而是『讲一个你最有代表性的项目』，AI 自动点亮多个技能。
   - evidence(原话片段) 同时支撑"点节点 → 为什么判这个等级"的可解释体验；
@@ -17,23 +17,30 @@ from pathlib import Path
 from app.core.config import settings
 from app.domain import competency as C
 
-PROMPT_VERSION = "iv1"
+PROMPT_VERSION = "iv2-grounded-rubric"
 _THINK_RE = re.compile(r"<think>[\s\S]*?</think>", re.IGNORECASE)
 _CACHE_DIR = Path(__file__).resolve().parent.parent / "data" / "interview_cache"
 
-_SYSTEM = (
-    "你是 Zeno 的技能抽取器。我会给你：① 用户讲述的一段真实项目经历；② 一份目标岗位的技能清单"
-    "（每项 skill_id + 名称）。\n\n"
-    "任务：\n"
-    "1. 从经历中抽取用户**确实展示出**的技能，每个给：skill_id、level(0-4：0没接触/1入门/2能独立做小功能/"
-    "3可交付/4可设计治理)、confidence(0-1，你对这个判断的把握)、evidence(从用户原话里摘一句作为判断依据)。\n"
-    "2. 再『猜』2-3 个用户很可能也具备、但没明说的相邻技能(guesses)，每个给 skill_id、confidence(0-1)、"
-    "reason(为什么猜他也会，一句话)。\n\n"
-    "铁律：skill_id 只能用清单里的；不能凭空抬高 level；evidence 必须是用户原话里的片段；"
-    "把握不足就调低 confidence；宁可少抽也不要编造。\n\n"
-    '只返回 JSON：{"skills":[{"skill_id":"...","level":3,"confidence":0.9,"evidence":"用户原话片段"}], '
-    '"guesses":[{"skill_id":"...","confidence":0.7,"reason":"为什么猜他也会，一句话"}]}'
-)
+_SYSTEM = """You extract grounded skill evidence from a user's project experience. Never assign a level.
+For every skill explicitly demonstrated, return:
+- skill_id from the supplied catalog
+- evidence: one exact contiguous quote from the user's text
+- dimensions with exactly these keys:
+  application: {value: none|learning|exercise|personal_project|real_project|production, quote: string}
+  ownership: {value: none|participated|independent|led, quote: string}
+  delivery: {value: none|completed|shipped|operated, quote: string}
+  problem_solving: {value: none|handled, quote: string}
+  system_scope: {value: none|component|system, quote: string}
+
+Every non-none dimension requires an exact contiguous quote. Responsibility for a component in an
+organizational/client project is independent ownership even without the literal word independently.
+Use led only for leading direction or people; use system only for cross-component architecture,
+trade-offs, evaluation systems, or ongoing governance.
+
+You may also suggest up to 3 adjacent skills in guesses, but guesses are explicitly unverified and must
+not contain a level. Return JSON only:
+{"skills":[{"skill_id":"...","evidence":"exact quote","dimensions":{...}}],
+ "guesses":[{"skill_id":"...","reason":"short hypothesis"}]}"""
 
 
 def _key(text: str, role_id: str, lang: str) -> str:
@@ -75,8 +82,44 @@ def _enrich(items: list, key: str, lang: str) -> list:
     return out
 
 
+def _ground_skill(item: dict, text: str, lang: str) -> dict | None:
+    """Validate verbatim evidence and compute a level with the shared rubric."""
+    from app.domain import correction_evidence
+
+    sid = str(item.get("skill_id") or "")
+    evidence = str(item.get("evidence") or "").strip()
+    if sid not in C.SKILLS_BY_ID or not evidence or evidence not in text:
+        return None
+    raw_dimensions = item.get("dimensions")
+    raw_dimensions = raw_dimensions if isinstance(raw_dimensions, dict) else {}
+    dimensions: dict[str, dict[str, str]] = {}
+    grounded_count = 0
+    for name, allowed in correction_evidence.DIMENSION_VALUES.items():
+        raw = raw_dimensions.get(name)
+        raw = raw if isinstance(raw, dict) else {}
+        value = str(raw.get("value") or "none")
+        quote = str(raw.get("quote") or "").strip()
+        if value not in allowed or value != "none" and (not quote or quote not in text):
+            value, quote = "none", ""
+        if value != "none":
+            grounded_count += 1
+        dimensions[name] = {"value": value, "quote": quote}
+    extracted = {"dimensions": dimensions}
+    level = correction_evidence.calibrate(extracted)
+    return {
+        "skill_id": sid,
+        "skill_name": C.skill_name(sid, lang),
+        "category": C.SKILLS_BY_ID[sid].category,
+        "level": level,
+        "confidence": round(min(0.95, 0.55 + grounded_count * 0.08), 2),
+        "evidence": evidence,
+        "dimensions": dimensions,
+        "rule_version": correction_evidence.RULE_VERSION,
+    }
+
+
 def extract(text: str, *, role_id: str, lang: str = "zh") -> dict | None:
-    """经历文本 → {skills:[{skill_id,skill_name,level,evidence}], guesses:[{skill_id,skill_name,reason}]}。
+    """经历文本 → grounded skills + unverified guesses.
     命中缓存直接返回；无 key/失败返回 None。"""
     text = (text or "").strip()
     if len(text) < 4:
@@ -104,8 +147,11 @@ def extract(text: str, *, role_id: str, lang: str = "zh") -> dict | None:
         )
         raw = _THINK_RE.sub("", resp.choices[0].message.content or "").strip()
         data = json.loads(raw)
+        raw_skills = data.get("skills") if isinstance(data, dict) else []
+        skills = [grounded for item in raw_skills if isinstance(item, dict)
+                  and (grounded := _ground_skill(item, text, lang)) is not None]
         result = {
-            "skills": _enrich(data.get("skills"), "skill_id", lang),
+            "skills": skills,
             "guesses": _enrich(data.get("guesses"), "skill_id", lang),
             "_cached": False,
         }

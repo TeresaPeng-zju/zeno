@@ -32,6 +32,8 @@ export interface JdMatchResponse {
   description: string;
   matched: boolean;
   signals: string[];
+  confidence: number;
+  needs_confirmation: boolean;
 }
 
 export interface OptionOut {
@@ -149,6 +151,7 @@ export interface NextStepOut {
   unblocks: string[];
   blocked_by: string[];
   recommended_resources: ResourceOut[];
+  ranking_reasons?: string[];
   supporting_strengths: SupportingStrength[];
   key_gaps: KeyGap[];
 }
@@ -381,6 +384,12 @@ const realApi = {
     http<JdMatchResponse>("/api/match-orientation", {
       method: "POST",
       body: JSON.stringify({ jd }),
+    }),
+
+  recommendResource: (skillId: string, url: string, title: string, reason: string) =>
+    http<{ status: string; candidate_id?: string }>("/api/resources/recommend", {
+      method: "POST",
+      body: JSON.stringify({ skill_id: skillId, url, title, reason }),
     }),
 
   nextQuestion: (sessionId: string, forceContinue = false, requiredOnly = false) => {

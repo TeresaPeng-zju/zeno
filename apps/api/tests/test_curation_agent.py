@@ -107,6 +107,34 @@ def test_stage_url_keeps_model_output_in_review_queue(tmp_path):
         assert db.scalar(select(Resource)) is None
 
 
+def test_community_recommendation_enters_review_queue(tmp_path):
+    from sqlalchemy import create_engine, select
+    from sqlalchemy.orm import Session
+
+    from app.core.db import Base
+    from app.models import ResourceCandidate
+    from app.routers.resources import ResourceRecommendationIn, recommend_resource
+
+    engine = create_engine(f"sqlite:///{tmp_path / 'community.db'}")
+    Base.metadata.create_all(engine)
+    with Session(engine) as db:
+        result = recommend_resource(
+            ResourceRecommendationIn(
+                skill_id="llm.prompt",
+                url="https://example.com/prompt-course",
+                title="Prompt course",
+                reason="有完整练习，适合完成第一个Prompt项目。",
+            ),
+            db,
+        )
+        candidate = db.scalar(select(ResourceCandidate))
+        assert result["status"] == "pending"
+        assert candidate is not None
+        assert candidate.source == "community"
+        assert candidate.annotation["skill_ids"] == ["llm.prompt"]
+        assert candidate.annotation["community_reason"].startswith("有完整练习")
+
+
 def _postgres_available() -> bool:
     """True only if Postgres is reachable AND the `vector` extension can be
     installed. The pipeline test calls `init_db()` -> `CREATE EXTENSION vector`,

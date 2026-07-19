@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
@@ -24,6 +25,11 @@ from app.domain import interview
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
+
+
+# Keep very fast local/cache hits visible long enough for the progress UI to
+# register, but never add a fixed delay to an already slow generation.
+_MIN_PROGRESS_DISPLAY_SECONDS = 0.55
 
 
 class ExtractRequest(BaseModel):
@@ -173,7 +179,12 @@ def get_voice(
         raise HTTPException(status_code=404, detail="session not found")
     effective_lang: Lang = "zh" if lang_param and lang_param.startswith("zh") else lang
     result = session_service.build_result(
-        db, sess, time_budget=time_budget, lang=effective_lang, orientation=orientation
+        db,
+        sess,
+        time_budget=time_budget,
+        lang=effective_lang,
+        orientation=orientation,
+        include_resources=False,
     )
     out = voice_for_result(
         result, role_id=sess.role_id, orientation=result.orientation, lang=effective_lang
@@ -193,7 +204,7 @@ def extract_skills(
     db: Session = Depends(get_db),
     lang: Lang = Depends(get_lang),
 ) -> dict:
-    """AI Interview：一段项目经历 → DeepSeek 抽取技能(+水平+confidence+原话依据+相邻猜测)。
+    """AI Interview：LLM提取原文证据，Zeno规则判级，用户在前端最终确认。
     输入文本哈希缓存，同样输入同样输出。无 key/失败时返回空，前端回退手动。"""
     sess = session_service.get_session(db, session_id)
     if sess is None:
@@ -220,6 +231,8 @@ async def get_result_stream(
     effective_lang: Lang = "zh" if lang_param and lang_param.startswith("zh") else lang
 
     async def event_stream():
+        started_at = time.monotonic()
+
         def emit(data: dict) -> str:
             return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
 
@@ -250,17 +263,17 @@ async def get_result_stream(
         pm = _pm.get(effective_lang, _pm["en"])
 
         yield emit({"type": "progress", "step": "profile", "message": pm["profile"]})
-        await asyncio.sleep(0.4)
+        await asyncio.sleep(0)
 
         yield emit({"type": "progress", "step": "strengths", "message": pm["strengths"]})
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(0)
 
         yield emit({"type": "progress", "step": "gaps", "message": pm["gaps"]})
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(0)
         yield heartbeat()
 
         yield emit({"type": "progress", "step": "roadmap", "message": pm["roadmap"]})
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(0)
 
         # Actually compute the result (may take longer when LLM is involved)
         result = session_service.build_result(
@@ -269,10 +282,18 @@ async def get_result_stream(
 
         yield heartbeat()
         yield emit({"type": "progress", "step": "resources", "message": pm["resources"]})
-        await asyncio.sleep(0.2)
+
+        # The old implementation always added about 0.55 s of staged sleeps.
+        # Now that time is only a minimum display budget for unusually fast
+        # responses. If real work already consumed the budget (for example a
+        # 1.5 s network/model request), no artificial delay is added.
+        elapsed = time.monotonic() - started_at
+        remaining_display_time = max(0.0, _MIN_PROGRESS_DISPLAY_SECONDS - elapsed)
+        if remaining_display_time:
+            await asyncio.sleep(remaining_display_time)
 
         yield emit({"type": "progress", "step": "done", "message": pm["done"]})
-        await asyncio.sleep(0.15)
+        await asyncio.sleep(0)
 
         # Final event: the full result payload
         yield emit({"type": "result", "data": result.model_dump(mode="json")})

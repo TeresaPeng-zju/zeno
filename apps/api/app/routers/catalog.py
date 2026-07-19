@@ -398,12 +398,20 @@ def match_orientation(
     role is (e.g.) retrieval-heavy, and the frontend then re-scores the existing
     profile via `GET /sessions/{id}/result?orientation=...`. No JD text is stored.
     """
-    orientation_id, signals = competency.classify_jd(payload.jd)
+    from app.domain import jd_orientation
+
+    try:
+        result = jd_orientation.classify(payload.jd, lang)
+    except ValueError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    orientation_id = result["orientation"]
     orient = competency.get_orientation(orientation_id)
     return JdMatchResponse(
         orientation=orientation_id,
         orientation_label=competency.orientation_label(orient, lang),
         description=competency.orientation_description(orient, lang),
-        matched=orientation_id != competency.ORIENTATION_BASE,
-        signals=signals,
+        matched=bool(result["matched"]),
+        signals=result["signals"],
+        confidence=result["confidence"],
+        needs_confirmation=result["needs_confirmation"],
     )

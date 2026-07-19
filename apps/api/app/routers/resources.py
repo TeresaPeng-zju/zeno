@@ -12,16 +12,62 @@ bootstrapped and maintained over HTTP:
 from collections import Counter
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import AnyHttpUrl, BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.data.seed_resources import SEED_RESOURCES
 from app.domain import competency, curation_agent
-from app.models import Resource
+from app.models import Resource, ResourceCandidate, url_hash
 from app.services import freshness, resource_service
 
 router = APIRouter(prefix="/api/resources", tags=["resources"])
+
+
+class ResourceRecommendationIn(BaseModel):
+    skill_id: str
+    url: AnyHttpUrl
+    title: str = Field(default="", max_length=240)
+    reason: str = Field(min_length=8, max_length=1200)
+
+
+@router.post("/recommend")
+def recommend_resource(
+    payload: ResourceRecommendationIn, db: Session = Depends(get_db)
+) -> dict:
+    """Accept a community recommendation into the review queue.
+
+    A submission never enters retrieval directly. Freshness checks, annotation,
+    and approval still happen through the existing candidate curation flow.
+    """
+    if payload.skill_id not in competency.SKILLS_BY_ID:
+        raise HTTPException(status_code=404, detail=f"unknown skill_id: {payload.skill_id}")
+    normalized_url = str(payload.url).strip().rstrip("/")
+    digest = url_hash(normalized_url)
+    if db.scalar(select(Resource.id).where(Resource.url_hash == digest)):
+        return {"status": "already_published"}
+    existing = db.scalar(
+        select(ResourceCandidate).where(ResourceCandidate.url_hash == digest)
+    )
+    if existing:
+        return {"status": existing.status, "candidate_id": existing.id}
+    candidate = ResourceCandidate(
+        title=payload.title.strip(),
+        url=normalized_url,
+        url_hash=digest,
+        source="community",
+        status="pending",
+        annotation={
+            "skill_ids": [payload.skill_id],
+            "community_reason": payload.reason.strip(),
+            "submitted_via": "result_page",
+        },
+    )
+    db.add(candidate)
+    db.commit()
+    db.refresh(candidate)
+    return {"status": "pending", "candidate_id": candidate.id}
 
 
 @router.post("/seed")

@@ -417,6 +417,21 @@ function GraphInner() {
                 <p className="text-sm font-semibold">{t("correctionInputTitle")}</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t("correctionInputHint")}</p>
                 <textarea value={correctionText} onChange={(event) => setCorrectionText(event.target.value)} rows={5} autoFocus placeholder={t("correctionPlaceholder")} className="mt-3 w-full resize-none rounded-xl border border-white/10 bg-black/20 p-3 text-sm leading-relaxed text-slate-100 outline-none placeholder:text-slate-600 focus:border-gold/50" />
+                {correctionBusy && (
+                  <div className="mt-3 overflow-hidden rounded-lg border border-gold/15 bg-gold/[0.035] px-3 py-2.5">
+                    <div className="flex items-center justify-between gap-3 text-[10px] text-slate-400">
+                      <span>{t("correctionProgress")}</span>
+                      <span className="font-mono text-gold/70">ZENO // EVIDENCE</span>
+                    </div>
+                    <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/[0.06]">
+                      <motion.div
+                        className="h-full w-1/3 rounded-full bg-gradient-to-r from-transparent via-gold to-transparent"
+                        animate={{ x: ["-110%", "310%"] }}
+                        transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className="mt-3 flex gap-2">
                   <button onClick={() => setModalPhase("ask")} className="flex-1 rounded-lg border border-white/10 px-3 py-2 text-xs text-muted-foreground">{t("back")}</button>
                   <button disabled={correctionBusy || correctionText.trim().length < 12} onClick={() => void analyzeCorrection()} className="flex-[2] rounded-lg bg-gold px-3 py-2 text-xs font-semibold text-[#151006] disabled:opacity-40">{correctionBusy ? t("correctionAnalyzing") : t("correctionAnalyze")}</button>

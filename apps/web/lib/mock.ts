@@ -217,38 +217,6 @@ for (const g of CATEGORY_META) {
   for (const [sid] of g.skills) SKILL_CATEGORY[sid] = g.category;
 }
 
-// JD → orientation keyword signals (mirrors skill_graph.json `jd_signals` and
-// competency.classify_jd). Lowercase; ≥2 distinct hits flips to that orientation.
-const JD_SIGNALS: Record<string, string[]> = {
-  rag: [
-    "rag", "retrieval-augmented", "retrieval augmented", "retrieval", "retriever",
-    "vector search", "vector database", "vector db", "vector store", "embedding",
-    "embeddings", "rerank", "reranking", "re-rank", "semantic search",
-    "knowledge base", "knowledge-base", "chunking", "chunk", "faiss", "pinecone",
-    "milvus", "weaviate", "qdrant", "elasticsearch", "bm25", "hybrid search",
-    "question answering", "document qa",
-    "检索增强", "检索", "召回", "重排", "向量检索", "向量数据库", "向量库", "向量化",
-    "嵌入", "语义检索", "语义搜索", "知识库", "切分", "分块", "文档问答", "问答系统",
-  ],
-};
-const JD_MATCH_THRESHOLD = 2;
-
-function classifyJd(text: string): { orientation: string; signals: string[] } {
-  const hay = (text || "").toLowerCase();
-  if (!hay.trim()) return { orientation: "base", signals: [] };
-  let bestId = "base";
-  let best: string[] = [];
-  for (const [id, sigs] of Object.entries(JD_SIGNALS)) {
-    const hits = [...new Set(sigs.filter((s) => hay.includes(s)))];
-    if (hits.length > best.length) {
-      bestId = id;
-      best = hits;
-    }
-  }
-  if (best.length < JD_MATCH_THRESHOLD) return { orientation: "base", signals: [] };
-  return { orientation: bestId, signals: best };
-}
-
 const name = (id: string, loc: Locale) =>
   SKILL_NAMES[id] ? pick(SKILL_NAMES[id], loc) : id;
 const cat = (id: string) => SKILL_CATEGORY[id] ?? "foundation";
@@ -917,16 +885,20 @@ export const mockApi = {
     ],
   }, 150),
 
-  matchOrientation: (jd: string): Promise<JdMatchResponse> => {
+  matchOrientation: (_jd: string): Promise<JdMatchResponse> => {
     const loc = currentLocale();
-    const { orientation, signals } = classifyJd(jd);
+    // Mock mode deliberately does not pretend to understand arbitrary prose.
+    // Semantic JD extraction only exists in the real API.
+    const orientation = "base";
     const meta = ORIENTATION_META.find((o) => o.id === orientation)!;
     return delay({
       orientation,
       orientation_label: pick(meta.label, loc),
       description: pick(meta.description, loc),
-      matched: orientation !== "base",
-      signals,
+      matched: false,
+      signals: [],
+      confidence: 0,
+      needs_confirmation: false,
     }, 320);
   },
 
@@ -941,20 +913,23 @@ export const mockApi = {
   analyzeCorrection: (sessionId: string, skillId: string, text: string) => delay({
     evidence_id: `mock-${sessionId}-${skillId}`,
     skill_id: skillId,
-    project: "Zeno",
-    actions: text.split(/[。；;\n]/).filter(Boolean).slice(0, 3),
-    ownership: text.includes("独立") ? "独立实现" : "参与实现",
-    outcome: text.includes("Demo") || text.includes("上线") ? "完成可运行Demo" : "",
+    project: "Mock evidence fixture",
+    actions: ["完成一个个人项目中的功能"],
+    ownership: "个人项目实践",
+    outcome: "完成可运行功能",
     evidence_quote: text.slice(0, 180),
-    llm_suggested_level: 3,
-    rule_level: text.includes("主导") || text.includes("架构") ? 4 : text.includes("独立") ? 3 : 2,
-    rule_version: "correction-v1",
+    llm_suggested_level: null,
+    rule_level: 2,
+    rule_version: "mock-fixed-evidence-v1",
     current_level: 1,
     provider: "mock",
   }, 500),
 
   confirmCorrection: (_sessionId: string, _evidenceId: string, action: "confirm" | "keep") =>
-    delay({ status: action === "confirm" ? "confirmed" as const : "kept" as const, level: action === "confirm" ? 3 : 1 }, 180),
+    delay({ status: action === "confirm" ? "confirmed" as const : "kept" as const, level: action === "confirm" ? 2 : 1 }, 180),
+
+  recommendResource: (_skillId: string, _url: string, _title: string, _reason: string) =>
+    delay({ status: "pending", candidate_id: "mock-resource-candidate" }, 300),
 
   result: (sessionId: string, timeBudget?: TimeBudget, orientationOverride?: string): Promise<ResultResponse> => {
     const loc = currentLocale();

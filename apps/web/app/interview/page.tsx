@@ -87,7 +87,9 @@ function InterviewInner() {
     }
     for (const g of guesses) {
       if (rejected.has(g.skill_id)) continue;
-      if (!next[g.skill_id]) next[g.skill_id] = { skill_name: g.skill_name, level: 2, confidence: g.confidence, evidence: g.reason };
+      // A confirmed hypothesis proves familiarity, not project depth. It must
+      // never silently become L2 without grounded project evidence.
+      if (!next[g.skill_id]) next[g.skill_id] = { skill_name: g.skill_name, level: 1, confidence: g.confidence, evidence: g.reason };
     }
     return next;
   }

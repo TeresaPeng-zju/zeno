@@ -11,6 +11,8 @@ Recall has two interchangeable paths so the engine runs with or without Postgres
 
 from __future__ import annotations
 
+from functools import lru_cache
+
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
@@ -177,9 +179,15 @@ def recommend_for_skill(
     db: Session, *, skill_id: str, gap_target_level: int, query_text: str
 ) -> list[ScoredResource]:
     """Full per-skill pipeline: embed query -> recall -> multi-signal rerank."""
-    query_vec = get_embedder().embed_one(query_text)
+    query_vec = list(_cached_query_embedding(query_text))
     candidates = _recall(db, skill_id, query_vec)
     return rerank(candidates, gap_target_level=gap_target_level)
+
+
+@lru_cache(maxsize=256)
+def _cached_query_embedding(query_text: str) -> tuple[float, ...]:
+    """Cache finite skill/level query vectors across result refreshes."""
+    return tuple(get_embedder().embed_one(query_text))
 
 
 def _freshness_reason(s: ScoredResource, lang: str = "en") -> str:
